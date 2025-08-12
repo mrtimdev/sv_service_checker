@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:fragment="layout(content, pageTitle)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'Admin Dashboard'">Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link th:href="@{/css/admin.css}" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <div th:replace="~{partials/header :: header}"></div>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <div th:replace="~{partials/sidebar :: sidebar}"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6" th:insert="${content}"></main>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{partials/footer :: footer}"></div>
+
+    </body>
+</html>

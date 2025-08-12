@@ -1,0 +1,9 @@
+<th:block th:fragment="sidebar">
+    <aside class="w-64 bg-gray-800 text-white min-h-screen">
+        <nav class="mt-10 space-y-2">
+            <a th:href="@{/admin/dashboard}" class="block py-2.5 px-4 hover:bg-gray-700">📊 Dashboard</a>
+            <a th:href="@{/admin/settings}" class="block py-2.5 px-4 hover:bg-gray-700">⚙ Settings</a>
+            <a th:href="@{/reports}" class="block py-2.5 px-4 hover:bg-gray-700">📄 Reports</a>
+        </nav>
+    </aside>
+</th:block>

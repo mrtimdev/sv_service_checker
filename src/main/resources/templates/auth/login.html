@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Checker | Login</title>
+    <!-- Tailwind CSS via CDN (or install locally) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(-45deg, #f3f4f6, #e5e7eb, #dbeafe, #bfdbfe);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+    <!-- Custom colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3B82F6",  // Blue-500
+                        danger: "#EF4444",    // Red-500
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <!-- Logo / Branding -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-primary">SERVICE CHECKER</h1>
+            <p class="text-gray-600">Monitor your services with ease</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
+            
+            <!-- Error Messages -->
+            <div th:if="${param.error}" class="bg-danger/10 border-l-4 border-danger text-danger p-4 mb-4">
+                Invalid username or password.
+            </div>
+            <div th:if="${param.logout}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
+                You have been logged out.
+            </div>
+
+            <!-- Login Form -->
+            <form th:action="@{/auth/login}" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">Username</label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        required
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Enter admin username">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        required
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="••••••••">
+                    <div th:if="${session.error}" class="text-red-500" th:text="${session.error}"></div>
+                </div>
+                <button 
+                    type="submit"
+                    class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                    Sign In
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-gray-500 mt-8">
+            © 2024 Service Checker. All rights reserved.
+        </p>
+    </div>
+</body>
+</html>

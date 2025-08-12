@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+    <th:block th:fragment="content">
+        <h2 class="text-3xl font-bold mb-6">Dashboard Overview</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
+                <h3 class="text-gray-500">Total Users</h3>
+                <p class="text-3xl font-bold text-blue-600" th:text="${totalUsers}"></p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
+                <h3 class="text-gray-500">Revenue</h3>
+                <p class="text-3xl font-bold text-green-600" th:text="${revenue}"></p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
+                <h3 class="text-gray-500">Orders</h3>
+                <p class="text-3xl font-bold text-yellow-600" th:text="${orders}"></p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
+                <h3 class="text-gray-500">Active Sessions</h3>
+                <p class="text-3xl font-bold text-purple-600" th:text="${sessions}"></p>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+</html>
