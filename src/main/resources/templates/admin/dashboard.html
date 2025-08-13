@@ -1,25 +1,45 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<th:block th:replace="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
     <th:block th:fragment="content">
-        <h2 class="text-3xl font-bold mb-6">Dashboard Overview</h2>
+        <div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans">
+            <div class="mx-auto sm:px-6 lg:px-8">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
-                <h3 class="text-gray-500">Total Users</h3>
-                <p class="text-3xl font-bold text-blue-600" th:text="${totalUsers}"></p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
-                <h3 class="text-gray-500">Revenue</h3>
-                <p class="text-3xl font-bold text-green-600" th:text="${revenue}"></p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
-                <h3 class="text-gray-500">Orders</h3>
-                <p class="text-3xl font-bold text-yellow-600" th:text="${orders}"></p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow card-hover fade-in">
-                <h3 class="text-gray-500">Active Sessions</h3>
-                <p class="text-3xl font-bold text-purple-600" th:text="${sessions}"></p>
+                <!-- Welcome Section -->
+                <div class="bg-white shadow-lg rounded-xl flex-1 w-full mb-8 p-4">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+                        Welcome Back, <span class="text-primary" th:text="${user.username}">User</span>!
+                    </h1>
+                    <p class="text-gray-500">Here's what's happening with your invoices today</p>
+                </div>
+
+                <!-- Dashboard Header with Filters -->
+                <div class="mb-8 w-full">
+                    <div class="bg-white shadow-lg rounded-xl p-4 w-full">
+                        <div class="flex flex-col sm:flex-row gap-3 items-center">
+                            <div class="relative flex-1">
+                                <select id="timeRange" class="appearance-none bg-gray-100 border-0 text-gray-700 py-2 pl-3 pr-8 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month" selected>This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+
+                            <div id="customRangePicker" class="hidden sm:flex gap-2 flex-1">
+                                <input type="text" id="startDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Start Date" />
+                                <span class="flex items-center text-gray-400">to</span>
+                                <input type="text" id="endDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="End Date" />
+                            </div>
+
+                            <button id="applyFilter" class="bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                                <i class="fas fa-filter"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </th:block>

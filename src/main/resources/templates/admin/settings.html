@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<th:block th:replace="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Settings')}">
     <th:block th:fragment="content">
         <section>
             <div class="bg-white rounded-lg shadow overflow-hidden">

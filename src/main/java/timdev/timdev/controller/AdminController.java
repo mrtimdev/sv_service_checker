@@ -15,7 +15,7 @@ public class AdminController {
         model.addAttribute("revenue", "$12,430");
         model.addAttribute("orders", 320);
         model.addAttribute("sessions", 58);
-        model.addAttribute("username", user.getUsername());
+        model.addAttribute("user", user);
         model.addAttribute("pageTitle", "Dashboard");
         return "admin/dashboard";
     }
@@ -26,7 +26,7 @@ public class AdminController {
         model.addAttribute("revenue", "$12,430");
         model.addAttribute("orders", 320);
         model.addAttribute("sessions", 58);
-        model.addAttribute("username", user.getUsername());
+        model.addAttribute("user", user);
         model.addAttribute("pageTitle", "Dashboard");
         return "admin/dashboard";
     }

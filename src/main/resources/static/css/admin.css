@@ -1,1 +1,65 @@
 body{background-color:inherit;position:relative}#main-content{margin-left:230px}.dt-container .top{display:flex;justify-content:space-around}.dt-container .top:nth-child(1),.dt-container .top:nth-child(2){width:50% !important}.dt-container .top:nth-child(1){text-align:start !important}.dt-container .top:nth-child(2){text-align:end !important}.dt-container .dataTable thead th .dt-column-header .dt-column-title{align-items:center !important}[x-cloak]{display:none !important}#queueMonitor{width:280px;transition:all .3s ease}#queueMonitor:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.1)}.dark #queueMonitor{box-shadow:0 4px 6px rgba(0,0,0,.3)}.custom-backdrop-blur-md{backdrop-filter:blur(12px) !important}/*# sourceMappingURL=admin.css.map */
+
+/* Smooth transitions for cards & links */
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar custom scrollbar */
+.sidebar {
+    overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Page fade-in animation */
+.fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Chart container styling */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Button ripple effect */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+.btn-ripple::after {
+    content: "";
+    position: absolute;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    width: 0;
+    height: 0;
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+}
+.btn-ripple:active::after {
+    width: 200%;
+    height: 200%;
+    opacity: 1;
+    transform: scale(1);
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.6s ease;
+}

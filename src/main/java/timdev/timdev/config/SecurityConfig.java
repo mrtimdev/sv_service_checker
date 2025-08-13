@@ -18,15 +18,20 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain webFilterChain(HttpSecurity http,
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
             AuthenticationSuccessHandler successHandler) throws Exception {
         http
-            .securityMatcher("/**") // Applies to all requests
+            .securityMatcher("/**") 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/",
                     "/auth/login",
-                    "/static/**",
+                    "/css/**", "/js/**", "/images/**",
                     "/error"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -75,8 +80,5 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
+    
 }

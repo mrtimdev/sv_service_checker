@@ -1,6 +1,5 @@
 package timdev.timdev.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,6 +15,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class LoginController {
+    
+    private final AuthenticationManager authenticationManager;
+    public LoginController(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
     @GetMapping("/auth/login")
     public String showLoginForm(
         Authentication authentication,
@@ -35,15 +39,14 @@ public class LoginController {
         return "auth/login";
     }
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    
 
     @PostMapping("/auth/login")
     public String login(@RequestParam String username, 
                     @RequestParam String password,
                     HttpServletRequest request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            Authentication authentication = this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
             );
             
