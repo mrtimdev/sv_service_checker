@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+
     const sidebar = document.getElementById("sidebar");
     const toggleBtn = document.getElementById("sidebarToggle");
 
@@ -21,6 +22,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 });
+
+
+
+$(document).on('change', '#checkAll', function() {
+    $('.rowCheckbox').prop('checked', this.checked);
+    updateSelectedCount();
+});
+
+// Individual checkbox change
+$(document).on('change', '.rowCheckbox', function() {
+    var allChecked = $('.rowCheckbox:checked').length === $('.rowCheckbox').length;
+    $('#checkAll').prop('checked', allChecked);
+    updateSelectedCount();
+});
+
+// Update selected count and button state
+function updateSelectedCount() {
+    const count = $('.rowCheckbox:checked').length;
+    $('#selectedCount').text(count);
+    $('#bulkDeleteBtn').prop('disabled', count === 0);
+    $('#bulkDeleteBtn').toggleClass('opacity-50 cursor-not-allowed', count === 0);
+}
 
 
 // =====================

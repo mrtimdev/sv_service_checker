@@ -1,30 +1,33 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en" th:fragment="layout(content, pageTitle)" x-data="{
-    theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-    language: localStorage.getItem('language') || 'en',
-    init() {
-        document.documentElement.classList.toggle('dark', this.theme === 'dark');
-        this.$watch('theme', value => {
-            localStorage.setItem('theme', value);
-            document.documentElement.classList.toggle('dark', value === 'dark');
-        });
-        this.$watch('language', value => {
-            localStorage.setItem('language', value);
-            console.log('Language changed to:', value);
-        });
-    }
-}" :class="{ 'dark': theme === 'dark' }">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:fragment="layout(content, pageTitle)">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ?: 'SV Satisfaction Survey'">SV Satisfaction Survey</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link th:href="@{/css/admin.css}" rel="stylesheet">
     
-    <link rel="stylesheet" href="/css/flaticon-uicons/css/all/all.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons@3.3.1/css/all/all.min.css">
+    <!-- In your <head> -->
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link href="/css/output.css" rel="stylesheet">
+
+    
+    <style>
+        .dataTables_filter 
+        {
+            padding-bottom: 10px !important;
+        }
+    </style>
+    
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 dark:bg-gray-900 h-full">
 
     <!-- Header -->
     <div th:insert="~{partials/header :: header}"></div>
@@ -36,8 +39,11 @@
 
     <main id="main-content">
         <!-- Main Content -->
-        <div th:insert="${content}"></div>
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans" id="content-body" th:insert="${content}"></div>
     </main>
+
+
+    <div id="alert-container" class="container mb-3"></div>
 
     <!-- Footer -->
     <div th:insert="~{partials/footer :: footer}"></div>
@@ -47,6 +53,8 @@
         crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script th:src="@{/js/main.js}"></script>
 
 
@@ -68,6 +76,50 @@
             } else {
                 $("#custom-padding-top").removeClass("pt-[72px]");
             }
+        });
+
+        $(function() {
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                maxDate: "today"
+            });
+        })
+    </script>
+
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+            const themeToggleText = document.getElementById('theme-toggle-text');
+            
+            // Check for saved theme preference or use system preference
+            if (localStorage.getItem('color-theme') === 'dark' || 
+                (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleDarkIcon.classList.remove('hidden');
+            }
+            
+            themeToggleBtn.addEventListener('click', function() {
+                // Toggle icons
+                themeToggleDarkIcon.classList.toggle('hidden');
+                themeToggleLightIcon.classList.toggle('hidden');
+                
+                // Toggle theme
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                    themeToggleText.textContent = 'Toggle theme';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                    themeToggleText.textContent = 'Toggle theme';
+                }
+            });
         });
     </script>
 

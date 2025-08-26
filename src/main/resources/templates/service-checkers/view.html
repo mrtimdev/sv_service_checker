@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Service Checker Details')}">
+    <th:block th:fragment="content">
+        <div class="mx-auto sm:px-6 lg:px-8">
+                <!-- Header Card -->
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden mb-8">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                        <div class="flex justify-between items-start">
+                            
+                            <div class="flex space-x-3">
+                                <a th:href="@{/admin/service-checkers/new/edit/{id}(id=${serviceChecker.id})}" 
+                                   class="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                    Edit
+                                </a>
+                                <a th:href="@{/admin/service-checkers}" 
+                                   class="bg-white text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                    Back
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Date</h3>
+                                <p class="mt-1 text-lg font-semibold" th:text="${#temporals.format(serviceChecker.date, 'MMMM dd, yyyy')}">August 18, 2025</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Driver</h3>
+                                <div class="mt-1 flex items-center">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                        <span th:text="${serviceChecker.driver.firstName.substring(0,1) + serviceChecker.driver.lastName.substring(0,1)}">JD</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-lg font-semibold" th:text="${serviceChecker.driver.firstName + ' ' + serviceChecker.driver.lastName}">John Doe</p>
+                                        <p class="text-sm text-gray-500" th:text="${serviceChecker.driver.plateNumber}">LIC-123456</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Created At</h3>
+                                <p class="mt-1 text-lg font-semibold" th:text="${#temporals.format(serviceChecker.createdAt, 'MMMM dd, yyyy HH:mm')}">August 18, 2025 10:30</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Last Updated</h3>
+                                <p class="mt-1 text-lg font-semibold" th:text="${serviceChecker.updatedBy != null} ? ${#temporals.format(serviceChecker.updatedAt, 'MMMM dd, yyyy HH:mm')} : 'Never'">August 18, 2025 11:45</p>
+                                <p th:if="${serviceChecker.updatedBy != null}" class="text-sm text-gray-500">
+                                    by <span th:text="${serviceChecker.updatedBy.username}">admin</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Section -->
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden mb-8">
+                    <div class="border-b border-gray-200 p-6">
+                        <h2 class="text-xl font-bold flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Checklist Items
+                        </h2>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        <div th:each="item,itemStat : ${serviceChecker.items}" class="p-6 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-lg font-medium" th:text="${item.category.khmerName}">Item Title</h3>
+                                        <div class="mt-2 space-y-2">
+                                            <div th:each="note : ${item.notes}" class="flex items-start">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mt-1 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                    <div class="flex gap-1">
+                                                        <p th:text="${note.inspectionItem.khmerName}"> </p>
+                                                        <i th:if="${note.passed}" class="fi fi-rr-check-double text-blue-500"></i>
+                                                    </div>
+                                                     <div class="flex items-center gap-1"> 
+                                                        <i th:if="${!note.passed}" class="fi fi-br-pencil text-sm text-blue-500"></i>
+                                                        <p class="text-gray-600" th:text="${note.note}">Note details go here</p>
+                                                    </div>
+                                                    
+                                                    
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+                <!-- Signature Section -->
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                    <div class="border-b border-gray-200 p-6">
+                        <h2 class="text-xl font-bold flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Verification
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Inspector's Signature</h3>
+                                <div class="mt-4 w-48 h-20 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                                    <span th:if="${serviceChecker == null}" class="text-gray-400">No signature</span>
+                                </div>
+                            </div>
+                            <div class="mt-6 md:mt-0">
+                                <h3 class="text-sm font-medium text-gray-500">Driver's Signature</h3>
+                                <div class="mt-4 w-48 h-20 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                                    <span th:if="${serviceChecker == null}" class="text-gray-400">No signature</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </th:block>
+</th:block>
+</html>

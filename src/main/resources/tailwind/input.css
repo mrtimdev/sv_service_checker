@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom components */
+@layer components {
+  .status-pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-pill.checking {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .status-pill.checked {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .status-pill.issues {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .status-pill.not_checked {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .status-dropdown {
+    @apply origin-top-right right-0;
+  }
+
+  .status-option {
+    @apply text-left;
+  }
+}

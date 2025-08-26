@@ -1,3 +1,5 @@
+
+
 body{background-color:inherit;position:relative}#main-content{margin-left:230px}.dt-container .top{display:flex;justify-content:space-around}.dt-container .top:nth-child(1),.dt-container .top:nth-child(2){width:50% !important}.dt-container .top:nth-child(1){text-align:start !important}.dt-container .top:nth-child(2){text-align:end !important}.dt-container .dataTable thead th .dt-column-header .dt-column-title{align-items:center !important}[x-cloak]{display:none !important}#queueMonitor{width:280px;transition:all .3s ease}#queueMonitor:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.1)}.dark #queueMonitor{box-shadow:0 4px 6px rgba(0,0,0,.3)}.custom-backdrop-blur-md{backdrop-filter:blur(12px) !important}/*# sourceMappingURL=admin.css.map */
 
 /* Smooth transitions for cards & links */
@@ -62,4 +64,35 @@ body{background-color:inherit;position:relative}#main-content{margin-left:230px}
     opacity: 1;
     transform: scale(1);
     transition: width 0.3s ease, height 0.3s ease, opacity 0.6s ease;
+}
+
+.dataTables_wrapper  
+{
+    padding: 20px;
+}
+
+input[type="checkbox"] {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.2em;
+}
+
+#bulkDeleteBtn {
+    transition: all 0.3s ease;
+}
+
+#bulkDeleteBtn:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* Use Battambang with safe fallbacks */
+body {
+  font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang",
+               "Khmer OS System", "Khmer UI", "DaunPenh", sans-serif;
 }

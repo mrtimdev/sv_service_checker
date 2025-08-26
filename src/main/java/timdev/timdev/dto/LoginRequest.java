@@ -1,5 +1,8 @@
 package timdev.timdev.dto;
 
+import timdev.timdev.validation.ValidIdentifier;
+
+@ValidIdentifier
 public class LoginRequest {
     
 
