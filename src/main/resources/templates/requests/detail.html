@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#7c73d9',
+                        dark: '#1f2937',
+                        light: '#f9fafb'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .back-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            transform: translateX(-3px);
+        }
+        
+        .detail-row {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .action-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -37px;
+            top: 0.5rem;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background-color: #4f46e5;
+        }
+    </style>
+</head>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Request Details')}">
+    <th:block th:fragment="content">
+
+        <!-- Main Content -->
+        <div class="mx-auto sm:px-6 lg:px-8">
+            <!-- Alert Messages -->
+            <div th:if="${param.error}" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded fade-in" role="alert">
+                <p th:if="${param.error == 'access_denied'}">You don't have permission to view this request.</p>
+                <p th:if="${param.error == 'not_found'}">Request not found.</p>
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-700 dark:text-gray-100">Request Details</h1>
+                <a th:href="@{/requests}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200 flex items-center">
+                    <i class="fas fa-list mr-2"></i> Back To List
+                </a>
+            </div>
+
+            <!-- Request Details Card -->
+            <div th:if="${request}" class="mx-auto fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-xl card-shadow overflow-hidden mb-6">
+                    
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200" th:text="${request.title}">Request Title</h2>
+                        <div th:utext="${@setting.formatEnum(request.status)}"></div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left Column -->
+                            <div>
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Request ID</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${request.id}">101</p>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Requested By</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${request.requestBy}">John Smith</p>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Date</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${#temporals.format(request.date, 'yyyy-MM-dd')}">2023-10-15</p>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Urgency Level</p>
+                                    <p th:text="${request.urgencyLevel}">High</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column -->
+                            <div>
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Approval Level</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${request.approvalLevel}">Level 2</p>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Created At</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${#temporals.format(request.createdAt, 'yyyy-MM-dd HH:mm')}">2023-10-15 14:30</p>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <p class="text-sm text-gray-500 dark:text-gray-200">Last Updated</p>
+                                    <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${#temporals.format(request.updatedAt, 'yyyy-MM-dd HH:mm')}">2023-10-16 09:15</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-200 mb-2">Description</p>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <p class="text-gray-800 dark:text-gray-200" th:text="${request.description}">This is a detailed description of the request, explaining what is needed and why it's important.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Items -->
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-200 mb-2">Items</p>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <p class="text-gray-800 dark:text-gray-200" th:text="${request.items}">Laptop, Monitor, Keyboard, Mouse</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Approval Timeline -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl card-shadow overflow-hidden mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-500 dark:text-gray-200">Approval Timeline</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="timeline">
+                            <!-- Request Created -->
+                            <div class="timeline-item">
+                                <p class="text-sm text-gray-500 dark:text-gray-200">Request Created</p>
+                                <p class="font-medium text-gray-300 dark:text-gray-500" th:text="${#temporals.format(request.createdAt, 'yyyy-MM-dd HH:mm')}">2023-10-15 14:30</p>
+                            </div>
+                            
+                            <!-- Approval Steps -->
+                            <div th:each="approval : ${request.approvals}" 
+                                 th:with="statusText=${approval.status.toString() == 'APPROVED' ? 'Approved' : 
+                                             approval.status.toString() == 'REJECTED' ? 'Rejected' : 
+                                             approval.status.toString() == 'PENDING' ? 'Pending Approval' : 'Reviewed'}"
+                                 class="timeline-item">
+                                <p class="text-sm text-gray-500 dark:text-gray-200">
+                                    <span th:text="${approval.level} + ' ' + ${statusText}"></span>
+                                    <span th:if="${approval.approver != null}" 
+                                          th:text="' by ' + ${approval.approver.fullName}"></span>
+                                </p>
+                                <p class="font-medium text-gray-300 dark:text-gray-500" 
+                                   th:if="${approval.approvalDate != null}"
+                                   th:text="${#temporals.format(approval.approvalDate, 'yyyy-MM-dd HH:mm')}">
+                                    2023-10-16 09:15
+                                </p>
+                                <p class="font-medium text-gray-400 dark:text-gray-500" th:unless="${approval.approvalDate != null}">
+                                    Pending
+                                </p>
+                                <p th:if="${approval.comments != null and !approval.comments.isEmpty()}" 
+                                   class="text-xs text-gray-400 dark:text-gray-400 mt-1">
+                                    Comments: <span th:text="${approval.comments}"></span>
+                                </p>
+                            </div>
+
+                            <!-- Final Status -->
+                            <div th:if="${request.status.toString() == 'APPROVED' or request.status.toString() == 'REJECTED'}"
+                                class="timeline-item">
+                                <p class="text-sm text-gray-500 dark:text-gray-200"
+                                th:text="${request.status.toString() == 'APPROVED' ? 'Final Approval' : 'Request Rejected'}">
+                                    Final Status
+                                </p>
+                                <p class="font-medium text-gray-300 dark:text-gray-500"
+                                th:text="${#temporals.format(request.updatedAt, 'yyyy-MM-dd HH:mm')}">
+                                    2023-10-16 14:20
+                                </p>
+                            </div>
+
+                            <!-- No Approvals Message -->
+                            <div th:if="${#lists.isEmpty(request.approvals)}" class="timeline-item">
+                                <p class="text-sm text-gray-500 dark:text-gray-200">No approval actions yet</p>
+                                <p class="font-medium text-gray-400 dark:text-gray-500">Waiting for approvals</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div th:if="${currentUser.user.role.toString() == 'ADMIN'}" 
+                    class="bg-white dark:bg-gray-800 rounded-xl card-shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Admin Actions</h2>
+                    </div>
+                    <div class="p-6 flex flex-wrap gap-4">
+                        <!-- Approve Button -->
+                        <form th:if="${request.status.toString() != 'APPROVED' and request.status.toString() != 'REJECTED'}" 
+                              th:action="@{/requests/{id}/approve(id=${request.id})}" 
+                              method="post" class="inline">
+                            <button type="submit" class="action-btn bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+                                <i class="fas fa-check mr-2"></i>Approve
+                            </button>
+                        </form>
+                        
+                        <!-- Reject Button -->
+                        <form th:if="${request.status.toString() != 'APPROVED' and request.status.toString() != 'REJECTED'}" 
+                              th:action="@{/requests/{id}/reject(id=${request.id})}" 
+                              method="post" class="inline">
+                            <button type="submit" class="action-btn bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+                                <i class="fas fa-times mr-2"></i>Reject
+                            </button>
+                        </form>
+                        
+                        <!-- Edit Button -->
+                        <a th:href="@{/requests/{id}/edit(id=${request.id})}" 
+                           class="action-btn bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-edit mr-2"></i>Edit
+                        </a>
+                        
+                        <!-- View History Button -->
+                        <button class="action-btn bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-history mr-2"></i>View History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSS Styles -->
+        <style>
+            .card-shadow {
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            }
+            
+            .detail-row {
+                margin-bottom: 1rem;
+            }
+            
+            .timeline {
+                position: relative;
+                padding-left: 1.5rem;
+            }
+            
+            .timeline-item {
+                position: relative;
+                padding-bottom: 1.5rem;
+                border-left: 2px solid #e5e7eb;
+                padding-left: 1rem;
+                margin-left: 0.5rem;
+            }
+            
+            .timeline-item:last-child {
+                border-left: 2px solid transparent;
+            }
+            
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                left: -0.5rem;
+                top: 0;
+                width: 1rem;
+                height: 1rem;
+                border-radius: 50%;
+                background: #3b82f6;
+            }
+            
+            .action-btn {
+                transition: all 0.2s ease-in-out;
+            }
+            
+            .action-btn:hover {
+                transform: translateY(-1px);
+            }
+            
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .dark .timeline-item {
+                border-left-color: #4b5563;
+            }
+            
+            .dark .timeline-item::before {
+                background: #60a5fa;
+            }
+        </style>
+    </th:block>
+</th:block>
+
+    <script>
+        // Simple fade-in animation for page elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElems = document.querySelectorAll('.fade-in');
+            fadeElems.forEach((elem, index) => {
+                elem.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            // Add ripple effect to buttons
+            const buttons = document.querySelectorAll('.action-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const x = e.clientX - e.target.getBoundingClientRect().left;
+                    const y = e.clientY - e.target.getBoundingClientRect().top;
+                    
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple-effect');
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

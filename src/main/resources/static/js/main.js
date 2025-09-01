@@ -45,34 +45,6 @@ function updateSelectedCount() {
     $('#bulkDeleteBtn').toggleClass('opacity-50 cursor-not-allowed', count === 0);
 }
 
-
-// =====================
-// Chart.js Example Setup
-// =====================
-if (typeof Chart !== "undefined") {
-    const ctx = document.getElementById("trafficChart");
-    if (ctx) {
-        new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-                datasets: [{
-                    label: "Visitors",
-                    data: [320, 450, 300, 500, 600, 750, 900],
-                    borderColor: "#3b82f6",
-                    backgroundColor: "rgba(59, 130, 246, 0.2)",
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true } }
-            }
-        });
-    }
-}
-
 // =====================
 // Ripple Effect on Buttons
 // =====================
@@ -93,3 +65,64 @@ document.querySelectorAll(".btn-ripple").forEach(button => {
         this.appendChild(circle);
     });
 });
+
+
+
+function statusFormat(status) {
+    if (!status) return "";
+
+    switch (status) {
+        case "APPROVED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
+                        Approved
+                    </span>`;
+        case "REJECTED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-md">
+                        Rejected
+                    </span>`;
+        case "PENDING":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
+                        Pending
+                    </span>`;
+        case "CANCELLED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-gray-400 rounded-md">
+                        Cancelled
+                    </span>`;
+        case "INREVIEW":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-md">
+                        In Review
+                    </span>`;
+        default:
+            return `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-md">
+                        ${status}
+                    </span>`;
+    }
+}
+
+function formatDate(dateStr, options = { showTime: false, showAgo: false }) {
+    if (!dateStr) return "";
+
+    const date = new Date(dateStr);
+
+    let formatted = date.toLocaleDateString("en-GB", {  
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+    });
+
+    if (options.showTime) {
+        const time = date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true
+        });
+        formatted += `, ${time}`;
+    }
+
+    if (options.showAgo) {
+        formatted += ` ${dayjs(dateStr).fromNow()}`;
+    }
+
+    return formatted;
+}

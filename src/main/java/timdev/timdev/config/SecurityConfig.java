@@ -3,6 +3,8 @@ package timdev.timdev.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,15 +16,21 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import timdev.timdev.enums.RoleType;
+import timdev.timdev.service.CustomUserDetailsService;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsService customUserDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customUserDetailsService = customUserDetailsService;
+
     }
 
     @Bean
@@ -46,10 +54,23 @@ public class SecurityConfig {
                 // API endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
-                .requestMatchers("/api/v1/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/**")
+                .hasAnyRole(
+                    RoleType.ADMIN.toString(),
+                    RoleType.MANAGER.toString(),
+                    RoleType.SUPERVISOR.toString(),
+                    RoleType.REPAIRMAN.toString()
+                )
 
                 // Web endpoints
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/**")
+                .hasAnyRole(
+                    RoleType.ADMIN.toString(),
+                    RoleType.MANAGER.toString(),
+                    RoleType.SUPERVISOR.toString(),
+                    RoleType.REPAIRMAN.toString()
+                )
+
                 .anyRequest().authenticated()
             )
             
@@ -87,6 +108,15 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
     @Bean

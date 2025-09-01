@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern File Drop Zone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .file-item {
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="p-6 md:p-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">File Attachment</h1>
+            <p class="text-gray-600 mb-6">Upload images or PDF files by dragging & dropping or selecting them</p>
+            
+            <!-- Drop Zone -->
+            <div class="drop-zone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-8 bg-gray-50 hover:bg-gray-100 cursor-pointer">
+                <div class="flex flex-col items-center justify-center space-y-4">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-blue-500"></i>
+                    </div>
+                    <p class="text-gray-600">Drag & drop your files here</p>
+                    <p class="text-sm text-gray-500">or</p>
+                    <label for="fileInput" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition cursor-pointer">
+                        Browse Files
+                    </label>
+                    <input type="file" id="fileInput" class="hidden" name="attachment" accept="image/*,application/pdf" multiple>
+                    <p class="text-xs text-gray-500 mt-2">Supports images and PDF files</p>
+                </div>
+            </div>
+            
+            <!-- Uploaded Files Section -->
+            <div class="uploaded-files">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Uploaded Files</h2>
+                <div class="files-list space-y-4">
+                    <!-- Files will be added here dynamically -->
+                    <div class="empty-state text-center py-8 text-gray-500">
+                        <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                        <p>No files uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const dropZone = $('.drop-zone');
+            const fileInput = $('#fileInput');
+            const filesList = $('.files-list');
+            
+            // Prevent default drag behaviors
+            $(document).on('drag dragover dragstart dragend', function(e) {
+                e.preventDefault();
+            });
+            
+            // Highlight drop zone when file is dragged over
+            dropZone.on('dragover', function() {
+                $(this).addClass('dragover border-blue-400 bg-blue-50');
+            });
+            
+            // Unhighlight drop zone when file leaves
+            dropZone.on('dragleave', function() {
+                $(this).removeClass('dragover border-blue-400 bg-blue-50');
+            });
+            
+            // Handle dropped files
+            dropZone.on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover border-blue-400 bg-blue-50');
+                
+                const files = e.originalEvent.dataTransfer.files;
+                handleFiles(files);
+            });
+            
+            // Handle file selection via button
+            fileInput.on('change', function() {
+                handleFiles(this.files);
+            });
+            
+            // Click on drop zone to open file dialog
+            dropZone.on('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle the files
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    $('.empty-state').remove();
+                    
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        
+                        // Validate file type
+                        if (!isValidFileType(file)) {
+                            alert('Only images and PDF files are allowed.');
+                            continue;
+                        }
+                        
+                        // Create file item
+                        const fileItem = createFileItem(file);
+                        filesList.append(fileItem);
+                        
+                        // Simulate upload progress
+                        simulateUploadProgress(fileItem, file);
+                    }
+                }
+            }
+            
+            // Check if file is valid type
+            function isValidFileType(file) {
+                const acceptedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+                return acceptedTypes.includes(file.type);
+            }
+            
+            // Create file item element
+            function createFileItem(file) {
+                const isImage = file.type.startsWith('image/');
+                const icon = isImage ? 'fa-image' : 'fa-file-pdf';
+                const bgColor = isImage ? 'bg-green-100' : 'bg-red-100';
+                const textColor = isImage ? 'text-green-600' : 'text-red-600';
+                
+                return $(`
+                    <div class="file-item bg-white border rounded-lg p-4 flex items-center">
+                        <div class="flex-shrink-0 w-12 h-12 ${bgColor} rounded-full flex items-center justify-center mr-4">
+                            <i class="fas ${icon} ${textColor}"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-medium text-gray-800 truncate max-w-[180px]">${file.name}</h3>
+                                <span class="text-xs text-gray-500">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="progress-bar h-2 rounded-full bg-blue-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-gray-500">${formatFileSize(file.size)}</span>
+                                <button class="text-red-500 hover:text-red-700 delete-file">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+            
+            // Simulate upload progress
+            function simulateUploadProgress(fileItem, file) {
+                let progress = 0;
+                const progressBar = fileItem.find('.progress-bar');
+                const percentText = fileItem.find('span:last-child');
+                
+                const interval = setInterval(() => {
+                    progress += Math.floor(Math.random() * 15) + 5;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        
+                        // Change to completed state
+                        setTimeout(() => {
+                            progressBar.removeClass('bg-blue-500').addClass('bg-green-500');
+                            fileItem.find('.delete-file').addClass('text-green-600 hover:text-green-800')
+                                .html('<i class="fas fa-check"></i>');
+                        }, 300);
+                    }
+                    
+                    progressBar.css('width', `${progress}%`);
+                    percentText.text(`${progress}%`);
+                }, 300);
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Delete file handler
+            $(document).on('click', '.delete-file', function() {
+                $(this).closest('.file-item').remove();
+                
+                // Show empty state if no files left
+                if ($('.file-item').length === 0) {
+                    filesList.append(`
+                        <div class="empty-state text-center py-8 text-gray-500">
+                            <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                            <p>No files uploaded yet</p>
+                        </div>
+                    `);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

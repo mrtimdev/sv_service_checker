@@ -2,6 +2,10 @@
 
 body{background-color:inherit;position:relative}#main-content{margin-left:230px}.dt-container .top{display:flex;justify-content:space-around}.dt-container .top:nth-child(1),.dt-container .top:nth-child(2){width:50% !important}.dt-container .top:nth-child(1){text-align:start !important}.dt-container .top:nth-child(2){text-align:end !important}.dt-container .dataTable thead th .dt-column-header .dt-column-title{align-items:center !important}[x-cloak]{display:none !important}#queueMonitor{width:280px;transition:all .3s ease}#queueMonitor:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.1)}.dark #queueMonitor{box-shadow:0 4px 6px rgba(0,0,0,.3)}.custom-backdrop-blur-md{backdrop-filter:blur(12px) !important}/*# sourceMappingURL=admin.css.map */
 
+body {
+    font-size: 12px;
+}
+
 /* Smooth transitions for cards & links */
 .card-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -95,4 +99,26 @@ input[type="checkbox"] {
 body {
   font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang",
                "Khmer OS System", "Khmer UI", "DaunPenh", sans-serif;
+}
+
+
+.table tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .table tr th,
+.dark .table tr td {
+  border-color: rgba(209, 199, 199, 0.05) !important;
+  border: 1px solid;
+}
+
+.table tr td,
+.table tr th {
+  border-color: #dedada !important;
+  border: 1px solid;
+}
+
+table.dataTable tbody tr
+{
+    background-color: unset;
 }

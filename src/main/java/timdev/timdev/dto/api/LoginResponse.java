@@ -3,6 +3,7 @@ package timdev.timdev.dto.api;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import timdev.timdev.enums.RoleType;
 
 @Data
 @NoArgsConstructor
@@ -11,12 +12,12 @@ public class LoginResponse {
     private boolean success;
     private String token;
     private String username;
-    private String role;
+    private RoleType role;
     private String identifyError;
     private String passwordError;
 
     // Success factory method
-    public static LoginResponse success(String token, String username, String role) {
+    public static LoginResponse success(String token, String username, RoleType role) {
         return new LoginResponse(true, token, username, role, null, null);
     }
 

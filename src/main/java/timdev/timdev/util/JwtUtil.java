@@ -43,7 +43,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("userId", user.getId())
-                .claim("role", user.getRole())
+                .claim("ROLE", user.getRole())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -81,7 +81,7 @@ public class JwtUtil {
 
     // Extract role from token
     public String getRoleFromToken(String token) {
-        return extractAllClaims(token).get("role", String.class);
+        return extractAllClaims(token).get("ROLE", String.class);
     }
     public Long extractUserId(String token) {
         return extractAllClaims(token).get("userId", Long.class);
@@ -92,9 +92,6 @@ public class JwtUtil {
         Long employeeId = extractUserId(token);
         
         String role = getRoleFromToken(token).strip();
-        // if (!role.startsWith("ROLE_")) {
-        //     role = "ROLE_" + role;
-        // }
 
         List<SimpleGrantedAuthority> authorities =
                 Collections.singletonList(new SimpleGrantedAuthority(role));
