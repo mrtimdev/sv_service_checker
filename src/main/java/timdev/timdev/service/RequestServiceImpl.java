@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import timdev.timdev.entity.Request;
@@ -126,13 +128,48 @@ public class RequestServiceImpl implements RequestService {
             level
         );
     }
-     @Override
+    @Override
     public List<Request> findByStatusInAndCurrentLevel(List<ApprovalStatus> statuses, ApprovalLevel level)
     {
         return requestRepository.findByStatusInAndCurrentLevel(
             statuses, 
             level
         );
+    }
+
+    @Override
+    public long getTotalRequestCount() {
+        return requestRepository.count();
+    }
+
+    @Override
+    public long getRequestCountByStatus(ApprovalStatus status) {
+        return requestRepository.countByStatus(status);
+    }
+
+    @Override
+    public List<Request> findRecentRequests(int count) {
+        // Get the most recent requests, ordered by creation date descending
+        PageRequest pageRequest = PageRequest.of(0, count, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return requestRepository.findAll(pageRequest).getContent();
+    }
+
+
+    // ✅ By user
+    @Override
+    public long getTotalRequestCountByUser(User user) {
+        return requestRepository.countByCreatedBy(user);
+    }
+
+    @Override
+    public long getRequestCountByStatusAndUser(ApprovalStatus status, User user) {
+        return requestRepository.countByStatusAndCreatedBy(status, user);
+    }
+
+    @Override
+    public List<Request> findRecentRequestsByUser(User user, int count) {
+        PageRequest pageRequest = PageRequest.of(0, count, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return requestRepository.findAllByCreatedBy(user, pageRequest).getContent();
     }
 
     // Getters and setters (if needed)

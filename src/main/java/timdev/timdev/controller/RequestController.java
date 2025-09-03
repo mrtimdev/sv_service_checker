@@ -80,7 +80,7 @@ public class RequestController {
         User user = userDetails.getUser();
         List<Request> requests;
 
-        if (RoleType.ADMIN.equals(user.getRole())) {
+        if (!RoleType.REPAIRMAN.equals(user.getRole())) {
             requests = requestService.findAllRequests();
         } else {
             requests = requestService.findByUser(user);
@@ -126,20 +126,26 @@ public class RequestController {
     public Map<String, Object> getRequestsAjax(
             @RequestParam(value = "status", required = false) ApprovalStatus status,
             @RequestParam(value = "urgency", required = false) String urgency,
-            @RequestParam(value = "startDate", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
             @RequestParam(value = "draw", defaultValue = "0") int draw,
             @RequestParam(value = "start", defaultValue = "0") int start,
             @RequestParam(value = "length", defaultValue = "10") int length,
             @RequestParam(value = "search[value]", defaultValue = "") String searchValue,
             @RequestParam(value = "order[0][column]", defaultValue = "0") int orderColumn,
-            @RequestParam(value = "order[0][dir]", defaultValue = "asc") String orderDirection
+            @RequestParam(value = "order[0][dir]", defaultValue = "asc") String orderDirection,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         // 1. Fetch all requests (admin or user)
-        List<Request> requests = requestService.findAllRequests(); // Or filter by user if needed
+        User user = userDetails.getUser();
+        List<Request> requests;
+        if(user.getRole().equals(RoleType.REPAIRMAN)) {
+            requests = requestService.findByUser(user);
+        } else {
+            requests = requestService.findAllRequests(); 
+        }
+        
 
         // 2. Apply filters
         if (status != null) {
@@ -152,14 +158,14 @@ public class RequestController {
                     .filter(r -> urgency.equalsIgnoreCase(r.getUrgencyLevel()))
                     .toList();
         }
-        if (startDate != null) {
+        if (fromDate != null) {
             requests = requests.stream()
-                    .filter(r -> !r.getCreatedAt().toLocalDate().isBefore(startDate))
+                    .filter(r -> !r.getCreatedAt().toLocalDate().isBefore(fromDate))
                     .toList();
         }
-        if (endDate != null) {
+        if (toDate != null) {
             requests = requests.stream()
-                    .filter(r -> !r.getCreatedAt().toLocalDate().isAfter(endDate))
+                    .filter(r -> !r.getCreatedAt().toLocalDate().isAfter(toDate))
                     .toList();
         }
 
@@ -314,11 +320,6 @@ public class RequestController {
         if (requestOpt.isPresent()) {
             Request request = requestOpt.get();
             
-            // Check if user has access to this request
-            if (!userDetails.getUser().getRole().equals(RoleType.ADMIN) && 
-                !request.getCreatedBy().getId().equals(userDetails.getUser().getId())) {
-                return "redirect:/requests/list?error=access_denied";
-            }
             model.addAttribute("approvalStatus", ApprovalStatus.values());
             model.addAttribute("request", request);
             return "requests/detail";
@@ -331,13 +332,7 @@ public class RequestController {
         Optional<Request> requestOpt = requestService.findById(id);
         if (requestOpt.isPresent()) {
             Request request = requestOpt.get();
-            
-            // Check if user has access to this request
-            if (!userDetails.getUser().getRole().equals(RoleType.ADMIN) && 
-                !request.getCreatedBy().getId().equals(userDetails.getUser().getId())) {
-                return "redirect:/requests/list?error=access_denied";
-            }
-            
+        
             model.addAttribute("request", request);
             return "requests/clone";
         }
@@ -442,10 +437,24 @@ public class RequestController {
     // }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRequest(@PathVariable Long id) {
-        requestService.deleteRequest(id);
-        return ResponseEntity.noContent().build(); // ✅ 204 No Content
+    public ResponseEntity<?> deleteRequest(@PathVariable Long id) {
+        return requestService.findById(id)
+                .map(request -> {
+                    if (request.getStatus() == ApprovalStatus.APPROVED) {
+                        // ❌ Do not allow delete if approved
+                        return ResponseEntity.badRequest().body(Map.of(
+                            "success", false,
+                            "message", "Approved requests cannot be deleted"
+                        ));
+                    }
+
+                    requestService.deleteRequest(id);
+
+                    return ResponseEntity.noContent().build(); // ✅ 204 No Content
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build()); // ✅ 404 if not found
     }
+
 
 
     @GetMapping("/export")
@@ -468,10 +477,10 @@ public class RequestController {
 
     private void exportAsExcel(List<Request> requests, HttpServletResponse response) throws IOException {
     response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    response.setHeader("Content-Disposition", "attachment; filename=leave-reports.xlsx");
+    response.setHeader("Content-Disposition", "attachment; filename=Request-reports.xlsx");
 
     try (Workbook workbook = new XSSFWorkbook()) {
-        Sheet sheet = workbook.createSheet("Leave Reports");
+        Sheet sheet = workbook.createSheet("Request Reports");
 
         // Create header row
         Row headerRow = sheet.createRow(0);

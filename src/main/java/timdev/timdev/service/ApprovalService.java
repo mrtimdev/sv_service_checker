@@ -5,16 +5,20 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.entity.Approval;
 import timdev.timdev.entity.Request;
+import timdev.timdev.entity.Setting;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalLevel;
 import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.enums.ApproveOrRejectRequestDTO;
 import timdev.timdev.repository.ApprovalRepository;
+import timdev.timdev.repository.SettingRepository;
 
 @Service
 public class ApprovalService {
@@ -27,6 +31,8 @@ public class ApprovalService {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private SettingRepository settingRepo;
 
 
 
@@ -98,7 +104,7 @@ public class ApprovalService {
 
 
 
-    public Approval approveOrRejectRequest(ApproveOrRejectRequestDTO dto) {
+    public Approval approveOrRejectRequest(ApproveOrRejectRequestDTO dto, User user) {
         Request request = requestService.findById(dto.getRequestId()).orElse(null);
         ApprovalLevel requestLevel = request.getApprovalLevel();
 
@@ -109,9 +115,18 @@ public class ApprovalService {
             throw new RuntimeException("This user has already approved/rejected this request");
         }
 
+        if(request.getCreatedBy().getId() == user.getId()) {
+            throw new RuntimeException("Oop!, You can not approved/rejected your own request");
+        }
+
         if (requestLevel == null) {
             throw new RuntimeException("Approval level not set for this request");
         }
+
+          // ✅ Load system setting
+        Setting setting = settingRepo.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Approval setting not found"));
+        ApprovalLevel configuredLevel = setting.getApprovedLevel();
 
         if(!ApprovalStatus.REJECTED.equals(dto.getStatus())) {
             switch (requestLevel) {
@@ -123,7 +138,11 @@ public class ApprovalService {
                 }
                 default -> throw new RuntimeException("Unknown approval level: " + requestLevel);
             }
-            if (request.getStatus() != ApprovalStatus.APPROVED) {
+
+            // ✅ Check configured approvedLevel
+            if (request.getApprovalLevel().equals(configuredLevel)) {
+                request.setStatus(ApprovalStatus.APPROVED);
+            } else if (request.getStatus() != ApprovalStatus.APPROVED) {
                 request.setStatus(ApprovalStatus.INREVIEW);
             }
 
@@ -171,7 +190,7 @@ public class ApprovalService {
 
         Request request = approval.getRequest();
 
-        if (approval.getLevel() != request.getApprovalLevel() || request.getStatus() == ApprovalStatus.APPROVED) {
+        if (approval.getLevel() != request.getApprovalLevel() && request.getStatus() == ApprovalStatus.APPROVED) {
             throw new RuntimeException(
                 "Cannot delete approval: request is already at LEVEL_3 or approved"
             );

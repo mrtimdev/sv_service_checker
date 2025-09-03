@@ -107,41 +107,18 @@
 
 
                 <!-- Settings -->
-                <li class="mb-2" sec:authorize="!hasRole('REPAIRMAN')" x-data="{ settingsOpen: false }">
-                    <button @click="settingsOpen = !settingsOpen" class="flex items-center justify-between w-full space-x-3 p-2 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white">
-                        <div class="flex items-center space-x-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span>Settings</span>
-                        </div>
-                        <svg x-show="!settingsOpen" class="w-4 h-4 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                <li class="mb-2" sec:authorize="!hasRole('REPAIRMAN')">
+
+                    <a href="/settings"
+                        th:classappend="${requestURI.startsWith('/settings')} ?
+                            'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700 hover:text-white dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <svg x-show="settingsOpen" class="w-4 h-4 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                        </svg>
-                    </button>
-                    
-                    <ul x-show="settingsOpen" x-cloak x-collapse.duration.300ms class="ml-6 mt-1 space-y-1 submenu-transition">
-                        <li>
-                            <a href="/admin/categories" class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200 text-gray-200 hover:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                </svg>
-                                <span class="text-sm">Categories</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/admin/items" class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200 text-gray-200 hover:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                </svg>
-                                <span class="text-sm">Items Category</span>
-                            </a>
-                        </li>
-                    </ul>
+                        <span>Settings</span>
+                    </a>
                 </li>
             </ul>
         </nav>

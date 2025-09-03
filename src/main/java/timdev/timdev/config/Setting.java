@@ -8,7 +8,7 @@ import timdev.timdev.enums.RoleType;
 @Component("setting")
 public class Setting {
 
-    public String formatEnum(Enum<?> value) {
+    public String formatStatus(Enum<?> value) {
         if (value == null) return "";
 
         // Handle RoleType enum
@@ -17,25 +17,25 @@ public class Setting {
             switch (roleType) {
                 case REPAIRMAN:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-md">
                             Repairman
                         </span>
                     """;
                 case SUPERVISOR:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
                             Supervisor
                         </span>
                     """;
                 case MANAGER:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
                             Manager
                         </span>
                     """;
                 case ADMIN:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-md">
                             Admin
                         </span>
                     """;
@@ -50,25 +50,25 @@ public class Setting {
             switch (approvalStatus) {
                 case APPROVED:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
                             Approved
                         </span>
                     """;
                 case REJECTED:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-md">
                             Rejected
                         </span>
                     """;
                 case PENDING:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
                             Pending
                         </span>
                     """;
                 case CANCELLED:
                     return """
-                        <span class="px-2 py-1 text-xs font-medium text-white bg-gray-400 rounded-full">
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-gray-400 rounded-md">
                             Cancelled
                         </span>
                     """;
@@ -79,7 +79,7 @@ public class Setting {
 
         // Fallback for any other enum
         return String.format("""
-            <span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-full">
+            <span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-md">
                 %s
             </span>
         """, value.name());

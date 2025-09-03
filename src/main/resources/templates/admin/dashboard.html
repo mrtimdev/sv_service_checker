@@ -2,46 +2,250 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
     <th:block th:fragment="content">
-        <div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans">
-            <div class="mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto sm:px-6 lg:px-8">
 
-                <!-- Welcome Section -->
-                <div class="bg-white shadow-lg rounded-xl flex-1 w-full mb-8 p-4">
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
-                        Welcome Back, <span class="text-primary" th:text="${user.username}">User</span>!
-                    </h1>
-                    <p class="text-gray-500">Here's what's happening with your invoices today</p>
-                </div>
+            <div class="shadow-lg rounded-xl flex-1 w-full mb-8 p-4">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-200 mb-2">
+                    Welcome Back, <span class="text-primary" th:text="${user.username}">User</span>!
+                </h1>
+                <p class="text-gray-500">Here's what's happening with your invoices today</p>
+            </div>
 
-                <!-- Dashboard Header with Filters -->
-                <div class="mb-8 w-full">
-                    <div class="bg-white shadow-lg rounded-xl p-4 w-full">
-                        <div class="flex flex-col sm:flex-row gap-3 items-center">
-                            <div class="relative flex-1">
-                                <select id="timeRange" class="appearance-none bg-gray-100 border-0 text-gray-700 py-2 pl-3 pr-8 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
-                                    <option value="today">Today</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month" selected>This Month</option>
-                                    <option value="quarter">This Quarter</option>
-                                    <option value="year">This Year</option>
-                                    <option value="custom">Custom Range</option>
-                                </select>
+
+            <div class="mb-8 w-full">
+                <div class=" shadow-lg rounded-xl p-4 w-full">
+                    <div class="main-content overflow-y-auto">
+                    
+                    
+                    <!-- Dashboard Content -->
+                    <div class="p-6">
+                        <!-- Stats Overview -->
+                        <div class="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="card bg-gray-100 dark:bg-gray-800 stat-card p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Total Requests</p>
+                                        <h3 class="text-gray-500 dark:text-gray-200 text-2xl font-bold" th:text="${totalRequests}">142</h3>
+                                    </div>
+                                    <div class="bg-blue-100 p-3 rounded-full">
+                                        <i class="fas fa-file-invoice text-blue-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 12% from last week</p>
                             </div>
-
-                            <div id="customRangePicker" class="hidden sm:flex gap-2 flex-1">
-                                <input type="text" id="startDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Start Date" />
-                                <span class="flex items-center text-gray-400">to</span>
-                                <input type="text" id="endDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="End Date" />
+                            
+                            <div class="card bg-gray-100 dark:bg-gray-800 stat-card pending p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Pending Approval</p>
+                                        <h3 class="text-gray-500 dark:text-gray-200 text-2xl font-bold" th:text="${pendingRequests}">28</h3>
+                                    </div>
+                                    <div class="bg-yellow-100 p-3 rounded-full">
+                                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-red-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 3 new today</p>
                             </div>
-
-                            <button id="applyFilter" class="bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
-                                <i class="fas fa-filter"></i> Apply
-                            </button>
+                            
+                            <div class="card bg-gray-100 dark:bg-gray-800 stat-card approved p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Approved</p>
+                                        <h3 class="text-gray-500 dark:text-gray-200 text-2xl font-bold" th:text="${approvedRequests}">94</h3>
+                                    </div>
+                                    <div class="bg-green-100 p-3 rounded-full">
+                                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 8% from last week</p>
+                            </div>
+                            
+                            <div class="card bg-gray-100 dark:bg-gray-800 stat-card rejected p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Rejected</p>
+                                        <h3 class="text-gray-500 dark:text-gray-200 text-2xl font-bold" th:text="${rejectedRequests}">20</h3>
+                                    </div>
+                                    <div class="bg-red-100 p-3 rounded-full">
+                                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-sm mt-2"><i class="fas fa-minus"></i> No change</p>
+                            </div>
+                        </div>
+                        
+        
+                        <!-- Recent Requests and Chat -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Recent Requests -->
+                            <div class="card bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-5">
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="font-semibold">Recent Requests</h3>
+                                    <a href="/requests" class="text-sm text-blue-600">View All</a>
+                                </div>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="text-left text-gray-500 text-sm">
+                                                <th class="pb-3">Title</th>
+                                                <th class="pb-3">Requester</th>
+                                                <th class="pb-3">Date</th>
+                                                <th class="pb-3">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y">
+                                            <tr th:each="request : ${recentRequests}">
+                                                <td class="py-3" th:text="${request.title}">Office Supplies</td>
+                                                <td class="py-3" th:text="${request.requestBy}">John Smith</td>
+                                                <td class="py-3" th:text="${#temporals.format(request.date, 'MMM dd, yyyy')}">Sep 12, 2023</td>
+                                                <td class="py-3">
+                                                    <div th:utext="${@setting.formatStatus(request.status)}"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
     </th:block>
 </th:block>
 </html>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+    }
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f5f7fb;
+        color: #333;
+    }
+    
+    .sidebar {
+        width: 260px;
+        background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card {
+        border-left: 4px solid var(--primary);
+    }
+    
+    .stat-card.pending {
+        border-left-color: var(--warning);
+    }
+    
+    .stat-card.approved {
+        border-left-color: var(--success);
+    }
+    
+    .stat-card.rejected {
+        border-left-color: var(--danger);
+    }
+    
+    .nav-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--secondary);
+    }
+    
+    .chat-container {
+        height: 400px;
+        overflow-y: auto;
+    }
+    
+    .chat-message {
+        max-width: 80%;
+        border-radius: 18px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        position: relative;
+    }
+    
+    .received {
+        background-color: #eef2ff;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .sent {
+        background-color: var(--primary);
+        color: white;
+        border-bottom-right-radius: 4px;
+        margin-left: auto;
+    }
+    
+    .filter-dropdown {
+        display: none;
+        position: absolute;
+        background: white;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        width: 280px;
+        z-index: 100;
+        right: 0;
+        top: 40px;
+    }
+    
+    .filter-btn:hover + .filter-dropdown,
+    .filter-dropdown:hover {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 64px;
+        }
+
+        .sidebar .menu-text {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    
+</script>

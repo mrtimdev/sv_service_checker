@@ -3,6 +3,7 @@ package timdev.timdev.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,8 +14,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalLevel;
 import timdev.timdev.enums.RoleType;
@@ -69,6 +72,14 @@ public class UserController {
         userService.saveUser(user);
         return "redirect:/admin/users?success=created";
     }
+
+    @GetMapping("/profile")
+    public String showProfileForm(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        User user = userDetails.getUser();
+        
+        model.addAttribute("user", user);
+        return "admin/users/profile";
+    }
     
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
@@ -78,6 +89,47 @@ public class UserController {
         model.addAttribute("user", user);
         model.addAttribute("roleTypes", RoleType.values());
         return "admin/users/form";
+    }
+
+    @PostMapping("/profile/{id}")
+    public String updateUserProfile(@PathVariable Long id, 
+                           @Valid @ModelAttribute("user") User userDetails,
+                           BindingResult result, @AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
+        if (result.hasErrors()) {
+            return "admin/users/profile";
+        }
+        
+        User existingUser = currentUser.getUser();
+        
+        // Check if username is changed and already exists
+        if (!existingUser.getUsername().equals(userDetails.getUsername()) && 
+            userService.existsByUsername(userDetails.getUsername())) {
+            model.addAttribute("usernameError", "Username already exists");
+            return "admin/users/profile";
+        }
+        
+        // Check if email is changed and already exists
+        if (!existingUser.getEmail().equals(userDetails.getEmail()) && 
+            userService.existsByEmail(userDetails.getEmail())) {
+            model.addAttribute("emailError", "Email already exists");
+            return "admin/users/profile";
+        }
+        
+        // Update user details
+        existingUser.setFirstName(userDetails.getFirstName());
+        existingUser.setLastName(userDetails.getLastName());
+        existingUser.setEmail(userDetails.getEmail());
+        existingUser.setUsername(userDetails.getUsername());
+        existingUser.setPhoneNumber(userDetails.getPhoneNumber());
+        existingUser.setActive(userDetails.isActive());
+        
+        // Only update password if it's not empty
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
+        
+        userService.updateUser(existingUser);
+        return "redirect:/dashboard";
     }
     
     @PostMapping("/edit/{id}")
@@ -113,7 +165,6 @@ public class UserController {
         existingUser.setLastName(userDetails.getLastName());
         existingUser.setEmail(userDetails.getEmail());
         existingUser.setUsername(userDetails.getUsername());
-        existingUser.setRole(userDetails.getRole());
         existingUser.setPhoneNumber(userDetails.getPhoneNumber());
         existingUser.setActive(userDetails.isActive());
         
@@ -141,10 +192,13 @@ public class UserController {
     }
     
     @GetMapping("/assign-level/{id}")
-    public String showAssignLevelForm(@PathVariable Long id, Model model) {
+    public String showAssignLevelForm(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails, RedirectAttributes redirectAttributes, Model model) {
         User user = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + id));
-        
+        if (user.getRole() == RoleType.REPAIRMAN) {
+            redirectAttributes.addFlashAttribute("error", "An Assign Level Is Not Allowed, Please, check the user's role!");
+            return "redirect:/admin/users?error=access_denied";
+        }
         model.addAttribute("user", user);
         model.addAttribute("approvalLevels", new String[]{"LEVEL_1", "LEVEL_2", "LEVEL_3"});
         return "admin/users/assign-level";
@@ -152,13 +206,14 @@ public class UserController {
     
     @PostMapping("/assign-level/{id}")
     public String assignApprovalLevel(@PathVariable Long id,
-                                    @RequestParam ApprovalLevel approvalLevel) {
+                                    @RequestParam ApprovalLevel approvalLevel,  RedirectAttributes redirectAttributes) {
         User user = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + id));
         
         // Store approval level in a custom field or extend User entity
         // For now, we'll use a placeholder approach
         userService.assignApprovalLevel(user, approvalLevel);
+        redirectAttributes.addFlashAttribute("success", user.fullName()+" has assigned to -> "+ approvalLevel);
         
         return "redirect:/admin/users?success=level_assigned";
     }

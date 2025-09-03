@@ -263,7 +263,7 @@
                             class="grid grid-cols-1 gap-4">
 
                             <!-- Row 1: Filters -->
-                            <div class="grid md:grid-cols-3 grid-cols-1 gap-4">
+                            <div class="grid md:grid-cols-3 grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium mb-1">Urgency</label>
                                     <select id="urgency" 
@@ -277,12 +277,12 @@
                                 </div>
 
                                 <div>
-                                    <label for="fromDate" required class="form-label">From Date</label>
+                                    <label for="fromDate" required class="block text-sm font-medium mb-1">From Date</label>
                                     <input type="text" id="fromDate" name="fromDate" class="datepicker bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full flatpickr-input"/>
                                 </div>
                 
                                 <div>
-                                    <label for="toDate" required class="form-label">To Date</label>
+                                    <label for="toDate" required class="block text-sm font-medium mb-1">To Date</label>
                                     <input type="text" id="toDate" name="toDate" class="datepicker bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full flatpickr-input"/>
                                 </div>
                             </div>
@@ -528,7 +528,14 @@
 
 
 
+        
 
+
+    })
+
+
+    $(document).ajaxStop(function (event, xhr, settings) {
+            
 
         const deleteModalAlert = $('#delete-approval-modal');
         const successMessage = $('#success-message');
@@ -647,10 +654,7 @@
             }, 3000);
         }
 
-
-    })
-
-
+    });
     
     
     

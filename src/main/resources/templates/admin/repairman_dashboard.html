@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+    <th:block th:fragment="content">
+        <div class="mx-auto sm:px-6 lg:px-8">
+
+            <div class="shadow-lg rounded-xl flex-1 w-full mb-8 p-4">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-200 mb-2">
+                    Welcome Back, <span class="text-primary" th:text="${user.username}">User</span>!
+                </h1>
+                <p class="text-gray-500">Here's what's happening with your invoices today</p>
+            </div>
+
+
+            <div class="mb-8 w-full">
+                <div class="shadow-lg rounded-xl p-4 w-full">
+                    <div class="main-content overflow-y-auto">
+                    <!-- Header -->
+                    <header class="flex items-center justify-between p-6 bg-white shadow">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+                            <p class="text-gray-500">Welcome back, <span th:text="${user.username}">Admin</span>! Here's what's happening today.</p>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="relative">
+                                <button class="filter-btn bg-gray-100 p-2 rounded-lg">
+                                    <i class="fas fa-filter text-gray-600"></i>
+                                </button>
+                                
+                                <div class="filter-dropdown">
+                                    <h3 class="font-semibold mb-3">Filter Requests</h3>
+                                    
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                        <select class="w-full p-2 border rounded-lg">
+                                            <option>All Statuses</option>
+                                            <option>Pending</option>
+                                            <option>Approved</option>
+                                            <option>Rejected</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                                        <select class="w-full p-2 border rounded-lg">
+                                            <option>Last 7 days</option>
+                                            <option>Last 30 days</option>
+                                            <option>Last 90 days</option>
+                                            <option>Custom Range</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                                        <select class="w-full p-2 border rounded-lg">
+                                            <option>All Levels</option>
+                                            <option>Low</option>
+                                            <option>Medium</option>
+                                            <option>High</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary w-full">Apply Filters</button>
+                                </div>
+                            </div>
+                            
+                            <div class="relative">
+                                <button class="bg-gray-100 p-2 rounded-lg">
+                                    <i class="fas fa-bell text-gray-600"></i>
+                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">3</span>
+                                </button>
+                            </div>
+                            
+                            <div class="relative">
+                                <button class="bg-gray-100 p-2 rounded-lg">
+                                    <i class="fas fa-envelope text-gray-600"></i>
+                                    <span class="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">5</span>
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <!-- Dashboard Content -->
+                    <div class="p-6">
+                        <!-- Stats Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="card stat-card p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Total Requests</p>
+                                        <h3 class="text-2xl font-bold" th:text="${totalRequests}">142</h3>
+                                    </div>
+                                    <div class="bg-blue-100 p-3 rounded-full">
+                                        <i class="fas fa-file-invoice text-blue-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 12% from last week</p>
+                            </div>
+                            
+                            <div class="card stat-card pending p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Pending Approval</p>
+                                        <h3 class="text-2xl font-bold" th:text="${pendingRequests}">28</h3>
+                                    </div>
+                                    <div class="bg-yellow-100 p-3 rounded-full">
+                                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-red-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 3 new today</p>
+                            </div>
+                            
+                            <div class="card stat-card approved p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Approved</p>
+                                        <h3 class="text-2xl font-bold" th:text="${approvedRequests}">94</h3>
+                                    </div>
+                                    <div class="bg-green-100 p-3 rounded-full">
+                                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-green-500 text-sm mt-2"><i class="fas fa-arrow-up"></i> 8% from last week</p>
+                            </div>
+                            
+                            <div class="card stat-card rejected p-5">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Rejected</p>
+                                        <h3 class="text-2xl font-bold" th:text="${rejectedRequests}">20</h3>
+                                    </div>
+                                    <div class="bg-red-100 p-3 rounded-full">
+                                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-sm mt-2"><i class="fas fa-minus"></i> No change</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts and Chat Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- Requests Chart -->
+                            <div class="card p-5">
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="font-semibold">Requests Overview</h3>
+                                    <select class="border rounded-lg p-2 text-sm">
+                                        <option>Last 7 Days</option>
+                                        <option>Last 30 Days</option>
+                                        <option>Last 90 Days</option>
+                                    </select>
+                                </div>
+                                <canvas id="requestsChart" height="250"></canvas>
+                            </div>
+                            
+                            <!-- Status Chart -->
+                            <div class="card p-5">
+                                <h3 class="font-semibold mb-5">Approval Status</h3>
+                                <canvas id="statusChart" height="250"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Requests and Chat -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Recent Requests -->
+                            <div class="card p-5">
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="font-semibold">Recent Requests</h3>
+                                    <a href="#" class="text-sm text-blue-600">View All</a>
+                                </div>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="text-left text-gray-500 text-sm">
+                                                <th class="pb-3">Title</th>
+                                                <th class="pb-3">Requester</th>
+                                                <th class="pb-3">Date</th>
+                                                <th class="pb-3">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y">
+                                            <tr th:each="request : ${recentRequests}">
+                                                <td class="py-3" th:text="${request.title}">Office Supplies</td>
+                                                <td class="py-3" th:text="${request.requestBy}">John Smith</td>
+                                                <td class="py-3" th:text="${#temporals.format(request.date, 'MMM dd, yyyy')}">Sep 12, 2023</td>
+                                                <td class="py-3">
+                                                    <span th:if="${request.status.name() == 'PENDING'}" class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Pending</span>
+                                                    <span th:if="${request.status.name() == 'APPROVED'}" class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Approved</span>
+                                                    <span th:if="${request.status.name() == 'REJECTED'}" class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Rejected</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Section -->
+                            <div class="card p-5">
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="font-semibold">Team Chat</h3>
+                                    <div class="flex space-x-2">
+                                        <button class="bg-gray-100 p-2 rounded-lg">
+                                            <i class="fas fa-video text-gray-600"></i>
+                                        </button>
+                                        <button class="bg-gray-100 p-2 rounded-lg">
+                                            <i class="fas fa-phone-alt text-gray-600"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-container mb-4">
+                                    <div class="chat-message received">
+                                        <p class="font-medium">Sarah Johnson</p>
+                                        <p>Hey, have you reviewed the quarterly budget request yet?</p>
+                                        <span class="text-xs text-gray-500 block mt-1">10:24 AM</span>
+                                    </div>
+                                    
+                                    <div class="chat-message sent">
+                                        <p>Yes, I approved it this morning. It's now with finance.</p>
+                                        <span class="text-xs opacity-80 block mt-1">10:26 AM</span>
+                                    </div>
+                                    
+                                    <div class="chat-message received">
+                                        <p class="font-medium">Michael Brown</p>
+                                        <p>The software license renewal request is urgent. Can you prioritize it?</p>
+                                        <span class="text-xs text-gray-500 block mt-1">10:30 AM</span>
+                                    </div>
+                                    
+                                    <div class="chat-message sent">
+                                        <p>I'll take a look at it right now.</p>
+                                        <span class="text-xs opacity-80 block mt-1">10:31 AM</span>
+                                    </div>
+                                    
+                                    <div class="chat-message received">
+                                        <p class="font-medium">Emily Davis</p>
+                                        <p>Thanks for approving the hardware upgrade so quickly!</p>
+                                        <span class="text-xs text-gray-500 block mt-1">10:35 AM</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <input type="text" placeholder="Type your message..." class="flex-1 border rounded-l-lg p-3 focus:outline-none">
+                                    <button class="bg-blue-600 text-white p-3 rounded-r-lg">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+</html>
+
+<script>
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Requests Chart
+        const requestsCtx = document.getElementById('requestsChart').getContext('2d');
+        const requestsChart = new Chart(requestsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'Submitted',
+                        data: [12, 19, 8, 15, 14, 4, 2],
+                        backgroundColor: '#4361ee',
+                        borderColor: '#4361ee',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Approved',
+                        data: [8, 12, 6, 10, 11, 3, 1],
+                        backgroundColor: '#4cc9f0',
+                        borderColor: '#4cc9f0',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Pending', 'Rejected'],
+                datasets: [{
+                    data: [
+                        [[${approvedRequests}]],
+                        [[${pendingRequests}]],
+                        [[${rejectedRequests}]]
+                    ],
+                    backgroundColor: [
+                        '#4cc9f0',
+                        '#f8961e',
+                        '#f72585'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    });
+</script>

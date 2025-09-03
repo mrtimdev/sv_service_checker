@@ -62,9 +62,9 @@
 </head>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Create Request')}">
     <th:block th:fragment="content">
-        <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-            <div class="bg-white shadow-md rounded-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">New Request</h2>
+        <div class="mx-auto sm:px-6 lg:px-8">
+            <div class="bg-gray-200 dark:bg-gray-800 shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100">New Request</h2>
                 <p class="text-gray-600 mb-6">Fill out the form below to submit a new request</p>
 
                 <!-- Error Message Display -->
@@ -87,29 +87,29 @@
                     <!-- Title -->
                     
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="title" required class="form-label">Request Title</label>
-                            <input type="text" id="title" th:field="*{title}" class="form-input" placeholder="Enter request title">
+                            <label for="title" required class="text-gray-500 dark:text-gray-300 mb-2">Request Title</label>
+                            <input type="text" id="title" th:field="*{title}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Enter request title">
                             <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="form-error"></p>
                         </div>
         
                         <div>
-                            <label for="requestDate" required class="form-label">Request Date</label>
-                            <input type="text" id="requestDate" th:field="*{date}" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full"/>
+                            <label for="requestDate" required class="text-gray-500 dark:text-gray-300 mb-2">Request Date</label>
+                            <input type="text" id="requestDate" th:field="*{date}" class="datepicker bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full"/>
                             <p th:if="${#fields.hasErrors('date')}" th:errors="*{date}" class="form-error"></p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="requestBy" required class="form-label">Request By</label>
-                            <input type="text" id="requestBy" th:field="*{requestBy}" class="form-input" placeholder="Mr Ben">
+                            <label for="requestBy" required class="text-gray-500 dark:text-gray-300 mb-2">Request By</label>
+                            <input type="text" id="requestBy" th:field="*{requestBy}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Mr Ben">
                             <p th:if="${#fields.hasErrors('requestBy')}" th:errors="*{requestBy}" class="form-error"></p>
                         </div>
                         <div>
-                            <label for="urgencyLevel" class="form-label">Urgency Level</label>
-                            <select id="urgencyLevel" th:field="*{urgencyLevel}" class="form-input">
+                            <label for="urgencyLevel" class="text-gray-500 dark:text-gray-300 mb-2">Urgency Level</label>
+                            <select id="urgencyLevel" th:field="*{urgencyLevel}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
                                 <option value="LOW">Low</option>
                                 <option value="MEDIUM">Medium</option>
                                 <option value="HIGH">High</option>
@@ -118,27 +118,27 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="items" class="form-label">Request Items</label>
-                            <textarea id="items" th:field="*{items}" class="form-input" rows="4" placeholder="Describe the request item line by line"></textarea>
+                            <label for="items" class="text-gray-500 dark:text-gray-300 mb-2">Request Items</label>
+                            <textarea id="items" th:field="*{items}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" rows="4" placeholder="Describe the request item line by line"></textarea>
                             <p th:if="${#fields.hasErrors('items')}" th:errors="*{items}" class="form-error"></p>
                         </div>
                         <div>
-                            <label for="description" class="form-label">Description</label>
-                            <textarea id="description" th:field="*{description}" class="form-input" rows="4" placeholder="Describe the request in detail"></textarea>
+                            <label for="description" class="text-gray-500 dark:text-gray-300 mb-2">Description</label>
+                            <textarea id="description" th:field="*{description}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" rows="4" placeholder="Describe the request in detail"></textarea>
                             <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="form-error"></p>
                         </div>
                     </div>
 
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- attachedFile Field -->
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="display: none !important;">
+               
                         <div class="mb-6">
                             <label class="block text-gray-700 font-medium mb-2">Attach File (Optional)</label>
                             <p class="text-sm text-gray-500 mb-3">Maximum file size: 5MB. Allowed formats: Images and PDFs</p>
                             
-                            <!-- Drop Zone with integrated preview -->
+                      
                             <div class="drop-zone border-2 border-dashed border-gray-300 rounded-xl mb-2 bg-gray-50 hover:bg-gray-100 cursor-pointer relative overflow-hidden" id="dropZone">
                                 <div class="drop-content text-center p-4 z-10" id="dropContent">
                                     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -153,15 +153,14 @@
                                     <p class="text-xs text-gray-500 mt-3">Supports images and PDF files</p>
                                 </div>
                                 
-                                <!-- Image Preview Container -->
+                  
                                 <div class="absolute inset-0 items-center justify-center p-4 hidden" id="previewContainer">
                                     <img id="imagePreview" class="max-h-full max-w-full object-contain" src="" alt="Preview">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center p-4">
                                         <span class="text-white text-sm mb-2">Click to change image</span>
                                     </div>
                                 </div>
-                                
-                                <!-- PDF Preview -->
+                   
                                 <div class="absolute inset-0 items-center justify-center p-4 hidden" id="pdfPreview">
                                     <div class="text-center">
                                         <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -173,15 +172,15 @@
                                 </div>
                             </div>
                             
-                            <!-- File Error Message -->
+                
                             <div class="text-red-500 text-sm mt-1 hidden" id="fileError"></div>
                             
-                            <!-- Uploaded File Info -->
+                       
                             <div class="file-info mt-4 hidden" id="fileInfo">
                                 <div class="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
                                     <div class="flex items-center">
                                         <i class="fas fa-file text-blue-500 mr-2" id="fileIcon"></i>
-                                        <span class="text-sm font-medium" id="fileName"></span>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-700" id="fileName"></span>
                                     </div>
                                     <button type="button" class="text-red-500 hover:text-red-700" id="removeFileBtn">
                                         <i class="fas fa-times"></i>
@@ -195,7 +194,7 @@
                     
                     
                     <div class="flex justify-end space-x-4 pt-4">
-                        <a th:href="@{/request/list}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition duration-200">
+                        <a th:href="@{/requests/list}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition duration-200">
                             Cancel
                         </a>
                         <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
@@ -310,7 +309,7 @@
             });
             
             // Form submission
-            requestForm.on('submit', function(e) {
+            /*requestForm.on('submit', function(e) {
                 // Basic validation
                 const title = $('#title').val().trim();
                 const description = $('#description').val().trim();
@@ -354,7 +353,7 @@
                 }
                 
                 // If validation passes, the form will submit to the server
-            });
+            });*/
             
             // Handle the file
             function handleFile(file) {

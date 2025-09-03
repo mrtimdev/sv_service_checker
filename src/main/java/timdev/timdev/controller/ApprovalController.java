@@ -253,6 +253,33 @@ public class ApprovalController {
         User approver = userDetails.getUser();
         List<Approval> approvals = approvalService.findByApprover(approver);
 
+        if (urgency != null && !urgency.isEmpty()) {
+            approvals = approvals.stream()
+                    .filter(r -> urgency.equalsIgnoreCase(r.getRequest().getUrgencyLevel()))
+                    .toList();
+        }
+        if (fromDate != null) {
+            approvals = approvals.stream()
+                    .filter(r -> !r.getApprovalDate().toLocalDate().isBefore(fromDate))
+                    .toList();
+        }
+        if (toDate != null) {
+            approvals = approvals.stream()
+                    .filter(r -> !r.getApprovalDate().toLocalDate().isAfter(toDate))
+                    .toList();
+        }
+
+        // 3. Apply search filter
+        if (!searchValue.isEmpty()) {
+            String lowerSearch = searchValue.toLowerCase();
+            approvals = approvals.stream()
+                    .filter(r -> r.getRequest().getTitle().toLowerCase().contains(lowerSearch) ||
+                                r.getRequest().getDescription().toLowerCase().contains(lowerSearch) ||
+                                r.getComments().toLowerCase().contains(lowerSearch)
+                            )
+                    .toList();
+        }
+
         int totalRecords = approvals.size();
 
         // Apply sorting
@@ -330,7 +357,7 @@ public class ApprovalController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         dto.setApproverId(userDetails.getUser().getId());
-        Approval saved = approvalService.approveOrRejectRequest(dto);
+        approvalService.approveOrRejectRequest(dto, userDetails.getUser());
 
         return ResponseEntity.ok(Map.of(
                 "success", true,

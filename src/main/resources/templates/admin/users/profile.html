@@ -8,7 +8,7 @@
     <th:block th:fragment="content">
         <div class="mx-auto py-6 sm:px-6 lg:px-8">
             <div class="bg-gray-200 dark:bg-gray-800 shadow-md rounded-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-6" th:text="${user.id != null} ? 'Edit User' : 'Create New User'">User Form</h2>
+                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-6">Your Profile Info</h2>
                 
                 <!-- Error Messages -->
                 <div th:if="${usernameError}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -18,7 +18,7 @@
                     <span class="block sm:inline" th:text="${emailError}"></span>
                 </div>
                 
-                <form th:action="${user.id != null} ? @{/admin/users/edit/{id}(id=${user.id})} : @{/admin/users/create}" 
+                <form th:action="@{/admin/users/profile/{id}(id=${user.id})}" 
                       th:object="${user}" method="post" class="space-y-6">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,28 +68,6 @@
                             <label for="phoneNumber" class="text-gray-700 dark:text-gray-100">Phone Number</label>
                             <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Enter phone number">
                             <p th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="text-red-600"></p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- User Type -->
-                        <div>
-                            <label for="roleType" class="text-gray-700 dark:text-gray-100">User Role</label>
-                            <select id="roleType" th:field="*{role}" class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
-                                <option th:each="role : ${roleTypes}"
-                                        th:value="${role}" 
-                                        th:text="${role.label}" 
-                                        th:selected="${user.role == role}">
-                                </option>
-                            </select>
-                            <p th:if="${#fields.hasErrors('role')}" th:errors="*{role}" class="text-red-600"></p>
-                        </div>
-
-                        
-                        <!-- Active Status -->
-                        <div class="flex items-center">
-                            <input type="checkbox" id="active" th:field="*{active}" class="form-checkbox mr-2">
-                            <label for="active" class="text-gray-700 dark:text-gray-100 mb-0">Active User</label>
                         </div>
                     </div>
                     

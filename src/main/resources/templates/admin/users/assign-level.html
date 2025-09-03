@@ -54,7 +54,7 @@
                             <option th:each="level : ${approvalLevels}" 
                                     th:value="${level}" 
                                     th:text="${level.replace('_', ' ')}"
-                                    th:selected="${user.approvalLevel == level}">
+                                    th:selected="${user.approvalLevel.toString() == level}">
                             </option>
                         </select>
                     </div>

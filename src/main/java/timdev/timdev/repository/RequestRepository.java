@@ -3,7 +3,11 @@ package timdev.timdev.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import timdev.timdev.entity.Request;
@@ -26,6 +30,22 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByStatusInAndCurrentLevel(List<ApprovalStatus> statuses, ApprovalLevel approvalLevel);
 
     List<Request> findAllByStatus(ApprovalStatus status);
+
+
+     // Count requests by status
+    long countByStatus(ApprovalStatus status);
+    
+    // Optional: Query to get requests created by a specific user
+    @Query("SELECT r FROM Request r WHERE r.createdBy.id = :userId")
+    List<Request> findByUserId(@Param("userId") Long userId);
+
+
+
+    long countByCreatedBy(User user);
+
+    long countByStatusAndCreatedBy(ApprovalStatus status, User user);
+
+    Page<Request> findAllByCreatedBy(User user, Pageable pageable);
 
     // Optional: convenience methods
     default List<Request> findAllPendingRequests() {

@@ -28,4 +28,14 @@ public interface RequestService {
     List<Request> findByStatusAndCurrentLevel(ApprovalStatus status, ApprovalLevel approvalLevel);
     List<Request> findByStatusInAndApprovalLevel(List<ApprovalStatus> statuses, ApprovalLevel approvalLevel);
     List<Request> findByStatusInAndCurrentLevel(List<ApprovalStatus> statuses, ApprovalLevel approvalLevel);
+
+    long getTotalRequestCount();
+    long getRequestCountByStatus(ApprovalStatus status);
+    List<Request> findRecentRequests(int count);
+
+    long getTotalRequestCountByUser(User user);
+
+    long getRequestCountByStatusAndUser(ApprovalStatus status, User user);
+
+    List<Request> findRecentRequestsByUser(User user, int count);
 }
