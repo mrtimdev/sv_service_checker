@@ -96,7 +96,7 @@ input[type="checkbox"] {
 }
 
 /* Use Battambang with safe fallbacks */
-body {
+body * {
   font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang",
                "Khmer OS System", "Khmer UI", "DaunPenh", sans-serif;
 }
@@ -121,4 +121,12 @@ body {
 table.dataTable tbody tr
 {
     background-color: unset;
+}
+
+table * {
+    font-size: 12px;
+}
+
+table thead tr * {
+    font-size: 14px;
 }

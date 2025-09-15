@@ -3,6 +3,7 @@ package timdev.timdev.config;
 import org.springframework.stereotype.Component;
 
 import timdev.timdev.enums.ApprovalStatus;
+import timdev.timdev.enums.OilStatus;
 import timdev.timdev.enums.RoleType;
 
 @Component("setting")
@@ -77,11 +78,46 @@ public class Setting {
             }
         }
 
+
+        if (value instanceof OilStatus) {
+            OilStatus oilStatus = (OilStatus) value;
+            switch (oilStatus) {
+                case NOT_CHANGED:
+                    return """
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-md">
+                            Not Changed
+                        </span>
+                    """;
+                case COMPLETED:
+                    return """
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
+                            Completed
+                        </span>
+                    """;
+                case PENDING:
+                    return """
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
+                            Pending
+                        </span>
+                    """;
+                case OVERDUE:
+                    return """
+                        <span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-md">
+                            Over Due
+                        </span>
+                    """;
+                default:
+                    break;
+            }
+        }
+
         // Fallback for any other enum
         return String.format("""
             <span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-md">
                 %s
             </span>
         """, value.name());
+        
     }
+    
 }

@@ -3,19 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SV Repairman Requests | Login</title>
-    <!-- Tailwind CSS via CDN (or install locally) -->
+    <title>SV Vehicles Controller | Login</title>
+    <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         body {
-            background: linear-gradient(-45deg, #f3f4f6, #e5e7eb, #dbeafe, #bfdbfe);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e0f2fe, #dbeafe);
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
+            height: 100vh;
         }
+        
         @keyframes gradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+        
+        .maintenance-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .maintenance-icon:hover {
+            transform: translateY(-5px);
+        }
+        
+        .login-container {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+        
+        .illustration-container {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        }
+        
+        @media (max-width: 768px) {
+            .split-layout {
+                flex-direction: column;
+            }
+            
+            .illustration-container {
+                display: none;
+            }
         }
     </style>
     <!-- Custom colors -->
@@ -32,59 +78,145 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-md">
-        <!-- Logo / Branding -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-primary">SV Repairman Requests</h1>
-            <p class="text-gray-600">Controll your repairman with ease</p>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="flex split-layout w-full max-w-5xl rounded-2xl overflow-hidden login-container">
+        <!-- Left side - Illustration -->
+        <div class="hidden md:flex illustration-container w-1/2 p-10 flex-col justify-between text-white">
+            <div>
+                <h1 class="text-4xl font-bold mb-2">SV Vehicles Controller</h1>
+                <p class="text-blue-100">Optimize your vehicle maintenance schedule</p>
+            </div>
+            
+            <div class="flex flex-col items-center">
+                <div class="flex justify-center space-x-6 mb-8">
+                    <div class="maintenance-icon bg-white/20 p-4 rounded-2xl">
+                        <i class="fas fa-oil-can text-3xl"></i>
+                    </div>
+                    <div class="maintenance-icon bg-white/20 p-4 rounded-2xl">
+                        <i class="fas fa-cogs text-3xl"></i>
+                    </div>
+                    <div class="maintenance-icon bg-white/20 p-4 rounded-2xl">
+                        <i class="fas fa-tools text-3xl"></i>
+                    </div>
+                </div>
+                
+                <!-- <div class="relative">
+                    <div class="absolute -inset-2 bg-white/20 rounded-2xl blur"></div>
+                    <div class="relative bg-white/30 p-6 rounded-2xl backdrop-blur-sm">
+                        <p class="text-center"><i class="fas fa-quote-left mr-2"></i>This system reduced our maintenance costs by 23% in the first quarter.<i class="fas fa-quote-right ml-2"></i></p>
+                        <div class="flex items-center justify-center mt-4">
+                            <div class="h-10 w-10 rounded-full bg-white/30 flex items-center justify-center mr-2">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold">SV Trucking</p>
+                                <p class="text-xs text-blue-100">Fleet Manager</p>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            
+            <div class="flex justify-center">
+                <div class="flex space-x-2">
+                    <div class="h-2 w-2 rounded-full bg-white/60"></div>
+                    <div class="h-2 w-8 rounded-full bg-white"></div>
+                    <div class="h-2 w-2 rounded-full bg-white/60"></div>
+                </div>
+            </div>
         </div>
-
-        <!-- Login Card -->
-        <div class="bg-white rounded-lg shadow-xl p-8">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
+        
+        <!-- Right side - Login Form -->
+        <div class="w-full md:w-1/2 bg-white p-8 md:p-10 flex flex-col justify-center">
+            <div class="text-center mb-2 md:hidden">
+                <h1 class="text-3xl font-bold text-primary">SV Vehicles Controller</h1>
+                <p class="text-gray-600">Optimize your vehicle maintenance schedule</p>
+            </div>
+            
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
             
             <!-- Error Messages -->
-            <div th:if="${param.error}" class="bg-danger/10 border-l-4 border-danger text-danger p-4 mb-4">
-                Invalid username or password.
+            <div th:if="${param.error}" class="bg-red-50 border-l-4 border-danger text-danger p-4 mb-4 rounded">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>Invalid username or password.</span>
+                </div>
             </div>
-            <div th:if="${param.logout}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
-                You have been logged out.
+            <div th:if="${param.logout}" class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>You have been logged out successfully.</span>
+                </div>
             </div>
 
             <!-- Login Form -->
-            <form th:action="@{/auth/login}" method="post" class="space-y-4">
+            <form th:action="@{/auth/login}" method="post" class="space-y-5">
                 <div>
-                    <label class="block text-gray-700 mb-2">Username</label>
-                    <input 
-                        type="text" 
-                        name="username" 
-                        required
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="Enter admin username">
+                    <label class="block text-gray-700 mb-2 font-medium">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            required
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:ring-2 focus:ring-primary"
+                            placeholder="Enter admin username">
+                    </div>
                 </div>
+                
                 <div>
-                    <label class="block text-gray-700 mb-2">Password</label>
-                    <input 
-                        type="password" 
-                        name="password" 
-                        required
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="••••••••">
-                    <div th:if="${session.error}" class="text-red-500" th:text="${session.error}"></div>
+                    <label class="block text-gray-700 mb-2 font-medium">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            required
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none focus:ring-2 focus:ring-primary"
+                            placeholder="••••••••">
+                    </div>
+                    <div th:if="${session.error}" class="text-red-500 mt-2 flex items-center" th:text="${session.error}">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                    </div>
                 </div>
+
+                <div class="flex items-center">
+                    <input 
+                        id="remember-me" 
+                        name="remember-me" 
+                        type="checkbox" 
+                        checked
+                        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                        Remember me
+                    </label>
+                </div>
+                
                 <button 
                     type="submit"
-                    class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                    class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg btn-hover transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
                     Sign In
                 </button>
             </form>
+            
+            <div class="mt-6 text-center">
+                <a href="#" class="text-sm text-primary hover:text-blue-700 flex items-center justify-center">
+                    <i class="fas fa-key mr-2"></i>
+                    Forgot your password?
+                </a>
+            </div>
         </div>
-
-        <!-- Footer -->
-        <p class="text-center text-gray-500 mt-8">
-            © 2024 SV Repairman Requests. All rights reserved.
-        </p>
     </div>
+
+    <!-- Footer -->
+    <p class="absolute bottom-4 text-center text-gray-500 text-sm">
+        © 2024 SV Vehicles Controller. All rights reserved.
+    </p>
 </body>
 </html>

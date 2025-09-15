@@ -109,7 +109,7 @@ private List<ServiceChecker> filterData(List<ServiceChecker> data, String search
         .filter(sc -> 
             (sc.getDriver().getFirstName() != null && sc.getDriver().getFirstName().toLowerCase().contains(searchLower)) ||
             (sc.getDriver().getLastName() != null && sc.getDriver().getLastName().toLowerCase().contains(searchLower)) ||
-            (sc.getDriver().getPlateNumber() != null && sc.getDriver().getPlateNumber().toLowerCase().contains(searchLower)) ||
+            (sc.getDriver().getNativeName() != null && sc.getDriver().getNativeName().toLowerCase().contains(searchLower)) ||
             (sc.getStatus() != null && sc.getStatus().toString().toLowerCase().contains(searchLower)) ||
             (sc.getDate() != null && sc.getDate().toString().contains(searchValue))
         )
@@ -131,7 +131,7 @@ private List<ServiceChecker> sortData(List<ServiceChecker> data, int orderColumn
             comparator = Comparator.comparing(sc -> sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
             break;
         case 3: // Plate Number
-            comparator = Comparator.comparing(sc -> sc.getDriver().getPlateNumber());
+            comparator = Comparator.comparing(sc -> sc.getDriver().getNativeName());
             break;
         case 4: // Status
             comparator = Comparator.comparing(ServiceChecker::getStatus);
@@ -168,7 +168,7 @@ private List<Map<String, Object>> convertToDataTablesFormat(List<ServiceChecker>
         row.put("id", sc.getId());
         row.put("date", sc.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
         row.put("driverName", sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
-        row.put("plateNumber", sc.getDriver().getPlateNumber());
+        row.put("nativeName", sc.getDriver().getNativeName());
         row.put("checkedCount", sc.getCheckedCount());
         row.put("notCheckedCount", sc.getNotCheckedCount());
         row.put("issuesStatus", sc.issuesStatus());

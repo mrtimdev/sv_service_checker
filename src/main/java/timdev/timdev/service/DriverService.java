@@ -7,8 +7,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import timdev.timdev.entity.Driver;
-import timdev.timdev.exception.DuplicateResourceException;
-import timdev.timdev.exception.ResourceNotFoundException;
+import timdev.timdev.entity.Truck;
 import timdev.timdev.repository.DriverRepository;
 
 @Service
@@ -30,57 +29,16 @@ public class DriverService {
     }
 
     public Driver createDriver(Driver driver) {
-        // Check for duplicate phone
-        if (driverRepository.existsByPhone(driver.getPhone())) {
-            throw new DuplicateResourceException(
-                "Phone number already exists", "phone");
-        }
-
-        // Check for duplicate plate number
-        if (driverRepository.existsByPlateNumber(driver.getPlateNumber())) {
-            throw new DuplicateResourceException(
-                "Plate number already exists", "plateNumber");
-        }
-
-        // Additional validation if needed
-        if (driver.getFirstName() == null || driver.getFirstName().isBlank()) {
-            throw new IllegalArgumentException("First name is required");
-        }
-        if (driver.getLastName() == null || driver.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Last name is required");
-        }
-
-        // Set any additional default values if needed
-        driver.setId(null); // Ensure we're creating new record
-
         return driverRepository.save(driver);
     }
 
-    public Driver updateDriver(Long id, Driver driverDetails) {
-        return driverRepository.findById(id)
-                .map(existingDriver -> {
-                    // Check for duplicate phone (if changed)
-                    if (!existingDriver.getPhone().equals(driverDetails.getPhone()) &&
-                        driverRepository.existsByPhone(driverDetails.getPhone())) {
-                        throw new DuplicateResourceException(
-                            "Phone number already exists", "phone");
-                    }
-
-                    // Check for duplicate plate number (if changed)
-                    if (!existingDriver.getPlateNumber().equals(driverDetails.getPlateNumber()) &&
-                        driverRepository.existsByPlateNumber(driverDetails.getPlateNumber())) {
-                        throw new DuplicateResourceException(
-                            "Plate number already exists", "plateNumber");
-                    }
-
-                    existingDriver.setFirstName(driverDetails.getFirstName());
-                    existingDriver.setLastName(driverDetails.getLastName());
-                    existingDriver.setPhone(driverDetails.getPhone());
-                    existingDriver.setPlateNumber(driverDetails.getPlateNumber());
-
-                    return driverRepository.save(existingDriver);
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("Driver not found with id: " + id));
+    public Driver updateDriver(Driver existingDriver, Driver driverDetails) {
+        existingDriver.setFirstName(driverDetails.getFirstName());
+        existingDriver.setLastName(driverDetails.getLastName());
+        existingDriver.setPhone(driverDetails.getPhone());
+        existingDriver.setNativeName(driverDetails.getNativeName());
+        existingDriver.setTruck(driverDetails.getTruck());
+        return driverRepository.save(existingDriver);
     }
 
     public void deleteDriver(Long id) {
@@ -90,7 +48,11 @@ public class DriverService {
     public boolean existsByPhone(String phone) {
         return driverRepository.existsByPhone(phone);
     }
-    public boolean existsByPlateNumber(String phone) {
-        return driverRepository.existsByPlateNumber(phone);
+    public boolean existsByTruck(Truck truck) {
+        return driverRepository.existsByTruck(truck);
+    }
+
+    public Driver findByPhone(String phone) {
+        return driverRepository.findByPhone(phone);
     }
 }

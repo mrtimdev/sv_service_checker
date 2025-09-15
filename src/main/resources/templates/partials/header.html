@@ -4,13 +4,34 @@
 
     <div class="bg-gray-700 dark:bg-gray-800 mx-auto pr-0 sm:pr-6 lg:pr-8 absolute top-0 left-0 right-0 z-10">
         <header class="flex items-center justify-between p-4 text-white shadow-md dark:bg-gray-800 dark:text-gray-100">
-            <!-- Logo -->
-            <div class="flex items-center space-x-2">
-                <img src="/images/logo.png" alt="Logo" class="h-8 w-[50px]">
-                <span class="text-xl font-semibold">SV Repairman</span>
+            
+            <div class="flex items-center gap-2 justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa fa-th-list text-[25px] ml-[1px] cursor-pointer" id="btnToggleSidebar"></i>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <img src="/images/logo.png" alt="Logo" class="h-8 w-[50px]">
+                    <span class="text-xl font-semibold">SV Vehicles Management</span>
+                </div>
             </div>
 
             <div class="flex items-center space-x-4">
+               <div class="flex gap-2">
+                    <a th:href="@{/?lang=en}"
+                        th:classappend="${currentLang == 'en'} ?
+                        'bg-blue-600 text-white px-3 py-1 rounded-lg shadow' :
+                        'bg-gray-200 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-300'">
+                        English
+                    </a>
+
+                    <a th:href="@{/?lang=km}"
+                        th:classappend="${currentLang == 'km'} ?
+                        'bg-blue-600 text-white px-3 py-1 rounded-lg shadow' :
+                        'bg-gray-200 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-300'">
+                        Khmer
+                    </a>
+                </div>
+
                 <!-- User Menu -->
                 <div class="relative" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open"
@@ -34,9 +55,8 @@
                         
                         <!-- Profile Link -->
                         <a th:href="@{/admin/users/profile}" 
-                            th:classappend="${requestURI == '/admin/users/profile'} ? 
-                                'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">
+                            
+                            class="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
                             </svg>

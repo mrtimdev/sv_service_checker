@@ -3,6 +3,7 @@ import forms from '@tailwindcss/forms';
 
 export default {
     content: [
+        "./src/main/resources/templates/**/*.{html,thymeleaf}",
         "./src/main/resources/templates/**/*.html",
         "./src/main/resources/templates/**/*.th.xml",
         "./src/main/resources/static/**/*.js",

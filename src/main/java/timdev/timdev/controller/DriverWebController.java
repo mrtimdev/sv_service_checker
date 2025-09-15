@@ -1,5 +1,7 @@
 package timdev.timdev.controller;
 
+import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,8 +16,10 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import timdev.timdev.entity.Driver;
+import timdev.timdev.entity.Truck;
 import timdev.timdev.service.DriverService;
 import timdev.timdev.service.ServiceCheckerService;
+import timdev.timdev.service.TruckService;
 
 
 
@@ -27,6 +31,7 @@ public class DriverWebController {
 
     private final DriverService driverService;
     private final ServiceCheckerService serviceCheckerService;
+    private final TruckService truckService;
 
 
     @GetMapping
@@ -37,30 +42,35 @@ public class DriverWebController {
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
+
+        List<Truck> trucks = truckService.getAll();
+        model.addAttribute("trucks", trucks);
         model.addAttribute("driver", new Driver());
         return "drivers/form";
     }
 
     @PostMapping
-    public String createDriver(@Valid @ModelAttribute Driver driver, BindingResult result, RedirectAttributes redirectAttributes) {
+    public String createDriver(
+        @Valid @ModelAttribute Driver driver, 
+        BindingResult result, 
+        RedirectAttributes redirectAttributes, 
+        Model model) 
+    {
         if (result.hasErrors()) {
             return "drivers/form";
         }
         if (driverService.existsByPhone(driver.getPhone())) {
             redirectAttributes.addFlashAttribute("error_phone", "Phone number already exists");
+            // model.addAttribute("trucks", trucks);
+            // model.addAttribute("driver", new Driver());
+            return "redirect:/admin/drivers/new";
         }
 
-        // Check for duplicate plate number
-        if (driverService.existsByPlateNumber(driver.getPlateNumber())) {
-            redirectAttributes.addFlashAttribute("error_plate_number", "Plate number already exists");
-        }
-
-        // Additional validation if needed
-        if (driver.getFirstName() == null || driver.getFirstName().isBlank()) {
-            throw new IllegalArgumentException("First name is required");
-        }
-        if (driver.getLastName() == null || driver.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Last name is required");
+        if (driverService.existsByTruck(driver.getTruck())) {
+            redirectAttributes.addFlashAttribute("error_truck", "Driver's truck already exists on driver " + driver.getFullName());
+            // model.addAttribute("trucks", trucks);
+            // model.addAttribute("driver", new Driver());
+            return "redirect:/admin/drivers/new";
         }
         driverService.createDriver(driver);
         return "redirect:/admin/drivers";
@@ -70,6 +80,9 @@ public class DriverWebController {
     public String showEditForm(@PathVariable Long id, Model model) {
         Driver driver = driverService.getDriverById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        List<Truck> trucks = truckService.getAll();
+        model.addAttribute("trucks", trucks);
         model.addAttribute("driver", driver);
         return "drivers/form";
     }
@@ -79,8 +92,23 @@ public class DriverWebController {
         if (result.hasErrors()) {
             return "drivers/form";
         }
-        driver.setId(id);
-        driverService.updateDriver(id, driver);
+        // driver.setId(id);
+
+        Driver existingDriver = driverService.findById(id).orElse(null);
+
+        if (!existingDriver.getPhone().equals(driver.getPhone()) &&
+            driverService.existsByPhone(driver.getPhone())) {
+            Driver driverByPhone = driverService.findByPhone(driver.getPhone());
+            redirectAttributes.addFlashAttribute("error_phone", "Phone number already exists  by driver "+ driverByPhone.getFullName());
+            return "redirect:/admin/drivers/edit/"+ id;
+        }
+        if (!existingDriver.getTruck().equals(driver.getTruck()) &&
+            driverService.existsByTruck(driver.getTruck())) {
+            redirectAttributes.addFlashAttribute("error_truck", "Driver's truck already exists by driver "+ driver.getTruck().getDriver().getFullName());
+            return "redirect:/admin/drivers/edit/"+ id;
+        }
+
+        driverService.updateDriver(existingDriver, driver);
         redirectAttributes.addFlashAttribute("success", driver.getFullName() + " Driver updated successfully.!");
         return "redirect:/admin/drivers";
     }

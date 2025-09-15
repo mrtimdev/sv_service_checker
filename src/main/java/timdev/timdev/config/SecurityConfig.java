@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,6 +32,7 @@ public class SecurityConfig {
 
     }
 
+    @SuppressWarnings({ "removal", "deprecation" })
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -85,18 +85,25 @@ public class SecurityConfig {
             
             // Logout configuration
             .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
                 .logoutSuccessUrl("/auth/login?logout=true")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies("JSESSIONID", "remember-me") 
                 .permitAll()
             )
             
             // Session management
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // For Thymeleaf
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
+            // .sessionManagement(session -> session
+            //     .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // For Thymeleaf
+            //     .maximumSessions(1)
+            //     .maxSessionsPreventsLogin(false)
+            // )
+
+            .rememberMe(rememberMe -> rememberMe
+                .key("uniqueAndSecretKey")   // use a strong secret key
+                .tokenValiditySeconds(Integer.MAX_VALUE) 
+                .rememberMeParameter("remember-me") // name of checkbox in login form
+                .userDetailsService(customUserDetailsService)
             )
             
             // API specific configurations

@@ -15,12 +15,14 @@ import jakarta.validation.Valid;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.entity.Request;
 import timdev.timdev.entity.Setting;
+import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.enums.RoleType;
 import timdev.timdev.repository.SettingRepository;
 import timdev.timdev.service.ApprovalService;
 import timdev.timdev.service.RequestService;
+import timdev.timdev.service.TruckService;
 import timdev.timdev.service.UserService;
 
 @Controller
@@ -38,6 +40,8 @@ public class AdminController {
 
     @Autowired
     private SettingRepository settingRepo;
+    @Autowired
+    private TruckService truckService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -95,8 +99,19 @@ public class AdminController {
     public String saveSettings(@Valid @ModelAttribute("setting") Setting request,
         BindingResult result, Model model) {
         Setting setting_ = settingRepo.findById(1L).orElse(null);
-        setting_.setApprovedLevel(request.getApprovedLevel());
+        setting_.setKmForFatsShoot(request.getKmForFatsShoot());
+        setting_.setKmForOilsChange(request.getKmForOilsChange());
+        setting_.setKmFats(request.getKmFats());
+        setting_.setKmOils(request.getKmOils());
         settingRepo.save(setting_);
+        List<Truck> trucks = truckService.getAll();
+        for (Truck truck : trucks) {
+            truck.setKmFatsBetween(setting_.getKmFats());
+            truck.setKmOilsBetween(setting_.getKmOils());
+            truck.setKmForFatsShoot(request.getKmForFatsShoot());
+            truck.setKmForOilsChange(request.getKmForOilsChange());
+        }
+        truckService.saveAll(trucks);
         model.addAttribute("pageTitle", "Settings");
         return "redirect:/settings";
     }

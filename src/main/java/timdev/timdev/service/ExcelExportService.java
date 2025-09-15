@@ -72,7 +72,7 @@ public class ExcelExportService {
     for (ServiceChecker sc : data) {
         String serviceInfo = "SC-" + sc.getId();
         String driverInfo = sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName() + 
-                          " (" + sc.getDriver().getPlateNumber() + ")";
+                          " (" + sc.getDriver().getNativeName() + ")";
         
         if (sc.getItems() != null && !sc.getItems().isEmpty()) {
             for (ServiceCheckerItem item : sc.getItems()) {

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import timdev.timdev.entity.User;
+import timdev.timdev.enums.RoleType;
 import timdev.timdev.enums.UserType;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -18,7 +19,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsernameOrEmail(String username, String email);
 
+    List<User> findByRole(RoleType role);
     List<User> findByUserType(UserType userType);
+
+    List<User> findByRoleNotIn(List<RoleType> roles);
+
 
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);

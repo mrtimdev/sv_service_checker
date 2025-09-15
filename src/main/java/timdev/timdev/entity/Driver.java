@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
@@ -27,13 +30,34 @@ public class Driver {
     @Column(nullable = false)
     private String lastName;
 
+
+    // @NotBlank(message = "Native name is required")
+    @Column(nullable = true)
+    private String nativeName;
+
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "truck_id", referencedColumnName = "id", nullable = true)
+    private Truck truck;
+
+
+    public Truck getTruck() {
+        return truck;
+    }
+    public void setTruck(Truck truck) {
+        this.truck = truck;
+    }
+    public String getNativeName() {
+        return nativeName;
+    }
+    public void setNativeName(String nativeName) {
+        this.nativeName = nativeName;
+    }
+
     @NotBlank(message = "Phone number is required")
     @Column(nullable = false, unique = true)
     private String phone;
 
-    @NotBlank(message = "Plate number is required")
-    @Column(nullable = false, unique = true)
-    private String plateNumber;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -48,9 +72,6 @@ public class Driver {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
-    public String getPlateNumber() { return plateNumber; }
-    public void setPlateNumber(String plateNumber) { this.plateNumber = plateNumber; }
-
     public String getFullName()
     {
         return this.firstName + ' ' + this.lastName;
@@ -64,7 +85,6 @@ public class Driver {
                ", firstName='" + firstName + '\'' +
                ", lastName='" + lastName + '\'' +
                ", phone='" + phone + '\'' +
-               ", plateNumber='" + plateNumber + '\'' +
                '}';
     }
 }

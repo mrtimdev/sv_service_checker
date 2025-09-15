@@ -65,7 +65,8 @@ public class DriverController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateDriver(@PathVariable Long id, @RequestBody Driver driver) {
         try {
-            Driver updated = driverService.updateDriver(id, driver);
+            Driver existDriver = driverService.findById(id).orElse(null);
+            Driver updated = driverService.updateDriver(existDriver, driver);
             return ResponseEntity.ok(updated);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

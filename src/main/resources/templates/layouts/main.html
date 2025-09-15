@@ -5,7 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'SV Repairman Requests'">SV Repairman Requests</title>
+    <title th:text="${pageTitle} ?: 'SV Vehicles Controller'">SV Vehicles Controller</title>
     
     <link th:href="@{/css/admin.css}" rel="stylesheet">
     
@@ -35,8 +35,14 @@
         }
     </style>
 
- 
     <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+
+ 
+    <!-- <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -665,7 +671,7 @@
             },
             
         }
-    </script>
+    </script> -->
   
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full dark:text-gray-700 text-gray-200">
@@ -730,6 +736,32 @@
         });
 
         $(function() {
+            $("#btnToggleSidebar").on('click', function() {
+                const sidebar = $("#sidebar");
+                const mainContent = $("#main-content");
+
+                sidebar.toggleClass("collapsed");
+                mainContent.toggleClass("expanded");
+
+                // hide/show menu text when collapsed
+                if (sidebar.hasClass("collapsed")) {
+                    sidebar.find('.menu-text').hide();
+                    sidebar.addClass('w-[65px] overflow-x-hidden');
+                    sidebar.find('ul > li').addClass('w-[30px] rounded-full');
+                    mainContent.addClass('!ml-[10px]');
+
+                    $("#theme-toggle-text").hide();
+                    $("#custom-padding-top h2").addClass('text-[10px]');
+                } else {
+                    sidebar.find('.menu-text').show();
+                    sidebar.removeClass('w-[65px] overflow-x-hidden');
+                    sidebar.find('ul > li').removeClass('w-[30px] rounded-full');
+                    mainContent.removeClass('!ml-[10px]');
+                    $("#theme-toggle-text").show();
+                    $("#custom-padding-top h2").removeClass('text-[10px]');
+                }
+            });
+
             $(".datepicker").flatpickr({
                 dateFormat: "M d, Y",
                 maxDate: "today"

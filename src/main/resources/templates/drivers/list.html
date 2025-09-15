@@ -57,6 +57,7 @@
                             <th class="py-3 px-6 text-left">Full Name</th>
                             <th class="py-3 px-6 text-left">Phone</th>
                             <th class="py-3 px-6 text-left">Plate Number</th>
+                            <th class="py-3 px-6 text-left">Truck</th>
                             <th class="py-3 px-6 text-center">Actions</th>
                         </tr>
                     </thead>
@@ -65,7 +66,8 @@
                             <td class="py-3 px-6" th:text="${driver.id}"></td>
                             <td class="py-3 px-6" th:text="${driver.fullName}"></td>
                             <td class="py-3 px-6" th:text="${driver.phone}"></td>
-                            <td class="py-3 px-6" th:text="${driver.plateNumber}"></td>
+                            <td class="py-3 px-6" th:text="${driver?.nativeName}"></td>
+                            <td class="py-3 px-6" th:text="${driver.truck?.licensePlate}"></td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2">
                                     <a th:href="@{/admin/drivers/edit/{id}(id=${driver.id})}" 
