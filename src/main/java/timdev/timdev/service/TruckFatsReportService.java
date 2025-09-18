@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
 import timdev.timdev.entity.TruckFatsReport;
+import timdev.timdev.entity.TruckOilsReport;
 import timdev.timdev.repository.TruckFatsReportRepository;
 
 @AllArgsConstructor
@@ -42,5 +43,9 @@ public class TruckFatsReportService {
 
     public List<TruckFatsReport> getAllFiltered(Long truckId, LocalDate from, LocalDate to) {
         return reportRepo.findFiltered(truckId, from, to);
+    }
+
+    public List<TruckFatsReport> findTop10ByOrderByDateDesc() {
+        return reportRepo.findTop10ByOrderByDateDesc();
     }
 }

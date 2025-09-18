@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -101,7 +102,7 @@ public class TruckDistanceService {
 
     public List<TruckDistance> importFromExcel(MultipartFile file, TruckService truckService) throws Exception {
         List<TruckDistance> distances = new ArrayList<>();
-
+        User currentUser = userService.getCurrentUser();
         try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
             Sheet sheet = workbook.getSheetAt(0);
 
@@ -148,7 +149,7 @@ public class TruckDistanceService {
                     }
                 }
 
-                                // Truck Number column (index 2)
+                // Truck Number column (index 2)
                 Cell truckCell = row.getCell(2);
                 if (truckCell != null) {
                     String truckNumber;
@@ -174,8 +175,7 @@ public class TruckDistanceService {
                             distance = distanceCell.getNumericCellValue();
                         } else {
                             String distStr = distanceCell.getStringCellValue().trim();
-                            // Extract numbers from string like "km33", " km16 ", etc.
-                            distStr = distStr.replaceAll("[^0-9.]", ""); // Remove non-numeric characters except decimal point
+                            distStr = distStr.replaceAll("[^0-9.]", "");
                             if (distStr.isEmpty()) {
                                 distance = 0.0;
                             } else {
@@ -187,11 +187,21 @@ public class TruckDistanceService {
                         throw new RuntimeException("Error parsing distance at row " + (i + 1) + ": " + e.getMessage());
                     }
                 }
+                
+                td.setCreatedBy(currentUser);
 
                 distances.add(td);
             }
         }
 
         return distances;
+    }
+
+
+    public Page<TruckDistance> getAllWithPageable(Pageable pageable, Long truckId, LocalDate from, LocalDate to) {
+        return truckDistanceRepo.findFiltered(truckId, from, to, pageable);
+    }
+    public List<TruckDistance> getAllFiltered(Long truckId, LocalDate from, LocalDate to, Sort sort) {
+        return truckDistanceRepo.findFiltered(truckId, from, to, sort);
     }
 }

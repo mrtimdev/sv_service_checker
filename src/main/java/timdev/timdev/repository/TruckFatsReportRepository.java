@@ -39,5 +39,8 @@ public interface TruckFatsReportRepository extends JpaRepository<TruckFatsReport
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate
     );
+
+    List<TruckFatsReport> findTop10ByOrderByDateDesc();
+
     
 }

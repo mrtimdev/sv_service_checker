@@ -74,7 +74,7 @@
                             </select>
                         </div>
                     </form>
-                    <form th:action="@{/admin/trucks/change/fats}" method="get" class="mb-4 flex space-x-2">
+                    <form th:action="@{/admin/trucks/change/oils}" method="get" class="mb-4 flex space-x-2">
                         <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
                             class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                         <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
@@ -100,31 +100,32 @@
                     </thead>
                     <tbody class="text-gray-600 text-sm">
                         <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
-                           th:classappend="${
-                            truck.truckOilsReports.isEmpty() ? ((truck.kmForOilsChange - truck.currentKm) <= truck.kmOilsBetween ? 'bg-yellow-500 text-white in-range' : 'insufficient not-in-range') : 
-                                (truck.kmOilsBalance < 100 ? 'bg-[#ff0000] text-white' : 
-                                (truck.kmOilsBalance >= 100 && truck.kmOilsBalance <= truck.kmOilsBetween ? 'bg-yellow-500 text-white' : 'insufficient'))}"
+                            th:classappend="${ 
+                                truck.kmOilsBalance == 500 ? 'bg-[#E87A7AFF] need-to-update text-white' :
+                                (truck.kmOilsBalance < 0 ? 'bg-[#ff0000] need-to-update text-white' :
+                                (truck.kmOilsBalance < 500 ? 'bg-yellow-500 need-to-update text-white' :
+                                'insufficient final-condition'))
+                            }">
 
-                            >
                             <td class="py-3 px-6 text-center" th:text="${row.index + 1}"></td>
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
                             <td class="py-3 px-6" th:text="${truck.model.name}"></td>
                             
                             <td class="py-3 px-6" th:text="${truck.year}"></td>
-                            <td class="py-3 px-6" th:text="${truck.kmForOilsChange}"></td>
-                            <td class="py-3 px-6" th:text="${truck.currentKm}"></td>
+                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForOilsChange, 0, 'COMMA')}"></td>
+                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
 
                             <td class="py-3 px-6 text-center text-warning-dark">
                                 <span th:text="${#temporals.format(truck.lastOilsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastOilsReport?.currentKm}"></span>
+                                <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.currentKm, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastOilsReport?.nextRange}"></span>
+                                <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.nextRange, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6">
-                                <div th:text="${truck.getKmOilsBalance()} "></div>
+                                <div th:text="${#numbers.formatInteger(truck.getKmOilsBalance(), 0, 'COMMA')}"></div>
                             </td>
                             
                             <td class="py-3 px-6 text-center">
@@ -156,6 +157,11 @@
                                             <i class="fas fa-history text-gray-500"></i>
                                             <span>ប្រវត្តិប្ដូរប្រេង</span>
                                         </a>
+                                        <a target="_blank" th:href="@{/truck-distances(truck_id=${truck.id})}" 
+                                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
+                                            <i class="fas fa-eye text-gray-500"></i>
+                                            <span>View Distances</span>
+                                        </a>
 
                                     </div>
                                 </div>
@@ -173,19 +179,20 @@
             </div>
 
             <div class="flex justify-center mt-4 items-center">
-                <ul class="inline-flex -space-x-px mr-4">
+
+                <ul class="inline-flex -space-x-px mr-4" 
+                    th:if="${totalPages > 1}">
                     <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/admin/trucks/change/fats(page=${i}, size=${pageSize})}"
+                        <a th:href="@{/admin/trucks/change/oils(page=${i}, size=${pageSize})}"
                         th:text="${i + 1}"
-                        class="px-3 py-1 border rounded-md mr-1 
-                                text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
+                        class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
                         th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
                         </a>
                     </li>
                 </ul>
 
                 <!-- Show All button -->
-                <a th:href="@{/admin/trucks/change/fats(all=true)}"
+                <a th:href="@{/admin/trucks/change/oils(all=true)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>

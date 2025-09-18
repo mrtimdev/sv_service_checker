@@ -1,5 +1,8 @@
 package timdev.timdev.entity;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +27,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import timdev.timdev.enums.OilStatus;
+import timdev.timdev.enums.TruckSize;
 
 @Entity
 @Table(name = "trucks")
@@ -40,7 +44,7 @@ public class Truck {
     private String licensePlate;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "model_id", nullable = false)
+    @JoinColumn(name = "model_id", nullable = true)
     private Model model;
 
     @Column(name = "year", nullable = false)
@@ -52,7 +56,7 @@ public class Truck {
     @Column(name = "oils_km_between", nullable = false)
     private Double kmOilsBetween = 0.0;
 
-    @Column(name = "km_for_oil_change", nullable = false)
+    @Column(name = "km_for_oils_change", nullable = false)
     private Double kmForOilsChange = 0.0;
 
     // គីឡូម៉ែត្រត្រូវចូលបាញ់ខ្លាញ់
@@ -66,6 +70,13 @@ public class Truck {
 
     @Column(name = "km_for_fats_shoot", nullable = false)
     private Double kmForFatsShoot = 0.0;
+
+    @Column(name = "expired_date", nullable = true)
+    private LocalDate expiredDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TruckSize size;
 
     public Double getKmForFatsShoot() {
         return kmForFatsShoot;
@@ -108,6 +119,18 @@ public class Truck {
 
     @OneToOne(mappedBy = "truck", fetch = FetchType.LAZY)
     private Driver driver;
+
+
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Optionally store the selected setting directly
+    @ManyToOne
+    @JoinColumn(name = "fats_oils_setting_id")
+    private FatsOilsSetting setting;
 
     public Driver getDriver() {
         return driver;
@@ -170,11 +193,20 @@ public class Truck {
     }
 
     @PrePersist
-    @PreUpdate
     public void handlePrePersistAndUpdate() {
         if (licensePlate != null && !licensePlate.isBlank()) {
             this.code = "TR-" + licensePlate.trim().toUpperCase();
         }
+        createdAt = LocalDateTime.now();
+        calculateCurrentKm();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        if (licensePlate != null && !licensePlate.isBlank()) {
+            this.code = "TR-" + licensePlate.trim().toUpperCase();
+        }
+        updatedAt = LocalDateTime.now();
         calculateCurrentKm();
     }
 
@@ -299,6 +331,8 @@ public class Truck {
         Double balance = 0.00;
         if(this.lastFatsReport != null) {
             balance = this.lastFatsReport.getNextRange() - currentKm;
+        } else {
+            balance = this.kmForFatsShoot - currentKm;
         }
         return balance;
     }
@@ -308,6 +342,8 @@ public class Truck {
         Double balance = 0.00;
         if(this.lastOilsReport != null) {
             balance = this.lastOilsReport.getNextRange() - currentKm;
+        } else {
+            balance = this.kmForOilsChange - currentKm;
         }
         return balance;
     }
@@ -330,6 +366,78 @@ public class Truck {
 
     public void setLastFatsReport(TruckFatsReport lastFatsReport) {
         this.lastFatsReport = lastFatsReport;
+    }
+
+
+    public boolean isExpired() {
+        if (expiredDate == null) return false;
+        return expiredDate.isBefore(LocalDate.now()) || expiredDate.isEqual(LocalDate.now());
+    }
+
+
+    public long expiredDurationDays() {
+        if (expiredDate == null) return 0;
+        return ChronoUnit.DAYS.between(LocalDate.now(), expiredDate) + 1;
+    }
+
+    public String expiredDurationText() {
+        if (expiredDate == null) return "No expiration date";
+        long days = expiredDurationDays();
+        if (days > 0) return days + " days left";
+        else if (days < 0) return Math.abs(days) + " days expired";
+        else return "Expires today";
+    }
+
+    public String expiredColor() {
+        long days = expiredDurationDays();
+        if (days <= 31) return "bg-red-500 dark:bg-red-700 text-white"; // less than or equal 31 days
+        else if (days <= 90) return "bg-yellow-500 dark:bg-yellow-600 text-white"; // 32-90 days
+        return ""; // more than 90 days → normal
+    }
+
+    public LocalDate getExpiredDate() {
+        return expiredDate;
+    }
+
+    public void setExpiredDate(LocalDate expiredDate) {
+        this.expiredDate = expiredDate;
+    }
+
+    public void setLastOilsReport(TruckOilsReport lastOilsReport) {
+        this.lastOilsReport = lastOilsReport;
+    }
+
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public FatsOilsSetting getSetting() {
+        return setting;
+    }
+
+    public void setSetting(FatsOilsSetting setting) {
+        this.setting = setting;
+    }
+
+    public TruckSize getSize() {
+        return size;
+    }
+
+    public void setSize(TruckSize size) {
+        this.size = size;
     }
 
 

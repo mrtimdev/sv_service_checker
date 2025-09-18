@@ -77,31 +77,68 @@
         
                         <!-- Recent Requests and Chat -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Recent Requests -->
-                            <div class="card bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-5">
-                                <div class="flex justify-between items-center mb-5">
-                                    <h3 class="font-semibold">Recent Requests</h3>
-                                    <a href="/requests" class="text-sm text-blue-600">View All</a>
+                            
+                            <div class="bg-white shadow rounded-lg mb-8">
+                                <div class="p-4 border-b">
+                                    <h2 class="text-xl font-semibold text-gray-600">Recent Fats Reports</h2>
                                 </div>
-                                
                                 <div class="overflow-x-auto">
-                                    <table class="w-full">
+                                    <table class="min-w-full text-sm">
                                         <thead>
-                                            <tr class="text-left text-gray-500 text-sm">
-                                                <th class="pb-3">Title</th>
-                                                <th class="pb-3">Requester</th>
-                                                <th class="pb-3">Date</th>
-                                                <th class="pb-3">Status</th>
+                                            <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+                                                <th class="py-3 px-6 text-center">#</th>
+                                                <th class="py-3 px-6 text-center">Truck</th>
+                                                <th class="py-3 px-6 text-center">Date</th>
+                                                <th class="py-3 px-6 text-center">Current Km</th>
+                                                <th class="py-3 px-6 text-center">Next Range</th>
+                                                <th class="py-3 px-6 text-center">Status</th>
+                                                <th class="py-3 px-6 text-center">Note</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y">
-                                            <tr th:each="request : ${recentRequests}">
-                                                <td class="py-3" th:text="${request.title}">Office Supplies</td>
-                                                <td class="py-3" th:text="${request.requestBy}">John Smith</td>
-                                                <td class="py-3" th:text="${#temporals.format(request.date, 'MMM dd, yyyy')}">Sep 12, 2023</td>
-                                                <td class="py-3">
-                                                    <div th:utext="${@setting.formatStatus(request.status)}"></div>
-                                                </td>
+                                        <tbody class="text-gray-600">
+                                            <tr th:each="report, iStat : ${recentFats}" 
+                                                class="border-b hover:bg-gray-50">
+                                                <td class="py-3 px-6 text-center" th:text="${iStat.index + 1}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.truck.licensePlate}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${#temporals.format(report.date,'MMM dd, yyyy')}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.currentKm}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.nextRange}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.status}"></td>
+                                                <td class="py-3 px-6 text-center" th:utext="${report.note}"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Recent Oils Reports -->
+                            <div class="bg-white shadow rounded-lg">
+                                <div class="p-4 border-b">
+                                    <h2 class="text-xl font-semibold text-gray-600">Recent Oils Reports</h2>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+                                                <th class="py-3 px-6 text-center">#</th>
+                                                <th class="py-3 px-6 text-center">Truck</th>
+                                                <th class="py-3 px-6 text-center">Date</th>
+                                                <th class="py-3 px-6 text-center">Current Km</th>
+                                                <th class="py-3 px-6 text-center">Next Range</th>
+                                                <th class="py-3 px-6 text-center">Status</th>
+                                                <th class="py-3 px-6 text-center">Note</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-gray-600">
+                                            <tr th:each="report, iStat : ${recentOils}" 
+                                                class="border-b hover:bg-gray-50">
+                                                <td class="py-3 px-6 text-center" th:text="${iStat.index + 1}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.truck.licensePlate}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${#temporals.format(report.date,'MMM dd, yyyy')}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.currentKm}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.nextRange}"></td>
+                                                <td class="py-3 px-6 text-center" th:text="${report.status}"></td>
+                                                <td class="py-3 px-6 text-center" th:utext="${report.note}"></td>
                                             </tr>
                                         </tbody>
                                     </table>

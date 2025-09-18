@@ -43,4 +43,10 @@ public class TruckOilsReportService {
     public List<TruckOilsReport> getAllFiltered(Long truckId, LocalDate from, LocalDate to) {
         return reportRepo.findFiltered(truckId, from, to);
     }
+
+
+
+    public List<TruckOilsReport> findTop10ByOrderByDateDesc() {
+        return reportRepo.findTop10ByOrderByDateDesc();
+    }
 }

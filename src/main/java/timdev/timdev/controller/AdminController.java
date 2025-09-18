@@ -10,18 +10,25 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.dto.FatsOilsSettingsForm;
 import timdev.timdev.entity.Request;
 import timdev.timdev.entity.Setting;
 import timdev.timdev.entity.Truck;
+import timdev.timdev.entity.TruckFatsReport;
+import timdev.timdev.entity.TruckOilsReport;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.enums.RoleType;
 import timdev.timdev.repository.SettingRepository;
 import timdev.timdev.service.ApprovalService;
+import timdev.timdev.service.FatsOilsSettingService;
 import timdev.timdev.service.RequestService;
+import timdev.timdev.service.TruckFatsReportService;
+import timdev.timdev.service.TruckOilsReportService;
 import timdev.timdev.service.TruckService;
 import timdev.timdev.service.UserService;
 
@@ -42,6 +49,13 @@ public class AdminController {
     private SettingRepository settingRepo;
     @Autowired
     private TruckService truckService;
+
+    @Autowired private FatsOilsSettingService fatsOilsSettingService;
+
+    @Autowired
+    private TruckFatsReportService fatsReportService;
+    @Autowired
+    private TruckOilsReportService oilsReportService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -75,6 +89,7 @@ public class AdminController {
             recentRequests = requestService.findRecentRequestsByUser(user, 5);
         }
         
+
         
         
         model.addAttribute("totalRequests", totalRequests);
@@ -83,6 +98,17 @@ public class AdminController {
         model.addAttribute("rejectedRequests", rejectedRequests);
         
         model.addAttribute("recentRequests", recentRequests);
+
+
+        List<TruckFatsReport> recentFats = fatsReportService
+                .findTop10ByOrderByDateDesc(); // implement in repo or service
+
+        // latest 10 oils reports
+        List<TruckOilsReport> recentOils = oilsReportService
+                .findTop10ByOrderByDateDesc();
+
+        model.addAttribute("recentFats", recentFats);
+        model.addAttribute("recentOils", recentOils);
         
         return "admin/dashboard";
     }
@@ -115,6 +141,31 @@ public class AdminController {
         model.addAttribute("pageTitle", "Settings");
         return "redirect:/settings";
     }
+
+
+
+    @PostMapping("/fats-oils-settings/update")
+    public String updateAllSettings(
+        FatsOilsSettingsForm form,
+        RedirectAttributes redirectAttributes
+    ) {
+        if (form.getSettings() != null) {
+            form.getSettings().forEach(fatsOilsSettingService::save);
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Fats and Oils settings successfully updated.");
+        return "redirect:/fats-oils-settings";
+    }
+
+    @GetMapping("/fats-oils-settings")
+    public String listSettings(Model model) {
+        FatsOilsSettingsForm form = new FatsOilsSettingsForm();
+        form.setSettings(fatsOilsSettingService.getAll());
+        model.addAttribute("form", form);
+        model.addAttribute("settings", fatsOilsSettingService.getAll());
+        return "admin/fats_oils_settings"; // name of the template
+    }
+
 
 
 

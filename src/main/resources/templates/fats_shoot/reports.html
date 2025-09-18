@@ -46,11 +46,18 @@
                 <div class="flex justify-between items-center">
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">ប្រវត្តិបាញ់ខ្លាញ់</h1>
 
-                <div class="flex gap-2 items-center mb-6">
-                    <a class="btnExportExcel bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200">
-                        Export as Excel
+                <div class="flex justify-end mb-4 space-x-2">
+                    <a th:href="@{/admin/trucks/fats/reports/export(excel=true, truck_id=${selectedTruckId}, fromDate=${fromDate}, toDate=${toDate})}"
+                    class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+                    Export Excel
+                    </a>
+
+                    <a th:href="@{/admin/trucks/fats/reports/export(pdf=true, truck_id=${selectedTruckId}, fromDate=${fromDate}, toDate=${toDate})}"
+                    class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
+                    Export PDF
                     </a>
                 </div>
+
                 
             </div>
 
@@ -228,7 +235,7 @@
 
                 <!-- Page numbers -->
                 <ul class="inline-flex -space-x-px">
-                    <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                    <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
                         <a th:href="@{/admin/trucks/fats/reports(
                             page=${i}, 
                             size=${pageSize}, 
@@ -288,9 +295,6 @@
             allowClear: true
         });
 
-        $(document).on('click', '.btnExportExcel', function() {
-            alert('OOp.! This feature not available now')
-        })
     })
     
 </script>

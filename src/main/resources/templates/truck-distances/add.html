@@ -124,48 +124,48 @@
             }
         $(document).ready(function() {
             // Initialize datepickers
-            
+            $('select').select2();
             loadDatePicker();
             // Hide remove button for the first entry initially
             $("#entries-container .entry:first-child .remove-entry").hide();
             
-            // Add new entry
-            $("#add-entry").click(function() {
+           $("#add-entry").click(function() {
                 const container = $("#entries-container");
-                const newEntry = container.children().first().clone(true); // Clone with event handlers
-                
-                // Clear input values
+                const firstEntry = container.children().first();
+
+                // Destroy Select2 on the element before cloning
+                firstEntry.find('select').select2('destroy');
+
+                const newEntry = firstEntry.clone(true);
+
+                // Re-initialize Select2 on the original first entry
+                firstEntry.find('select').select2();
+
+                // Clear inputs
                 newEntry.find('input').val('');
                 newEntry.find('select').prop('selectedIndex', 0);
-                
-                // Update field names to avoid conflicts
+
+                // Update field names
                 const index = container.children().length;
                 newEntry.find('[name]').each(function() {
                     const name = $(this).attr('name').replace(/distances\[\d+\]/, `distances[${index}]`);
                     $(this).attr('name', name);
-                    $(this).removeAttr('id'); // Remove ID to avoid duplicates
+                    $(this).removeAttr('id'); // remove duplicate id
                 });
-                
+
                 // Show remove button for the new entry
                 newEntry.find('.remove-entry').show();
-                
+
                 // Append to container
                 container.append(newEntry);
-                
-                
-                // Show remove button for the first entry if there are multiple entries
-                if (container.children().length > 1) {
-                    container.children().first().find('.remove-entry').show();
-                }
+
+                // Re-initialize Select2 on the cloned element
+                newEntry.find('select').select2();
+
                 loadDatePicker();
             });
 
 
-
-            /*$('select').select2({
-                placeholder: "Select Truck",
-                allowClear: true
-            });*/
 
             
             // Remove entry

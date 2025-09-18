@@ -99,32 +99,36 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-600 text-sm">
-                        <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
-                           th:classappend="${
-                            truck.truckFatsReports.isEmpty() ? ((truck.kmForFatsShoot - truck.currentKm) <= truck.kmFatsBetween ? 'bg-yellow-500 text-white in-range' : 'insufficient not-in-range') : 
-                                (truck.kmFatsBalance < 100 ? 'bg-[#ff0000] text-white' : 
-                                (truck.kmFatsBalance >= 100 && truck.kmFatsBalance <= truck.kmFatsBetween ? 'bg-yellow-500 text-white' : 'insufficient'))}"
-
+                       <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
+                                th:classappend="${
+                                    (truck.kmForFatsShoot == 4000 and truck.getKmFatsBalance() < 500) ? 'bg-[#ff0000] need-to-update text-white' :
+                                    (truck.kmForFatsShoot == 4000 and truck.getKmFatsBalance() <= 500) ? 'bg-yellow-500 need-to-update text-white' :
+                                    ((truck.kmForFatsShoot == 3500 or truck.kmForFatsShoot == 2500) and truck.getKmFatsBalance() < 200) ? 'bg-[#ff0000] need-to-update text-white' :
+                                    ((truck.kmForFatsShoot == 3500 or truck.kmForFatsShoot == 2500) and truck.getKmFatsBalance() <= 200) ? 'bg-yellow-500 need-to-update text-white' :
+                                    'insufficient final-condition'
+                                }"
                             >
+
+
                             <td class="py-3 px-6 text-center" th:text="${row.index + 1}"></td>
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
                             <td class="py-3 px-6" th:text="${truck.model.name}"></td>
                             
                             <td class="py-3 px-6" th:text="${truck.year}"></td>
-                            <td class="py-3 px-6" th:text="${truck.kmForFatsShoot}"></td>
-                            <td class="py-3 px-6" th:text="${truck.currentKm}"></td>
+                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForFatsShoot, 0, 'COMMA')}"></td>
+                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
 
                             <td class="py-3 px-6 text-center text-warning-dark">
                                 <span th:text="${#temporals.format(truck.lastFatsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastFatsReport?.currentKm}"></span>
+                                <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.currentKm, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastFatsReport?.nextRange}"></span>
+                                <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.nextRange, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6">
-                                <div th:text="${truck.getKmFatsBalance()} "></div>
+                                <div th:text="${#numbers.formatInteger(truck.getKmFatsBalance(), 0, 'COMMA')}"></div>
                             </td>
                             
                             <td class="py-3 px-6 text-center">
@@ -157,6 +161,12 @@
                                             <span>ប្រវត្តិបាញ់ខ្លាញ់</span>
                                         </a>
 
+                                        <a target="_blank" th:href="@{/truck-distances(truck_id=${truck.id})}" 
+                                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
+                                            <i class="fas fa-eye text-gray-500"></i>
+                                            <span>View Distances</span>
+                                        </a>
+
                                     </div>
                                 </div>
                             </td>
@@ -173,13 +183,14 @@
             </div>
 
             <div class="flex justify-center mt-4 items-center">
-                <ul class="inline-flex -space-x-px mr-4">
+
+                <ul class="inline-flex -space-x-px mr-4" 
+                    th:if="${totalPages > 1}">
                     <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
                         <a th:href="@{/admin/trucks/shoot/fats(page=${i}, size=${pageSize})}"
-                        th:text="${i + 1}"
-                        class="px-3 py-1 border rounded-md mr-1 
-                                text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
-                        th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
+                            th:text="${i + 1}"
+                            class="px-3 py-1 border rounded-md mr-1 hover:bg-blue-100 dark:hover:bg-gray-700"
+                            th:classappend="${i == currentPage} ? ' bg-blue-500 text-white' : 'text-blue-500'">
                         </a>
                     </li>
                 </ul>

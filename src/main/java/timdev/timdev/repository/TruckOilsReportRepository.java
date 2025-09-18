@@ -39,5 +39,8 @@ public interface TruckOilsReportRepository extends JpaRepository<TruckOilsReport
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate
     );
+
+    List<TruckOilsReport> findTop10ByOrderByDateDesc();
+
     
 }

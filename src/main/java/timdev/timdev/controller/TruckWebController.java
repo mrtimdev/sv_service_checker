@@ -1,15 +1,24 @@
 package timdev.timdev.controller;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,12 +30,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.TruckRequestDTO;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.TruckFatsReport;
 import timdev.timdev.entity.TruckOilsReport;
+import timdev.timdev.entity.User;
 import timdev.timdev.enums.OilStatus;
 import timdev.timdev.service.ModelService;
 import timdev.timdev.service.TruckFatsReportService;
@@ -41,13 +53,13 @@ public class TruckWebController {
     private final TruckService truckService;
     private final ModelService modelService;
     private final TruckFatsReportService fatsReportService;
-    private final TruckOilsReportService oilReportService;
+    private final TruckOilsReportService oilsReportService;
 
 
     @GetMapping
     public String index(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate
     ) {
@@ -249,15 +261,25 @@ public class TruckWebController {
 
     //  Shoot fats
     @GetMapping("/shoot/fats")
-    public String indexShootFats(Model model,
-        @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "10") String sizeParam,
-        @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-        @RequestParam(value = "licensePlate", required = false) String licensePlate
-    ) {
+    public String indexShootFats(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate) 
+        {
+
+        List<Truck> allTrucks;
+        if (licensePlate != null && !licensePlate.isEmpty()) {
+            allTrucks = truckService.findByLicensePlateContaining(licensePlate);
+        } else {
+            allTrucks = truckService.getAll();
+        }
+
+        allTrucks.sort(Comparator.comparingInt(this::getFatsPriority));
 
         List<Truck> trucks;
-        int totalPages = 1;
+        int totalPages;
         int size;
         
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -265,23 +287,18 @@ public class TruckWebController {
         } else {
             size = Integer.parseInt(sizeParam); 
         }
-
         if (showAll) {
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                trucks = truckService.findByLicensePlateContaining(licensePlate);
-            } else {
-                trucks = truckService.getAll();
-            }
+            trucks = allTrucks; 
+            totalPages = 1;
         } else {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Truck> truckPage;
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                truckPage = truckService.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+            int fromIndex = page * size;
+            int toIndex = Math.min(fromIndex + size, allTrucks.size());
+            if (fromIndex >= allTrucks.size()) {
+                trucks = Collections.emptyList();
             } else {
-                truckPage = truckService.getAllWithPageable(pageable);
+                trucks = allTrucks.subList(fromIndex, toIndex);
             }
-            trucks = truckPage.getContent();
-            totalPages = truckPage.getTotalPages();
+            totalPages = (int) Math.ceil(allTrucks.size() / (double) size);
         }
 
         model.addAttribute("trucks", trucks);
@@ -289,9 +306,44 @@ public class TruckWebController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
-        model.addAttribute("licensePlate", licensePlate);  
+        model.addAttribute("licensePlate", licensePlate);
+
         return "fats_shoot/list";
     }
+
+
+    private int getFatsPriority(Truck truck) {
+        // higher priority first (smaller number = higher priority)
+        if (truck.getKmForFatsShoot() == 4000) {
+            if (truck.getKmFatsBalance() < 500) return 1; // red
+            if (truck.getKmFatsBalance() <= 500) return 2; // yellow
+            return 3; // normal
+        }
+        if (truck.getKmForFatsShoot() == 3500 || truck.getKmForFatsShoot() == 2500) {
+            if (truck.getKmFatsBalance() < 200) return 1; // red
+            if (truck.getKmFatsBalance() <= 200) return 2; // yellow
+            return 3; // normal
+        }
+        return 4; // default
+    }
+
+
+    private int getOilsPriority(Truck truck) {
+        Double balance = truck.getKmOilsBalance();
+
+        if(balance == 500) {
+            return 1; // safe
+        }
+        if(balance > 0 && balance < 500) {
+            return 2; // warning
+        }
+        if(balance < 0) {
+            return 3; // danger
+        }
+        return 4; // fallback / unknown
+    }
+
+
 
     @GetMapping("/fats/shoot")
     public String showAddDistanceForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model) {
@@ -317,7 +369,8 @@ public class TruckWebController {
         @Valid @ModelAttribute("truckFatsReport") TruckFatsReport report,
         BindingResult result,
         Model model,
-        RedirectAttributes redirectAttributes
+        RedirectAttributes redirectAttributes,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Truck truck = truckService.findById(truckId)
                 .orElseThrow(() -> new RuntimeException("Truck not found"));
@@ -331,7 +384,7 @@ public class TruckWebController {
 
         // calculate next range
         Double nextKmForFatShot = truck.getKmForFatsShoot() + truck.getCurrentKm();
-
+        User user = userDetails.getUser();
         // always set truck & timestamps
         report.setId(null);
         report.setTruck(truck);
@@ -341,6 +394,9 @@ public class TruckWebController {
         report.setKmForFatsShoot(truck.getKmForFatsShoot());
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
+
+        report.setCreatedBy(user);
+        report.setUpdatedBy(user);
         fatsReportService.save(report);
         
 
@@ -360,7 +416,7 @@ public class TruckWebController {
     public String fatsReports(
             Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
             @RequestParam(value = "truck_id", required = false) Long truckId,
             @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
@@ -411,13 +467,54 @@ public class TruckWebController {
     @GetMapping("/change/oils")
     public String indexChangeOils(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate
     ) {
 
+        // List<Truck> trucks;
+        // int totalPages = 1;
+        // int size;
+        
+        // if ("all".equalsIgnoreCase(sizeParam)) {
+        //     size = Integer.MAX_VALUE;
+        // } else {
+        //     size = Integer.parseInt(sizeParam); 
+        // }
+
+        // if (showAll) {
+        //     if (licensePlate != null && !licensePlate.isEmpty()) {
+        //         trucks = truckService.findByLicensePlateContaining(licensePlate);
+        //     } else {
+        //         trucks = truckService.getAll();
+        //     }
+        // } else {
+        //     Pageable pageable = PageRequest.of(page, size);
+        //     Page<Truck> truckPage;
+        //     if (licensePlate != null && !licensePlate.isEmpty()) {
+        //         truckPage = truckService.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+        //     } else {
+        //         truckPage = truckService.getAllWithPageable(pageable);
+        //     }
+        //     trucks = truckPage.getContent();
+        //     totalPages = truckPage.getTotalPages();
+        // }
+
+
+
+
+
+        List<Truck> allTrucks;
+        if (licensePlate != null && !licensePlate.isEmpty()) {
+            allTrucks = truckService.findByLicensePlateContaining(licensePlate);
+        } else {
+            allTrucks = truckService.getAll();
+        }
+
+        allTrucks.sort(Comparator.comparingInt(this::getOilsPriority));
+
         List<Truck> trucks;
-        int totalPages = 1;
+        int totalPages;
         int size;
         
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -425,23 +522,18 @@ public class TruckWebController {
         } else {
             size = Integer.parseInt(sizeParam); 
         }
-
         if (showAll) {
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                trucks = truckService.findByLicensePlateContaining(licensePlate);
-            } else {
-                trucks = truckService.getAll();
-            }
+            trucks = allTrucks; 
+            totalPages = 1;
         } else {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Truck> truckPage;
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                truckPage = truckService.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+            int fromIndex = page * size;
+            int toIndex = Math.min(fromIndex + size, allTrucks.size());
+            if (fromIndex >= allTrucks.size()) {
+                trucks = Collections.emptyList();
             } else {
-                truckPage = truckService.getAllWithPageable(pageable);
+                trucks = allTrucks.subList(fromIndex, toIndex);
             }
-            trucks = truckPage.getContent();
-            totalPages = truckPage.getTotalPages();
+            totalPages = (int) Math.ceil(allTrucks.size() / (double) size);
         }
 
         model.addAttribute("trucks", trucks);
@@ -477,7 +569,8 @@ public class TruckWebController {
         @Valid @ModelAttribute("truckOilsReport") TruckOilsReport report,
         BindingResult result,
         Model model,
-        RedirectAttributes redirectAttributes
+        RedirectAttributes redirectAttributes,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Truck truck = truckService.findById(truckId)
                 .orElseThrow(() -> new RuntimeException("Truck not found"));
@@ -492,6 +585,7 @@ public class TruckWebController {
         // calculate next range
         Double nextKmForOilsChange = truck.getKmForOilsChange() + truck.getCurrentKm();
 
+        User user = userDetails.getUser();
         // always set truck & timestamps
         report.setId(null);
         report.setTruck(truck);
@@ -501,7 +595,10 @@ public class TruckWebController {
         report.setKmForOilsChange(truck.getKmForOilsChange());
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
-        oilReportService.save(report);
+        
+        report.setCreatedBy(user);
+        report.setUpdatedBy(user);
+        oilsReportService.save(report);
         
 
         truck.setNextOilsRange(nextKmForOilsChange);
@@ -520,7 +617,7 @@ public class TruckWebController {
     public String oilsReports(
             Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
             @RequestParam(value = "truck_id", required = false) Long truckId,
             @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
@@ -540,10 +637,10 @@ public class TruckWebController {
         }
         if (showAll) {
             // fetch all reports with filter
-            reports = oilReportService.getAllFiltered(truckId, fromDate, toDate);
+            reports = oilsReportService.getAllFiltered(truckId, fromDate, toDate);
         } else {
             Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
-            Page<TruckOilsReport> truckPage = oilReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
+            Page<TruckOilsReport> truckPage = oilsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
             reports = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }
@@ -566,6 +663,183 @@ public class TruckWebController {
 
 
 
+
+
+    // export as excel and pdf file
+    @GetMapping("/fats/reports/export")
+    public void exportFatShootReports(
+            @RequestParam(value = "truck_id", required = false) Long truckId,
+            @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
+            @RequestParam(value = "excel", required = false, defaultValue = "false") boolean excel,
+            @RequestParam(value = "pdf", required = false, defaultValue = "false") boolean pdf,
+            HttpServletResponse response) throws IOException {
+
+        // fetch filtered data
+        List<TruckFatsReport> reports = fatsReportService.getAllFiltered(truckId, fromDate, toDate);
+
+        if (excel) {
+            // Export to Excel
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=fats-reports.xlsx");
+
+            try (Workbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("Fats Reports");
+
+                int rowIdx = 0;
+                // Header row
+                Row headerRow = sheet.createRow(rowIdx++);
+                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note"};
+                for (int i = 0; i < headers.length; i++) {
+                    headerRow.createCell(i).setCellValue(headers[i]);
+                }
+
+                int index = 1;
+                for (TruckFatsReport report : reports) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(0).setCellValue(index++);
+                    row.createCell(1).setCellValue(report.getTruck().getLicensePlate());
+                    row.createCell(2).setCellValue(report.getTruck().getCurrentKm());
+                    row.createCell(3).setCellValue(report.getDate().toString());
+                    row.createCell(4).setCellValue(report.getCurrentKm());
+                    row.createCell(5).setCellValue(report.getNextRange());
+                    row.createCell(6).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                }
+
+                workbook.write(response.getOutputStream());
+            }
+
+        } else if (pdf) {
+            // Export to PDF
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=fats-reports.pdf");
+
+            com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+            try {
+                com.itextpdf.text.pdf.PdfWriter.getInstance(document, response.getOutputStream());
+                document.open();
+                document.add(new com.itextpdf.text.Paragraph("Fats Reports"));
+                document.add(new com.itextpdf.text.Paragraph(" "));
+
+                com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(7);
+                table.setWidthPercentage(100);
+                table.setSpacingBefore(10f);
+
+                // headers
+                Stream.of("#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note")
+                        .forEach(headerTitle -> {
+                            com.itextpdf.text.pdf.PdfPCell headerCell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(headerTitle));
+                            headerCell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
+                            table.addCell(headerCell);
+                        });
+
+                int index = 1;
+                for (TruckFatsReport report : reports) {
+                    table.addCell(String.valueOf(index++));
+                    table.addCell(report.getTruck().getLicensePlate());
+                    table.addCell(String.valueOf(report.getTruck().getCurrentKm()));
+                    table.addCell(report.getDate().toString());
+                    table.addCell(String.valueOf(report.getCurrentKm()));
+                    table.addCell(String.valueOf(report.getNextRange()));
+                    table.addCell(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                }
+
+                document.add(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                document.close();
+            }
+        }
+    }
+
+    // oils
+    @GetMapping("/oils/reports/export")
+    public void exportOilChangeReports(
+            @RequestParam(value = "truck_id", required = false) Long truckId,
+            @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
+            @RequestParam(value = "excel", required = false, defaultValue = "false") boolean excel,
+            @RequestParam(value = "pdf", required = false, defaultValue = "false") boolean pdf,
+            HttpServletResponse response) throws IOException {
+
+        // fetch filtered data
+        List<TruckOilsReport> reports = oilsReportService.getAllFiltered(truckId, fromDate, toDate);
+
+        if (excel) {
+            // Export to Excel
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=Oils-reports.xlsx");
+
+            try (Workbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("Oils Reports");
+
+                int rowIdx = 0;
+                // Header row
+                Row headerRow = sheet.createRow(rowIdx++);
+                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note"};
+                for (int i = 0; i < headers.length; i++) {
+                    headerRow.createCell(i).setCellValue(headers[i]);
+                }
+
+                int index = 1;
+                for (TruckOilsReport report : reports) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(0).setCellValue(index++);
+                    row.createCell(1).setCellValue(report.getTruck().getLicensePlate());
+                    row.createCell(2).setCellValue(report.getTruck().getCurrentKm());
+                    row.createCell(3).setCellValue(report.getDate().toString());
+                    row.createCell(4).setCellValue(report.getCurrentKm());
+                    row.createCell(5).setCellValue(report.getNextRange());
+                    row.createCell(6).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                }
+
+                workbook.write(response.getOutputStream());
+            }
+
+        } else if (pdf) {
+            // Export to PDF
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=Oils-reports.pdf");
+
+            com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+            try {
+                com.itextpdf.text.pdf.PdfWriter.getInstance(document, response.getOutputStream());
+                document.open();
+                document.add(new com.itextpdf.text.Paragraph("Oils Reports"));
+                document.add(new com.itextpdf.text.Paragraph(" "));
+
+                com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(7);
+                table.setWidthPercentage(100);
+                table.setSpacingBefore(10f);
+
+                // headers
+                Stream.of("#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note")
+                        .forEach(headerTitle -> {
+                            com.itextpdf.text.pdf.PdfPCell headerCell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(headerTitle));
+                            headerCell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
+                            table.addCell(headerCell);
+                        });
+
+                int index = 1;
+                for (TruckOilsReport report : reports) {
+                    table.addCell(String.valueOf(index++));
+                    table.addCell(report.getTruck().getLicensePlate());
+                    table.addCell(String.valueOf(report.getTruck().getCurrentKm()));
+                    table.addCell(report.getDate().toString());
+                    table.addCell(String.valueOf(report.getCurrentKm()));
+                    table.addCell(String.valueOf(report.getNextRange()));
+                    table.addCell(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                }
+
+                document.add(table);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                document.close();
+            }
+        }
+    }
 
 
 

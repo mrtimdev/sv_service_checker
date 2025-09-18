@@ -4,6 +4,7 @@
     <th:block th:insert="~{layouts/main :: head}"></th:block>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.tailwindcss.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"  />
     <style>
         .dataTables_wrapper .dataTables_length, 
         .dataTables_wrapper .dataTables_filter, 
@@ -116,10 +117,10 @@
                 <span class="block sm:inline" th:text="${error}"></span>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Truck Distances</h1>
-                <div class="mb-4 flex items-center space-x-4">
-                    <div class="mb-4 flex items-center space-x-4">
+                <div class="mb-4 flex items-center justify-center space-x-4">
+                    <div class="flex items-center justify-center space-x-4">
                         <button id="editSelected" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" disabled>
                             Edit Selected
                         </button>
@@ -140,6 +141,92 @@
                     </a>
                     
                 </div>
+            </div>
+
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-colors duration-200 mb-5">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-1xl font-bold text-gray-800 dark:text-white">FATS Reports Filter</h2>
+                </div>
+                
+                <form id="filterForm" method="get" action="/truck-distances" class="space-y-6">
+                    <div class="grid grid-rows-2 gap-5">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-center">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    <i class="fas fa-truck mr-2 text-primary-600"></i>Truck
+                                </label>
+                                <div class="relative">
+                                    <select id="truck" name="truck_id" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none shadow-sm">
+                                        <option value="">All trucks</option>
+                                        <option th:each="truck : ${trucks}" 
+                                            th:value="${truck.id}"
+                                            th:text="${truck.licensePlate }"
+                                            th:selected="${selectedTruckId != null} ? ${truck.id} == ${selectedTruckId} : false"
+                                        ></option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
+                                </label>
+                                <input type="text"
+                                    name="fromDate"
+                                    th:value="${fromDate != null} ? ${#temporals.format(fromDate, 'MMM dd, yyyy')} : ''"
+                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                    placeholder="Select start date"/>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
+                                </label>
+                                <input type="text"
+                                    name="toDate"
+                                    th:value="${toDate != null} ? ${#temporals.format(toDate, 'MMM dd, yyyy')} : ''"
+                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                    placeholder="Select end date"/>
+                            </div>
+
+                            <div class="flex justify-between gap-3">
+                                
+                                <div>
+                                    <label for="sortBy" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Sort By:</label>
+                                    <select name="sortBy" id="sortBy" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none shadow-sm">
+                                        <option value="distanceDate" th:selected="${sortBy == 'distanceDate'}">Distance Date</option>
+                                        <option value="distanceId" th:selected="${sortBy == 'distanceId'}">Distance ID</option>
+                                        <option value="truckId" th:selected="${sortBy == 'truckId'}">Truck ID</option>
+                                        <option value="truckLicensePlate" th:selected="${sortBy == 'truckLicensePlate'}">Truck License Plate</option>
+                                    </select>
+                                </div>
+
+                               <div>
+                                    <label for="order" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Order:</label>
+                                    <select name="order" id="order" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none shadow-sm">
+                                        <option value="asc" th:selected="${order == 'asc'}">Ascending</option>
+                                        <option value="desc" th:selected="${order == 'desc'}">Descending</option>
+                                    </select>
+                               </div>
+                            </div>
+
+                        </div>
+
+                        <div class="flex items-end justify-end">
+                            <div class="flex items-center justify-center gap-3">
+                                <input type="hidden" name="all" value="false" />
+                                <button type="submit" class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 shadow-md flex items-center justify-center gap-2">
+                                    <i class="fas fa-filter"></i> Apply Filters
+                                </button>
+                                <a href="/truck-distances" class="px-4 py-2.5 border text-gray-200 border-red-300 dark:border-red-600 rounded-lg font-medium bg-red-700 dark:hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2">
+                                    <i class="fas fa-redo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <div class="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-800">
@@ -194,7 +281,7 @@
                                     <span th:text="${distance.truck.licensePlate}"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                                    <span th:text="${distance.distance}"></span> km
+                                    <span th:text="${distance.getDistanceFormat()}"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                                     <span th:text="${distance.createdBy != null ? distance.createdBy.username : 'System'}"></span>
@@ -205,6 +292,14 @@
                                 </td>
                             </tr>
                         </tbody>
+                        <tfoot class="bg-gray-50 dark:bg-gray-700 font-bold">
+                            <tr>
+                                <td colspan="3" class="px-6 py-3 text-right text-sm text-gray-900 dark:text-gray-200">Total Distance:</td>
+                                <td class="px-6 py-3 text-sm text-gray-900 dark:text-gray-200" th:text="${totalDistance}"></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+
                     </table>
                 </div>
 
@@ -229,7 +324,7 @@
                         </li>
 
                         <!-- Page numbers -->
-                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
                             <a th:href="@{/truck-distances(
                                             page=${i}, 
                                             size=${pageSize}, 
@@ -262,17 +357,25 @@
     </th:block>
 </th:block>
 </html>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+    <script>
 
-<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
-        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
-        <script>
+        $(function() {
+            
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: false
+            });
+            $('select').select2();
+        })
 
 
 
-            $('#selectAll').change(function() {
-        $('.distance-checkbox').prop('checked', this.checked);
-        updateSelectedCount();
-    });
+        $('#selectAll').change(function() {
+            $('.distance-checkbox').prop('checked', this.checked);
+            updateSelectedCount();
+        });
     
     // Individual checkbox change
     $('.distance-checkbox').change(function() {

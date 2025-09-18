@@ -1,11 +1,14 @@
 package timdev.timdev.controller;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -46,36 +49,76 @@ public class TruckDistanceWebController {
     @GetMapping
     public String listTruckDistances(
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
+        @RequestParam(value = "truck_id", required = false) Long truckId,
+        @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
+        @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
+        @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
+        @RequestParam(value = "order", defaultValue = "desc") String order,
         Model model) 
     {
-        Page<TruckDistance> distancesPage;
-        int size;
+        List<Truck> trucks = truckService.getAll();
+        List<TruckDistance> distancesPage;
+        int totalPages = 1;
+        int size = "all".equalsIgnoreCase(sizeParam) ? Integer.MAX_VALUE : Integer.parseInt(sizeParam);
+
+        // build Sort dynamically
+        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        // map frontend sortBy values to entity fields
+        String sortField;
+        switch (sortBy) {
+            case "truckId":
+                sortField = "truck.id";
+                break;
+            case "truckLicensePlate":
+                sortField = "truck.licensePlate"; // assuming field name
+                break;
+            case "distanceId":
+                sortField = "id";
+                break;
+            case "distanceDate":
+            default:
+                sortField = "date"; // assuming TruckDistance.date field
+                break;
+        }
+
+        Sort sort = Sort.by(direction, sortField);
         
-        if ("all".equalsIgnoreCase(sizeParam)) {
-            size = Integer.MAX_VALUE;
-        } else {
-            size = Integer.parseInt(sizeParam); 
-        }
-
         if (showAll) {
-            // If "all" is true, fetch all records without pagination
-            List<TruckDistance> distances = truckDistanceService.getAll();
-            model.addAttribute("distances", distances);
-            model.addAttribute("totalPages", 1);
-            model.addAttribute("currentPage", 0);
+            // fetch all reports with filter
+            distancesPage = truckDistanceService.getAllFiltered(truckId, fromDate, toDate, sort);
         } else {
-            // Paginated fetch
-            Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-            distancesPage = truckDistanceService.getAllPaged(pageable);
-
-            model.addAttribute("distances", distancesPage.getContent());
-            model.addAttribute("totalPages", distancesPage.getTotalPages());
-            model.addAttribute("currentPage", page);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<TruckDistance> truckPage = truckDistanceService.getAllWithPageable(pageable, truckId, fromDate, toDate);
+            distancesPage = truckPage.getContent();
+            totalPages = truckPage.getTotalPages();
         }
+
+
+        int totalDistance = (int) distancesPage.stream()
+                                       .mapToDouble(TruckDistance::getDistance)
+                                       .sum();
+        String totalDistanceFormatted = String.format("%,d km", totalDistance);
+
+        // put everything into model
+        model.addAttribute("distances", distancesPage);
+        model.addAttribute("totalDistance", totalDistanceFormatted);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
+
+        // preserve filters in the view
+        model.addAttribute("selectedTruckId", truckId != null ? truckId : null);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        model.addAttribute("trucks", trucks);
+
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("order", order);
+
         return "truck-distances/list";
     }
 
@@ -281,12 +324,16 @@ public class TruckDistanceWebController {
             try {
                 TruckDistance distance = truckDistanceService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid truck distance ID: " + id));
-                // Truck truck = distance.getTruck();
-
-                // double newKm = truck.getCurrentKm() - distance.getDistance();
-                // truck.setCurrentKm(Math.max(newKm, 0));
-                // truckRepo.save(truck);
+                         
+                
                 truckDistanceService.delete(id);
+                Truck truck = distance.getTruck(); 
+                if (truck != null) {
+                    double newKm = truck.getCurrentKm() - distance.getDistance();
+                    truck.setCurrentKm(newKm);
+                    truck.setUpdatedAt(LocalDateTime.now());
+                    truckService.save(truck);
+                }
                 redirectAttributes.addFlashAttribute("success", "Distance record deleted successfully");
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("error", "Error deleting distance record: " + e.getMessage());
@@ -307,7 +354,17 @@ public class TruckDistanceWebController {
         public String importExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
             try {
                 List<TruckDistance> distances = truckDistanceService.importFromExcel(file, truckService);
+                
                 truckDistanceService.saveAll(distances);
+                for (TruckDistance td : distances) {
+                    Truck truck = td.getTruck();          
+                    if (truck != null) {
+                        double newKm = truck.getCurrentKm() + td.getDistance();
+                        truck.setCurrentKm(newKm);
+                        truck.setUpdatedAt(LocalDateTime.now());
+                        truckService.save(truck);             
+                    }
+                }
                 redirectAttributes.addFlashAttribute("success", "File imported successfully!");
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("error", "Failed to import file: " + e.getMessage());
