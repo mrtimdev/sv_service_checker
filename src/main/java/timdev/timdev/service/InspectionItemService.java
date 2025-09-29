@@ -82,4 +82,9 @@ public class InspectionItemService {
         // For now, we'll just delete if no explicit service records exist
         itemRepository.deleteById(id);
     }
+
+
+    public List<InspectionItem> getAllItemsOrderByCategory() {
+        return itemRepository.findAllByOrderByCategory_NameAscNameAsc();
+    }
 }

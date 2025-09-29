@@ -912,6 +912,13 @@ select{
   color: rgb(153 27 27 / var(--tw-text-opacity, 1));
 }
 
+.status-pill.unchecked{
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 226 226 / var(--tw-bg-opacity, 1));
+  --tw-text-opacity: 1;
+  color: rgb(153 27 27 / var(--tw-text-opacity, 1));
+}
+
 .status-dropdown{
   right: 0px;
   transform-origin: top right;

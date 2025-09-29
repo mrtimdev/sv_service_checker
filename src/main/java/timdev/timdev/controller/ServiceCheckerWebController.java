@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -36,10 +37,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.dto.ExternalDriverDTO;
 import timdev.timdev.dto.ItemNoteDTO;
 import timdev.timdev.entity.Driver;
 import timdev.timdev.entity.ServiceChecker;
+import timdev.timdev.entity.User;
 import timdev.timdev.enums.ServiceCheckerStatus;
+import timdev.timdev.service.DriverProxyService;
 import timdev.timdev.service.DriverService;
 import timdev.timdev.service.ExcelExportService;
 import timdev.timdev.service.InspectionService;
@@ -56,143 +61,145 @@ public class ServiceCheckerWebController {
 
     private final ExcelExportService excelExportService;
 
+    private final DriverProxyService driverProxyService;
+
 
     @GetMapping("/filters")
-@ResponseBody
-public Map<String, Object> getByDateFilterAjax(
-    @RequestParam(value = "dateFilter", defaultValue = "all") String dateFilter,
-    @RequestParam(value = "startDate", required = false)
-    @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
-    @RequestParam(value = "endDate", required = false)
-    @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
-    @RequestParam(value = "driverId", required = false) Long driverId,
-    // DataTables parameters
-    @RequestParam(value = "draw", defaultValue = "0") int draw,
-    @RequestParam(value = "start", defaultValue = "0") int start,
-    @RequestParam(value = "length", defaultValue = "10") int length,
-    @RequestParam(value = "search[value]", defaultValue = "") String searchValue,
-    @RequestParam(value = "order[0][column]", defaultValue = "0") int orderColumn,
-    @RequestParam(value = "order[0][dir]", defaultValue = "asc") String orderDirection
-) {
-    
-    // Get filtered data
-    List<ServiceChecker> data = serviceCheckerService.getByDateAndDriverFilter(driverId, dateFilter, startDate, endDate);
-    
-    // Apply search filter if provided
-    if (!searchValue.isEmpty()) {
-        data = filterData(data, searchValue);
+    @ResponseBody
+    public Map<String, Object> getByDateFilterAjax(
+        @RequestParam(value = "dateFilter", defaultValue = "all") String dateFilter,
+        @RequestParam(value = "startDate", required = false)
+        @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false)
+        @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "driverId", required = false) Long driverId,
+        // DataTables parameters
+        @RequestParam(value = "draw", defaultValue = "0") int draw,
+        @RequestParam(value = "start", defaultValue = "0") int start,
+        @RequestParam(value = "length", defaultValue = "10") int length,
+        @RequestParam(value = "search[value]", defaultValue = "") String searchValue,
+        @RequestParam(value = "order[0][column]", defaultValue = "0") int orderColumn,
+        @RequestParam(value = "order[0][dir]", defaultValue = "asc") String orderDirection
+    ) {
+        
+        // Get filtered data
+        List<ServiceChecker> data = serviceCheckerService.getByDateAndDriverFilter(driverId, dateFilter, startDate, endDate);
+        
+        // Apply search filter if provided
+        if (!searchValue.isEmpty()) {
+            data = filterData(data, searchValue);
+        }
+        
+        // Get total records count (before pagination)
+        int totalRecords = data.size();
+        
+        // Apply sorting
+        data = sortData(data, orderColumn, orderDirection);
+        
+        // Apply pagination
+        List<ServiceChecker> paginatedData = paginateData(data, start, length);
+        
+        // Prepare DataTables response
+        Map<String, Object> response = new HashMap<>();
+        response.put("draw", draw);
+        response.put("recordsTotal", totalRecords);
+        response.put("recordsFiltered", totalRecords); // Same as total since we filtered in memory
+        response.put("data", convertToDataTablesFormat(paginatedData));
+        
+        return response;
     }
-    
-    // Get total records count (before pagination)
-    int totalRecords = data.size();
-    
-    // Apply sorting
-    data = sortData(data, orderColumn, orderDirection);
-    
-    // Apply pagination
-    List<ServiceChecker> paginatedData = paginateData(data, start, length);
-    
-    // Prepare DataTables response
-    Map<String, Object> response = new HashMap<>();
-    response.put("draw", draw);
-    response.put("recordsTotal", totalRecords);
-    response.put("recordsFiltered", totalRecords); // Same as total since we filtered in memory
-    response.put("data", convertToDataTablesFormat(paginatedData));
-    
-    return response;
-}
 
-// Helper method to filter data based on search value
-private List<ServiceChecker> filterData(List<ServiceChecker> data, String searchValue) {
-    String searchLower = searchValue.toLowerCase();
-    return data.stream()
-        .filter(sc -> 
-            (sc.getDriver().getFirstName() != null && sc.getDriver().getFirstName().toLowerCase().contains(searchLower)) ||
-            (sc.getDriver().getLastName() != null && sc.getDriver().getLastName().toLowerCase().contains(searchLower)) ||
-            (sc.getDriver().getPlateNumber() != null && sc.getDriver().getPlateNumber().toLowerCase().contains(searchLower)) ||
-            (sc.getStatus() != null && sc.getStatus().toString().toLowerCase().contains(searchLower)) ||
-            (sc.getDate() != null && sc.getDate().toString().contains(searchValue))
-        )
-        .collect(Collectors.toList());
-}
-
-// Helper method to sort data
-private List<ServiceChecker> sortData(List<ServiceChecker> data, int orderColumn, String orderDirection) {
-    Comparator<ServiceChecker> comparator;
-    
-    switch (orderColumn) {
-        case 0: // ID
-            comparator = Comparator.comparing(ServiceChecker::getId);
-            break;
-        case 1: // Date
-            comparator = Comparator.comparing(ServiceChecker::getDate);
-            break;
-        case 2: // Driver Name
-            comparator = Comparator.comparing(sc -> sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
-            break;
-        case 3: // Plate Number
-            comparator = Comparator.comparing(sc -> sc.getDriver().getPlateNumber());
-            break;
-        case 4: // Status
-            comparator = Comparator.comparing(ServiceChecker::getStatus);
-            break;
-        case 5: // Created At
-            comparator = Comparator.comparing(ServiceChecker::getCreatedAt);
-            break;
-        default:
-            comparator = Comparator.comparing(ServiceChecker::getId);
+    // Helper method to filter data based on search value
+    private List<ServiceChecker> filterData(List<ServiceChecker> data, String searchValue) {
+        String searchLower = searchValue.toLowerCase();
+        return data.stream()
+            .filter(sc -> 
+                (sc.getDriver().getFirstName() != null && sc.getDriver().getFirstName().toLowerCase().contains(searchLower)) ||
+                (sc.getDriver().getLastName() != null && sc.getDriver().getLastName().toLowerCase().contains(searchLower)) ||
+                (sc.getDriver().getPlateNumber() != null && sc.getDriver().getPlateNumber().toLowerCase().contains(searchLower)) ||
+                (sc.getStatus() != null && sc.getStatus().toString().toLowerCase().contains(searchLower)) ||
+                (sc.getDate() != null && sc.getDate().toString().contains(searchValue))
+            )
+            .collect(Collectors.toList());
     }
-    
-    if ("desc".equalsIgnoreCase(orderDirection)) {
-        comparator = comparator.reversed();
+
+    // Helper method to sort data
+    private List<ServiceChecker> sortData(List<ServiceChecker> data, int orderColumn, String orderDirection) {
+        Comparator<ServiceChecker> comparator;
+        
+        switch (orderColumn) {
+            case 0: // ID
+                comparator = Comparator.comparing(ServiceChecker::getId);
+                break;
+            case 1: // Date
+                comparator = Comparator.comparing(ServiceChecker::getDate);
+                break;
+            case 2: // Driver Name
+                comparator = Comparator.comparing(sc -> sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
+                break;
+            case 3: // Plate Number
+                comparator = Comparator.comparing(sc -> sc.getDriver().getPlateNumber());
+                break;
+            case 4: // Status
+                comparator = Comparator.comparing(ServiceChecker::getStatus);
+                break;
+            case 5: // Created At
+                comparator = Comparator.comparing(ServiceChecker::getCreatedAt);
+                break;
+            default:
+                comparator = Comparator.comparing(ServiceChecker::getId);
+        }
+        
+        if ("desc".equalsIgnoreCase(orderDirection)) {
+            comparator = comparator.reversed();
+        }
+        
+        return data.stream()
+            .sorted(comparator)
+            .collect(Collectors.toList());
     }
-    
-    return data.stream()
-        .sorted(comparator)
-        .collect(Collectors.toList());
-}
 
-// Helper method to paginate data
-private List<ServiceChecker> paginateData(List<ServiceChecker> data, int start, int length) {
-    int end = Math.min(start + length, data.size());
-    if (start > data.size()) {
-        return Collections.emptyList();
+    // Helper method to paginate data
+    private List<ServiceChecker> paginateData(List<ServiceChecker> data, int start, int length) {
+        int end = Math.min(start + length, data.size());
+        if (start > data.size()) {
+            return Collections.emptyList();
+        }
+        return data.subList(start, end);
     }
-    return data.subList(start, end);
-}
 
-// Convert ServiceChecker objects to DataTables format
-private List<Map<String, Object>> convertToDataTablesFormat(List<ServiceChecker> data) {
-    return data.stream().map(sc -> {
-        Map<String, Object> row = new HashMap<>();
-        row.put("id", sc.getId());
-        row.put("date", sc.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
-        row.put("driverName", sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
-        row.put("plateNumber", sc.getDriver().getPlateNumber());
-        row.put("checkedCount", sc.getCheckedCount());
-        row.put("notCheckedCount", sc.getNotCheckedCount());
-        row.put("issuesStatus", sc.issuesStatus());
-        row.put("status", sc.getStatus().toString());
-        row.put("createdAt", sc.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));
-        row.put("updatedAt", sc.getUpdatedAt() != null ? 
-            sc.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "Never");
-        row.put("updatedBy", sc.getUpdatedBy() != null ? sc.getUpdatedBy().getUsername() : "");
-        row.put("actions", getActionButtons(sc.getId()));
-        return row;
-    }).collect(Collectors.toList());
-}
+    // Convert ServiceChecker objects to DataTables format
+    private List<Map<String, Object>> convertToDataTablesFormat(List<ServiceChecker> data) {
+        return data.stream().map(sc -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", sc.getId());
+            row.put("date", sc.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+            row.put("driverName", sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName());
+            row.put("plateNumber", sc.getDriver().getPlateNumber());
+            row.put("checkedCount", sc.getCheckedCount());
+            row.put("notCheckedCount", sc.getNotCheckedCount());
+            row.put("issuesStatus", sc.issuesStatus());
+            row.put("status", sc.getStatus().toString());
+            row.put("createdAt", sc.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));
+            row.put("updatedAt", sc.getUpdatedAt() != null ? 
+                sc.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "Never");
+            row.put("updatedBy", sc.getUpdatedBy() != null ? sc.getUpdatedBy().getUsername() : "");
+            row.put("actions", getActionButtons(sc.getId()));
+            return row;
+        }).collect(Collectors.toList());
+    }
 
-// Generate HTML action buttons
-private String getActionButtons(Long id) {
-    return "<div class='flex space-x-2'>" +
-           "<a href='/admin/service-checkers/" + id + "' class='text-blue-600 hover:text-blue-900'>View</a>" +
-           "<a href='/admin/service-checkers/edit/" + id + "' class='text-green-600 hover:text-green-900'>Edit</a>" +
-           "<form action='/admin/service-checkers/delete/" + id + "' method='post' style='display: inline;'>" +
-           "<input type='hidden' name='_method' value='delete' />" +
-           "<button type='submit' class='text-red-600 hover:text-red-900' onclick='return confirm(\"Are you sure?\")'>Delete</button>" +
-           "</form>" +
-           "</div>";
-}
+    // Generate HTML action buttons
+    private String getActionButtons(Long id) {
+        return "<div class='flex space-x-2'>" +
+            "<a href='/admin/service-checkers/" + id + "' class='text-blue-600 hover:text-blue-900'>View</a>" +
+            "<a href='/admin/service-checkers/edit/" + id + "' class='text-green-600 hover:text-green-900'>Edit</a>" +
+            "<form action='/admin/service-checkers/delete/" + id + "' method='post' style='display: inline;'>" +
+            "<input type='hidden' name='_method' value='delete' />" +
+            "<button type='submit' class='text-red-600 hover:text-red-900' onclick='return confirm(\"Are you sure?\")'>Delete</button>" +
+            "</form>" +
+            "</div>";
+    }
 
 
 
@@ -232,17 +239,30 @@ private String getActionButtons(Long id) {
     }
 
     @PostMapping
-    public String create(@ModelAttribute ServiceChecker serviceChecker, RedirectAttributes redirectAttributes) {
+    public String create(@ModelAttribute ServiceChecker serviceChecker, 
+        RedirectAttributes redirectAttributes,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
 
          if (serviceChecker.getDriver() != null && serviceChecker.getDriver().getId() != null) {
             Driver driver = driverService.getDriverById(serviceChecker.getDriver().getId())
                     .orElseThrow(() -> new RuntimeException("Driver not found"));
             if (serviceCheckerService.existsByDriverAndDate(driver, serviceChecker.getDate())) {
-
-                redirectAttributes.addFlashAttribute("error", "A checklist already exists for this driver on " + driver.getFullName());
+                LocalDate date = serviceChecker.getDate();
+                String formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+                String message = String.format(
+                    "⚠️ Oops! %s already has a checklist for %s. Please check the existing record before creating a new one.",
+                    driver.getFullName(),
+                    formatted
+                );
+                
+                redirectAttributes.addFlashAttribute("error", message);
                 return "redirect:/admin/service-checkers/create";
             }
         }
+
+        User user = userDetails.getUser();
+        serviceChecker.setCreatedBy(user);
         
         ServiceChecker serviceCheckerCreated = serviceCheckerService.create(serviceChecker);
         redirectAttributes.addFlashAttribute("success", "Service checker created successfully " + serviceCheckerCreated.getTitle());
@@ -352,24 +372,42 @@ private String getActionButtons(Long id) {
     @PostMapping("/new")
     public String submitForm(
         @ModelAttribute("serviceChecker") ServiceChecker checker,
+        @RequestParam("driverId") Long driverId,
         @RequestParam Map<String, String> allParams,
         BindingResult result,
-        RedirectAttributes redirectAttributes) {
+        RedirectAttributes redirectAttributes,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
 
         if (result.hasErrors()) {
             return "admin/service-checkers/form";
         }
 
         try {
+            ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
+
+            if (exDriver == null) {
+                redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
+                return "redirect:/admin/service-checkers/new";
+            }
             if (checker.getDriver() != null && checker.getDriver().getId() != null) {
                 Driver driver = driverService.getDriverById(checker.getDriver().getId())
                         .orElseThrow(() -> new RuntimeException("Driver not found"));
                 if (serviceCheckerService.existsByDriverAndDate(driver, checker.getDate())) {
-
-                    redirectAttributes.addFlashAttribute("error", "A checklist already exists for this driver on " + driver.getFullName());
+                    LocalDate date = checker.getDate();
+                    String formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+                    String message = String.format(
+                        "⚠️ Oops! %s already has a checklist for %s. Please check the existing record before creating a new one.",
+                        driver.getFullName(),
+                        formatted
+                    );
+                    
+                    redirectAttributes.addFlashAttribute("error", message);
                     return "redirect:/admin/service-checkers/new";
                 }
             }
+            User user = userDetails.getUser();
+            checker.setCreatedBy(user);
             Map<Long, List<ItemNoteDTO>> categoryItems = processFormParameters(allParams);
             serviceCheckerService.createWithInspections(checker, categoryItems);
             redirectAttributes.addFlashAttribute("success", "Service checker created successfully!");
@@ -396,20 +434,40 @@ private String getActionButtons(Long id) {
     public String updateServiceChecker(
         @PathVariable Long id,
         @ModelAttribute ServiceChecker checker,
+        @RequestParam("driverId") Long driverId,
         @RequestParam Map<String, String> params,
-        RedirectAttributes redirectAttributes) {
+        RedirectAttributes redirectAttributes,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
         
         try {
+
+            ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
+
+            if (exDriver == null) {
+                redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
+                return "redirect:/admin/service-checkers/new";
+            }
+
             if (checker.getDriver() != null && checker.getDriver().getId() != null) {
                 Driver driver = driverService.getDriverById(checker.getDriver().getId())
                         .orElseThrow(() -> new RuntimeException("Driver not found"));
 
                 if (serviceCheckerService.existsByDriverAndDateAndIdNot(driver, checker.getDate(), id)) {
-                    redirectAttributes.addFlashAttribute("error",
-                        "A checklist already exists for this driver on " + driver.getFullName());
+
+                    LocalDate date = checker.getDate();
+                    String formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+                    String message = String.format(
+                        "⚠️ Oops! %s already has a checklist for %s. Please check the existing record before creating a new one.",
+                        driver.getFullName(),
+                        formatted
+                    );
+                    
+                    redirectAttributes.addFlashAttribute("error", message);
                     return "redirect:/admin/service-checkers/new/edit/" + id;
                 }
             }
+            User user = userDetails.getUser();
+            checker.setUpdatedBy(user);
             Map<Long, List<ItemNoteDTO>> categoryItems = processFormParameters(params);
             serviceCheckerService.updateWithInspections(id, checker, categoryItems);
             redirectAttributes.addFlashAttribute("success", "Service checker updated successfully!");

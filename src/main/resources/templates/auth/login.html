@@ -73,6 +73,18 @@
                         placeholder="••••••••">
                     <div th:if="${session.error}" class="text-red-500" th:text="${session.error}"></div>
                 </div>
+                <div class="flex items-center">
+                    <input 
+                        id="remember-me" 
+                        name="remember-me" 
+                        type="checkbox" 
+                        checked
+                        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                        Remember me
+                    </label>
+                </div>
                 <button 
                     type="submit"
                     class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200">

@@ -9,7 +9,7 @@
 
         <nav>
             <ul>
-                <li class="mb-2">
+                <li class="mb-2" sec:authorize="!hasRole('USER')">
                     <a href="/admin/dashboard"
                         th:classappend="${requestURI == '/admin/dashboard'} ? 
                                     'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -29,7 +29,7 @@
                         <span>Services Checker</span>
                     </a>
                 </li>
-                <li class="mb-2">
+                <li class="mb-2" sec:authorize="!hasRole('USER')">
                     <a href="/admin/drivers"
                         th:classappend="${requestURI == '/admin/drivers'} ? 
                                     'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -40,9 +40,19 @@
                         <span>Drivers</span>
                     </a>
                 </li>
+
+                <li class="mb-2" sec:authorize="!hasRole('USER')">
+                    <a href="/admin/users"
+                        th:classappend="${requestURI.startsWith('/admin/users')} ? 
+                                    'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                    class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white">
+                        <i class="menu-icon fas fa-users"></i>
+                        <span class="menu-text">Users</span>
+                    </a>
+                </li>
                 
                 <!-- Settings Dropdown with Alpine.js -->
-                <li class="mb-2" x-data="{ settingsOpen: false }">
+                <li class="mb-2" x-data="{ settingsOpen: false }" sec:authorize="!hasRole('USER')">
                     <button @click="settingsOpen = !settingsOpen" class="flex items-center justify-between w-full space-x-3 p-3 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white">
                         <div class="flex items-center space-x-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

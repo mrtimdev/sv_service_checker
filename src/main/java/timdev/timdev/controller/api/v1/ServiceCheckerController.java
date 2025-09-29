@@ -1,7 +1,6 @@
 package timdev.timdev.controller.api.v1;
 
 import java.time.LocalDate;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,14 +21,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import lombok.RequiredArgsConstructor;
+import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.ItemNoteDTO;
 import timdev.timdev.dto.api.CategoryItemRequest;
 import timdev.timdev.dto.api.ServiceCheckerRequest;
 import timdev.timdev.dto.api.ServiceCheckerResponseDTO;
 import timdev.timdev.entity.Driver;
 import timdev.timdev.entity.ServiceChecker;
+import timdev.timdev.entity.User;
 import timdev.timdev.exception.ResourceNotFoundException;
 import timdev.timdev.service.DriverService;
 import timdev.timdev.service.ServiceCheckerService;
@@ -123,7 +126,10 @@ public class ServiceCheckerController {
     @PostMapping
     public ResponseEntity<?> createServiceChecker(
             @RequestBody ServiceCheckerRequest request,
-            BindingResult result) {
+            BindingResult result,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body("Invalid request data");
@@ -140,11 +146,12 @@ public class ServiceCheckerController {
                 errorResponse.put("error", "A checklist already exists for this driver on " + request.getDate());
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
             }
-            
+            User user = userDetails.getUser();
             // Convert request to ServiceChecker entity
             ServiceChecker checker = new ServiceChecker();
             checker.setDate(request.getDate());
             checker.setDriver(driver);
+            checker.setCreatedBy(user);
             
             // Convert category items to the format expected by service
             Map<Long, List<ItemNoteDTO>> categoryItems = new HashMap<>();
@@ -197,7 +204,10 @@ public class ServiceCheckerController {
     public ResponseEntity<?> updateServiceChecker(
             @PathVariable Long id,
             @RequestBody ServiceCheckerRequest request,
-            BindingResult result) {
+            BindingResult result,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body("Invalid request data");
@@ -208,10 +218,12 @@ public class ServiceCheckerController {
             Driver driver = driverService.getDriverById(request.getDriverId())
                     .orElseThrow(() -> new RuntimeException("Driver not found with id: " + request.getDriverId()));
             
+            User user = userDetails.getUser();
             // Convert request to ServiceChecker entity
             ServiceChecker checker = new ServiceChecker();
             checker.setDate(request.getDate());
             checker.setDriver(driver);
+            checker.setUpdatedBy(user);
             
             // Convert category items to the format expected by service
             Map<Long, List<ItemNoteDTO>> categoryItems = new HashMap<>();

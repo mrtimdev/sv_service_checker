@@ -76,6 +76,9 @@ public class ExcelExportService {
         
         if (sc.getItems() != null && !sc.getItems().isEmpty()) {
             for (ServiceCheckerItem item : sc.getItems()) {
+                if(item.getCategory() == null) {
+                    continue; // Skip items without a category
+                }
                 String categoryName = item.getCategory() != null ? 
                                     item.getCategory().getName() : "N/A";
                 

@@ -48,7 +48,7 @@ public class ServiceChecker {
     private LocalDate date;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(20) default 'CHECKING'")
+    @Column(nullable = false)
     private ServiceCheckerStatus status = ServiceCheckerStatus.CHECKING;
 
     @OneToMany(mappedBy = "serviceChecker", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -230,7 +230,7 @@ public class ServiceChecker {
 
     public String issuesStatus() {
         if (getNotCheckedCount() > 0) {
-            return "Some Issues";
+            return "Unchecked";
         }
         return "Checked";
     }

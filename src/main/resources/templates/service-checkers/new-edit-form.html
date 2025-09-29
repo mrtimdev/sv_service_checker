@@ -32,7 +32,7 @@
                                 <option value="">Select a driver</option>
                                 <option th:each="driver : ${drivers}" 
                                         th:value="${driver.id}" 
-                                        th:text="${driver.firstName + ' ' + driver.lastName}"
+                                        th:text="${driver.plateNumber + ' - ' +  driver.firstName + ' ' + driver.lastName}"
                                         th:selected="${driver.id == serviceChecker.driver?.id}"></option>
                             </select>
                         </div>
@@ -78,9 +78,9 @@
             </div>
 
             <!-- Form Actions -->
-            <div class="flex justify-between">
+            <div class="flex justify-start gap-2">
                 <a th:href="@{/admin/service-checkers}" 
-                   class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                   class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                     Cancel
                 </a>
                 <button type="submit" 

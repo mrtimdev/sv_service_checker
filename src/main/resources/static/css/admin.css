@@ -96,3 +96,110 @@ body {
   font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang",
                "Khmer OS System", "Khmer UI", "DaunPenh", sans-serif;
 }
+#header
+{
+    z-index: 50 !important;
+}
+
+#sidebar
+{
+    z-index: 40 !important;
+}
+
+#main-content {
+  transition: margin-left 0.1s ease-in-out; /* smooth animation */
+  margin-left: 0; /* default closed */
+}
+
+#main-content.sidebar-open {
+  margin-left: 230px; /* when sidebar open on desktop */
+}
+
+@media (max-width: 640px) {
+  /* On mobile main content stays full width */
+  #main-content,
+  #main-content.sidebar-open {
+    margin-left: 0;
+  }
+}
+
+
+/* Overlay covering entire screen */
+#sidebarOverlay {
+    position: fixed;      /* fixed to viewport */
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+    z-index: 39;        /* high enough to be above sidebar/content */
+    display: none;        /* hidden by default */
+}
+
+/* Show overlay when active */
+#sidebarOverlay.active {
+    display: block;
+}
+
+/* Mobile only: hide overlay on large screens */
+@media (min-width: 640px) {
+    #sidebarOverlay {
+        display: none !important;
+    }
+}
+
+
+/* full screen overlay */
+#preloader {
+    position: fixed;
+    inset: 0;                /* shorthand for top:0;left:0;right:0;bottom:0; */
+    background: #00000075;
+    display: flex;
+    justify-content: center; /* center horizontally */
+    align-items: center;      /* center vertically */
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+      backdrop-filter: blur(4px);
+}
+
+/* make content a grid of 2 rows */
+#preloader .preloader-content {
+    display: grid;
+    grid-template-rows: auto auto; /* 2 rows: first for img, second for text */
+    row-gap: 15px;                /* space between rows */
+    justify-items: center;        /* center items horizontally in grid */
+    animation: fadeIn 1s ease-in-out;
+}
+
+#preloader img {
+    width: 120px;
+    height: auto;
+    animation: pulse 1.5s infinite;
+}
+
+#preloader p {
+    font-size: 14px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+/* hide preloader */
+#preloader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+

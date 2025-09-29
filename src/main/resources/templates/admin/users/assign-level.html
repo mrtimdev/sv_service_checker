@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:insert="~{layouts/main :: head}"></th:block>
+    <style>
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .user-info {
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Assign Approval Level')}">
+    <th:block th:fragment="content">
+        <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Assign Approval Level</h2>
+                
+                <!-- User Information -->
+                <div class="user-info mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">User Details</h3>
+                    <p><strong>Name:</strong> <span th:text="${user.firstName + ' ' + user.lastName}"></span></p>
+                    <p><strong>Username:</strong> <span th:text="${user.username}"></span></p>
+                    <p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
+                    <p><strong>User Type:</strong> <span th:text="${user.userType}"></span></p>
+                    <p><strong>Current Level:</strong> <span th:text="${user.approvalLevel != null} ? ${user.approvalLevel} : 'Not assigned'"></span></p>
+                </div>
+                
+                <form th:action="@{/admin/users/assign-level/{id}(id=${user.id})}" method="post" class="space-y-6">
+                    <!-- Approval Level -->
+                    <div>
+                        <label for="approvalLevel" class="form-label">Approval Level</label>
+                        <select id="approvalLevel" name="approvalLevel" class="form-input" required>
+                            <option value="">Select Approval Level</option>
+                            <option th:each="level : ${approvalLevels}" 
+                                    th:value="${level}" 
+                                    th:text="${level.replace('_', ' ')}"
+                                    th:selected="${user.approvalLevel.toString() == level}">
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <a th:href="@{/admin/users}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            Cancel
+                        </a>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            Assign Level
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+</html>

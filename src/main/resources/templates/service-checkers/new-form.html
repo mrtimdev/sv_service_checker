@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+</th:block>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Create Service Checker')}">
     <th:block th:fragment="content">
         <div class="">
@@ -15,24 +19,29 @@
                     </div>
                     <form th:action="@{/admin/service-checkers/new}" th:object="${serviceChecker}" method="post">
                         
-                        <!-- Date Field -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="date">Date</label>
-                            <input type="date" id="date" name="date" 
-                                   th:value="${#temporals.format(currentDate, 'yyyy-MM-dd')}"
-                                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                        </div>
                         
-                        <!-- Driver Dropdown -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="driverId">Driver</label>
-                            <select id="driverId" name="driver"
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Date Field -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="date">Date</label>
+                                <input type="date" id="date" name="date" 
+                                    th:value="${#temporals.format(currentDate, 'yyyy-MM-dd')}"
                                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                                <option value="">Select a driver</option>
-                                <option th:each="driver : ${drivers}" 
-                                        th:value="${driver.id}" 
-                                        th:text="${driver.firstName + ' ' + driver.lastName}"></option>
-                            </select>
+                            </div>
+                            
+                            <!-- Driver Dropdown -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="driverId">Driver</label>
+                                <select id="driverId" name="driver"
+                                    style="width: 100%; height: 38px !important;"
+                                        class="shadow appearance-none border rounded !w-full !h-[38px] py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                                    <option value="">Select a driver</option>
+                                    <option th:each="driver : ${drivers}" 
+                                            th:value="${driver.id}" 
+                                            th:text="${driver.plateNumber + ' - ' +  driver.firstName + ' ' + driver.lastName}"></option>
+                                </select>
+                            </div>
                         </div>
                         
                         <!-- Inspection Categories -->
@@ -68,8 +77,17 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary">Submit</button>
+
+                        <div class="flex justify-start gap-2">
+                            <a th:href="@{/admin/service-checkers}" 
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                Cancel
+                            </a>
+                            <button type="submit" 
+                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Save
+                            </button>
+                        </div>
                     </form>
 
                 </div>
@@ -120,9 +138,45 @@
 </th:block>
 </html>
 
-<script>
-            
-    document.addEventListener('DOMContentLoaded', function() {
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <!-- Select2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            $('select').select2({
+                placeholder: 'Select an option',
+                allowClear: true
+            });
+
+            $('#driverId').select2({
+                placeholder: 'Select a driver',
+                allowClear: true,
+                ajax: {
+                    url: '/api/drivers/search',
+                    dataType: 'json',
+                    data: function(params) {
+                        return { term: params.term };
+                    },
+                    type: 'GET',
+                    delay: 250,
+                    processResults: function(data) {
+                        // Map API JSON to Select2 format
+                        // Assuming API returns an array of driver objects
+                        return {
+                            results: $.map(data, function(driver) {
+                                return {
+                                    id: driver.id,
+                                    text: driver.name  // or driver.licenseNumber if you prefer
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
             // Show/hide notes when radio buttons change
             document.querySelectorAll('input[type="radio"][name^="passed_"]').forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -138,4 +192,5 @@
                 });
             });
         });
-</script>
+    </script>
+</th:block>

@@ -19,7 +19,9 @@ WantedBy=multi-user.target
 
 
 
+scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@192.168.1.249:~/sv_service_checker
 
+scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@45.201.196.19:~/sv_service_checker
 
 
 [Unit]

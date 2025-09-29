@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,7 @@ public class InspectionItemWebController {
     // List all items
     @GetMapping
     public String listItems(Model model) {
-        List<InspectionItem> items = itemService.getAllItems();
+        List<InspectionItem> items = itemService.getAllItemsOrderByCategory();
         model.addAttribute("items", items);
         return "items/list";
     }
@@ -120,7 +121,7 @@ public class InspectionItemWebController {
     }
     
     // Delete an item
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public String deleteItem(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             itemService.deleteItem(id);

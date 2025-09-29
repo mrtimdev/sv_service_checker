@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,10 +112,16 @@ public class CategoryWebController {
     }
     
     // Delete a category
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public String deleteCategory(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            categoryService.deleteCategory(id);
+            InspectionCategory category = categoryService.getCategoryById(id).orElse(null);
+            if (category != null && category.getItems() != null && !category.getItems().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Can not delete this Category that include items!");
+                return "redirect:/admin/categories";
+            }
+            categoryService.deleteCategoryWithItems(id);
+            // categoryService.deleteCategory(id);
             redirectAttributes.addFlashAttribute("success", "Category deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

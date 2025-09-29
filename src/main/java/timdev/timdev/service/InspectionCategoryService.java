@@ -2,7 +2,6 @@ package timdev.timdev.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale.Category;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +12,7 @@ import timdev.timdev.entity.InspectionCategory;
 import timdev.timdev.entity.InspectionItem;
 import timdev.timdev.exception.ResourceNotFoundException;
 import timdev.timdev.repository.InspectionCategoryRepository;
+import timdev.timdev.repository.ServiceCheckerItemRepository;
 
 @Service
 @Transactional
@@ -21,6 +21,8 @@ public class InspectionCategoryService {
 
     private final InspectionCategoryRepository categoryRepository;
     private final InspectionItemService itemService;
+
+    private final ServiceCheckerItemRepository serviceCheckerItemRepository;
 
 
     /**
@@ -136,6 +138,15 @@ public class InspectionCategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         
         categoryRepository.delete(category);
+    }
+
+    @Transactional
+    public void deleteCategoryWithItems(Long id) {
+        // delete items first
+        serviceCheckerItemRepository.deleteByCategoryId(id);
+
+        // then delete category
+        categoryRepository.deleteById(id);
     }
     
     public InspectionItem addItemToCategory(Long categoryId, InspectionItem item) {

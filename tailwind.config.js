@@ -10,6 +10,10 @@ export default {
         "./src/main/resources/tailwind/**/*.css" 
     ],
 
+    safelist: [
+        'translate-x-0', '-translate-x-full', 'z-50', 'z-40', 'hidden', 'z-[9999]'
+    ],
+
     darkMode: 'class',
     theme: {
         fontFamily: {

@@ -7,12 +7,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import timdev.timdev.enums.RoleType;
+import timdev.timdev.service.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -20,11 +22,19 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthSuccessHandler customAuthSuccessHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+        JwtAuthenticationFilter jwtAuthenticationFilter, 
+        CustomUserDetailsService customUserDetailsService,
+        CustomAuthSuccessHandler customAuthSuccessHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customUserDetailsService = customUserDetailsService;
+        this.customAuthSuccessHandler = customAuthSuccessHandler;
     }
 
+    @SuppressWarnings({ "deprecation", "removal" })
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -43,13 +53,33 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
                 
+                // // API endpoints
+                // .requestMatchers("/api/v1/auth/**").permitAll()
+                // .requestMatchers("/api/v1/**").authenticated()
+                // .requestMatchers("/api/v1/**").hasRole("ADMIN")
+
+                // // Web endpoints
+                // .requestMatchers("/admin/**").hasRole("ADMIN")
                 // API endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
-                .requestMatchers("/api/v1/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/**")
+                .hasAnyRole(
+                    RoleType.ADMIN.toString(),
+                    RoleType.MANAGER.toString(),
+                    RoleType.SUPERVISOR.toString(),
+                    RoleType.USER.toString()
+                )
 
                 // Web endpoints
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/**")
+                .hasAnyRole(
+                    RoleType.ADMIN.toString(),
+                    RoleType.MANAGER.toString(),
+                    RoleType.SUPERVISOR.toString(),
+                    RoleType.USER.toString()
+                )
+
                 .anyRequest().authenticated()
             )
             
@@ -57,7 +87,8 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/auth/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
+                // .defaultSuccessUrl("/admin/dashboard", true)
+                .successHandler(customAuthSuccessHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
@@ -72,10 +103,17 @@ public class SecurityConfig {
             )
             
             // Session management
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // For Thymeleaf
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
+            // .sessionManagement(session -> session
+            //     .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // For Thymeleaf
+            //     .maximumSessions(1)
+            //     .maxSessionsPreventsLogin(false)
+            // )
+
+             .rememberMe(rememberMe -> rememberMe
+                .key("uniqueAndSecretKey")   // use a strong secret key
+                .tokenValiditySeconds(Integer.MAX_VALUE) 
+                .rememberMeParameter("remember-me") // name of checkbox in login form
+                .userDetailsService(customUserDetailsService)
             )
             
             // API specific configurations

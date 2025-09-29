@@ -1,19 +1,16 @@
 package timdev.timdev.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -285,6 +282,8 @@ public class ServiceCheckerService {
         // 2. Update basic ServiceChecker fields
         existingChecker.setDate(updatedChecker.getDate());
         existingChecker.setDriver(updatedChecker.getDriver());
+        existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
+        existingChecker.setUpdatedAt(LocalDateTime.now());
         // Update other fields as needed...
         
         // 3. Process inspection updates

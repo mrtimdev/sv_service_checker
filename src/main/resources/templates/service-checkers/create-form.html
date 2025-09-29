@@ -38,7 +38,7 @@
                                 <option value="">Select a driver</option>
                                 <option th:each="driver : ${drivers}" 
                                         th:value="${driver.id}" 
-                                        th:text="${driver.firstName + ' ' + driver.lastName}"></option>
+                                        th:text="${driver.plateNumber +' - ' + driver.firstName + ' ' + driver.lastName}"></option>
                             </select>
                         </div>
                         

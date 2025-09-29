@@ -15,6 +15,8 @@ import timdev.timdev.entity.InspectionItem;
 public interface InspectionItemRepository extends JpaRepository<InspectionItem, Long> {
     List<InspectionItem> findByCategoryId(Long categoryId);
 
+    List<InspectionItem> findAllByOrderByCategory_NameAscNameAsc();
+
 
     Optional<InspectionItem> findByName(String name);
     
