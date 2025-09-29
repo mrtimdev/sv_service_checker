@@ -33,7 +33,11 @@ public class UserController {
     
     @GetMapping
     public String listUsers(Model model) {
+<<<<<<< HEAD
         List<User> users = userService.getUsersNotInRoles(List.of(RoleType.USER));
+=======
+        List<User> users = userService.findAllUsers();
+>>>>>>> e46db96ed2f8b48ae51f508fbfec53af20d81dc5
         model.addAttribute("users", users);
         model.addAttribute("roleTypes", RoleType.values());
         return "admin/users/list";
