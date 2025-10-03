@@ -1,14 +1,24 @@
 package timdev.timdev.controller;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -30,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -261,12 +272,15 @@ public class TruckWebController {
 
     //  Shoot fats
     @GetMapping("/shoot/fats")
-    public String indexShootFats(
+    public Object indexShootFats(
             Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") String sizeParam,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-            @RequestParam(value = "licensePlate", required = false) String licensePlate) 
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "export", required = false) String export,
+            HttpServletResponse response
+    ) throws IOException 
         {
 
         List<Truck> allTrucks;
@@ -300,6 +314,10 @@ public class TruckWebController {
             }
             totalPages = (int) Math.ceil(allTrucks.size() / (double) size);
         }
+        if ("excel".equalsIgnoreCase(export)) {
+            exportFatsToExcel(trucks, response);
+            return null; 
+        }
 
         model.addAttribute("trucks", trucks);
         model.addAttribute("currentPage", page);
@@ -331,22 +349,339 @@ public class TruckWebController {
     private int getOilsPriority(Truck truck) {
         Double balance = truck.getKmOilsBalance();
 
-        if(balance == 500) {
-            return 1; // safe
+        if (balance == null) {
+            return 4; // fallback
         }
-        if(balance > 0 && balance < 500) {
-            return 2; // warning
+        if (balance < 0) {
+            return 1; // danger
         }
-        if(balance < 0) {
-            return 3; // danger
+        if (balance == 500) {
+            return 2; // safe
+        }
+        if (balance > 0 && balance < 500) {
+            return 3; // warning
         }
         return 4; // fallback / unknown
     }
 
 
+    private String getOilsColorClass(Truck truck) {
+        Double balance = truck.getKmOilsBalance();
+
+        if (balance == null) {
+            return "insufficient final-condition";
+        }
+
+        if (balance < 0) {
+            return "bg-[#ff0000] need-to-update text-white"; // danger
+        }
+        if (balance == 500) {
+            return "bg-[#E87A7AFF] need-to-update text-white"; // safe
+        }
+        if (balance > 0 && balance < 500) {
+            return "bg-yellow-500 need-to-update text-white"; // warning
+        }
+        return "insufficient final-condition"; // fallback
+    }
+
+
+
+    private void exportOilsToExcel(List<Truck> trucks, HttpServletResponse response) throws IOException {
+        // Set response headers
+        String fileName = "oil-change-report-" + LocalDate.now() + ".xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+                .replace("+", "%20");
+        
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+        response.setCharacterEncoding("UTF-8");
+            // Create workbook and sheet
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Oil Change Report");
+        
+        // Create header row with styling
+        Row headerRow = sheet.createRow(0);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        
+        String[] headers = {
+            "#", "License Plate", "Model", "Year", 
+            "KM for Oil Change", "Current KM", "Last Oil Change Date",
+            "Last Oil Change KM", "Next Range", "KM Balance"
+        };
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+            sheet.setColumnWidth(i, 5000); // Set column width
+        }
+        
+        // Create data rows with color coding
+        int rowNum = 1;
+        for (int i = 0; i < trucks.size(); i++) {
+            Truck truck = trucks.get(i);
+            Row row = sheet.createRow(rowNum++);
+            
+            // Apply color style based on oil balance
+            CellStyle rowStyle = getOilBalanceCellStyle(workbook, truck);
+            
+            // Populate data
+            createCell(row, 0, i + 1, rowStyle); // #
+            createCell(row, 1, truck.getLicensePlate(), rowStyle);
+            createCell(row, 2, truck.getModel() != null ? truck.getModel().getName() : "", rowStyle);
+            createCell(row, 3, truck.getYear(), rowStyle);
+            createCell(row, 4, truck.getKmForOilsChange(), rowStyle);
+            createCell(row, 5, truck.getCurrentKm(), rowStyle);
+            
+            // Last oil change data
+            String lastChangeDate = truck.getLastOilsReport() != null && truck.getLastOilsReport().getDate() != null ?
+                truck.getLastOilsReport().getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "";
+            Double lastChangeKm = truck.getLastOilsReport() != null ? truck.getLastOilsReport().getCurrentKm() : null;
+            Double nextRange = truck.getLastOilsReport() != null ? truck.getLastOilsReport().getNextRange() : null;
+            
+            createCell(row, 6, lastChangeDate, rowStyle);
+            createCell(row, 7, lastChangeKm, rowStyle);
+            createCell(row, 8, nextRange, rowStyle);
+            createCell(row, 9, truck.getKmOilsBalance(), rowStyle);
+        }
+        
+        // Auto-size columns for better fit
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+        
+        // Stream the workbook to response
+        try (ServletOutputStream outputStream = response.getOutputStream()) {
+            workbook.write(outputStream);
+            outputStream.flush();
+        } finally {
+            workbook.close();
+        }
+    }
+
+
+    // បាញ់ខ្លាញ់
+    private void exportFatsToExcel(List<Truck> trucks, HttpServletResponse response) throws IOException {
+        // Set response headers
+        String fileName = "Fats-change-report-" + LocalDate.now() + ".xlsx";
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+                .replace("+", "%20");
+        
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+        response.setCharacterEncoding("UTF-8");
+            // Create workbook and sheet
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Fats Change Report");
+        
+        // Create header row with styling
+        Row headerRow = sheet.createRow(0);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        
+        String[] headers = {
+            "#", "License Plate", "Model", "Year", 
+            "KM for Fats Change", "Current KM", "Last Fats Change Date",
+            "Last Fats Change KM", "Next Range", "KM Balance"
+        };
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+            sheet.setColumnWidth(i, 5000); // Set column width
+        }
+        
+        // Create data rows with color coding
+        int rowNum = 1;
+        for (int i = 0; i < trucks.size(); i++) {
+            Truck truck = trucks.get(i);
+            Row row = sheet.createRow(rowNum++);
+            
+            // Apply color style based on oil balance
+            CellStyle rowStyle = getFatBalanceCellStyle(workbook, truck);
+            
+            // Populate data
+            createCell(row, 0, i + 1, rowStyle); // #
+            createCell(row, 1, truck.getLicensePlate(), rowStyle);
+            createCell(row, 2, truck.getModel() != null ? truck.getModel().getName() : "", rowStyle);
+            createCell(row, 3, truck.getYear(), rowStyle);
+            createCell(row, 4, truck.getKmForFatsShoot(), rowStyle);
+            createCell(row, 5, truck.getCurrentKm(), rowStyle);
+            
+            // Last Fat change data
+            String lastChangeDate = truck.getLastFatsReport() != null && truck.getLastFatsReport().getDate() != null ?
+                truck.getLastFatsReport().getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "";
+            Double lastChangeKm = truck.getLastFatsReport() != null ? truck.getLastFatsReport().getCurrentKm() : null;
+            Double nextRange = truck.getLastFatsReport() != null ? truck.getLastFatsReport().getNextRange() : null;
+            
+            createCell(row, 6, lastChangeDate, rowStyle);
+            createCell(row, 7, lastChangeKm, rowStyle);
+            createCell(row, 8, nextRange, rowStyle);
+            createCell(row, 9, truck.getKmFatsBalance(), rowStyle);
+        }
+        
+        // Auto-size columns for better fit
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+        
+        // Stream the workbook to response
+        try (ServletOutputStream outputStream = response.getOutputStream()) {
+            workbook.write(outputStream);
+            outputStream.flush();
+        } finally {
+            workbook.close();
+        }
+    }
+
+    private CellStyle getFatBalanceCellStyle(Workbook workbook, Truck truck) {
+        CellStyle style = workbook.createCellStyle();
+
+        // Common border styling
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        // Default font
+        Font font = workbook.createFont();
+        font.setColor(IndexedColors.BLACK.getIndex());
+
+        // Get priority
+        int priority = getFatsPriority(truck);
+
+        switch (priority) {
+            case 1 -> {
+                // 🔴 Danger (red)
+                style.setFillForegroundColor(IndexedColors.RED.getIndex());
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                font.setColor(IndexedColors.WHITE.getIndex());
+            }
+
+            case 2 -> {
+                // 🟡 Warning (yellow)
+                style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                font.setColor(IndexedColors.BLACK.getIndex());
+            }
+
+            case 3 -> {
+            }
+
+            case 4 -> {
+            }
+        }
+
+        style.setFont(font);
+        return style;
+    }
+
+
+
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        
+        // Background color
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        
+        // Borders
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        
+        // Font
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 11);
+        style.setFont(font);
+        
+        // Alignment
+        style.setAlignment(HorizontalAlignment.CENTER);
+        // style.setVerticalAlignment(VerticalAlignment.MIDDLE);
+        
+        return style;
+    }
+
+
+
+    private CellStyle getOilBalanceCellStyle(Workbook workbook, Truck truck) {
+        CellStyle style = workbook.createCellStyle();
+        
+        // Common styling
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        
+        // Apply colors based on oil balance (matching your HTML colors)
+        Double balance = truck.getKmOilsBalance();
+        
+        if (balance == null) {
+            // Default style - no special background
+            return style;
+        }
+        
+        if (balance < 0) {
+            // Red background for negative balance
+            style.setFillForegroundColor(IndexedColors.RED.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            
+            // White text for better contrast
+            Font font = workbook.createFont();
+            font.setColor(IndexedColors.WHITE.getIndex());
+            style.setFont(font);
+        } else if (balance == 500) {
+            // Light red background
+            style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            
+            // White text for better contrast
+            Font font = workbook.createFont();
+            font.setColor(IndexedColors.WHITE.getIndex());
+            style.setFont(font);
+        } else if (balance > 0 && balance < 500) {
+            // Yellow background for warning
+            style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            
+            // Dark text for contrast on yellow
+            Font font = workbook.createFont();
+            font.setColor(IndexedColors.BLACK.getIndex());
+            style.setFont(font);
+        }
+        // For balance > 500, use default style (no background)
+        
+        return style;
+    }
+
+    private void createCell(Row row, int column, Object value, CellStyle style) {
+        Cell cell = row.createCell(column);
+        cell.setCellStyle(style);
+        
+        if (value == null) {
+            cell.setCellValue("");
+        } else if (value instanceof String) {
+            cell.setCellValue((String) value);
+        } else if (value instanceof Integer) {
+            cell.setCellValue((Integer) value);
+        } else if (value instanceof Long) {
+            cell.setCellValue((Long) value);
+        } else if (value instanceof Double) {
+            cell.setCellValue((Double) value);
+        } else if (value instanceof LocalDate) {
+            cell.setCellValue(((LocalDate) value).format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+        } else {
+            cell.setCellValue(value.toString());
+        }
+    }
+
+
+
 
     @GetMapping("/fats/shoot")
-    public String showAddDistanceForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model) {
+            public String showAddDistanceForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model) {
 
         Truck truck = truckService.findById(truckId)
                 .orElseThrow(() -> new RuntimeException("Truck not found"));
@@ -465,45 +800,14 @@ public class TruckWebController {
 
     // oils
     @GetMapping("/change/oils")
-    public String indexChangeOils(Model model,
+    public Object indexChangeOils(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-        @RequestParam(value = "licensePlate", required = false) String licensePlate
-    ) {
-
-        // List<Truck> trucks;
-        // int totalPages = 1;
-        // int size;
-        
-        // if ("all".equalsIgnoreCase(sizeParam)) {
-        //     size = Integer.MAX_VALUE;
-        // } else {
-        //     size = Integer.parseInt(sizeParam); 
-        // }
-
-        // if (showAll) {
-        //     if (licensePlate != null && !licensePlate.isEmpty()) {
-        //         trucks = truckService.findByLicensePlateContaining(licensePlate);
-        //     } else {
-        //         trucks = truckService.getAll();
-        //     }
-        // } else {
-        //     Pageable pageable = PageRequest.of(page, size);
-        //     Page<Truck> truckPage;
-        //     if (licensePlate != null && !licensePlate.isEmpty()) {
-        //         truckPage = truckService.findByLicensePlateContainingWithPageable(licensePlate, pageable);
-        //     } else {
-        //         truckPage = truckService.getAllWithPageable(pageable);
-        //     }
-        //     trucks = truckPage.getContent();
-        //     totalPages = truckPage.getTotalPages();
-        // }
-
-
-
-
-
+        @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response
+    ) throws IOException {
         List<Truck> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
             allTrucks = truckService.findByLicensePlateContaining(licensePlate);
@@ -512,7 +816,7 @@ public class TruckWebController {
         }
 
         allTrucks.sort(Comparator.comparingInt(this::getOilsPriority));
-
+        
         List<Truck> trucks;
         int totalPages;
         int size;
@@ -534,6 +838,11 @@ public class TruckWebController {
                 trucks = allTrucks.subList(fromIndex, toIndex);
             }
             totalPages = (int) Math.ceil(allTrucks.size() / (double) size);
+        }
+
+        if ("excel".equalsIgnoreCase(export)) {
+            exportOilsToExcel(trucks, response);
+            return null;
         }
 
         model.addAttribute("trucks", trucks);

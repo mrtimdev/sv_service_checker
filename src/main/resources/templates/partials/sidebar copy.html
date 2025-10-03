@@ -2,15 +2,15 @@
 
 <th:block th:fragment="sidebar">
     <!-- Sidebar -->
-    <aside style="height: 100vh;" class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200 transition-all duration-300 overflow-y-auto scrollbar-hide">
+    <aside style="height: 100vh;" class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200 transition-all duration-300 !overflow-y-scroll">
         <!-- Menu Header -->
-        <!-- <div class="mb-6 pt-[72px]" id="custom-padding-top_">
+        <div class="mb-6 pt-[72px]" id="custom-padding-top_">
             <h2 class="text-sm uppercase tracking-wide text-gray-200 dark:text-gray-400">
                 Menu
             </h2>
-        </div> -->
+        </div>
 
-        <nav class="flex-1 overflow-y-auto scrollbar-hide text-sm">
+        <nav class="flex-1 overflow-y-auto">
             <!-- Group: Dashboard -->
             <div class="mb-4">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Dashboard</h3>
@@ -30,6 +30,14 @@
             <div class="mb-4">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Trucks</h3>
                 <ul>
+                    <li>
+                        <a href="/admin/trucks"
+                            th:classappend="${requestURI == '/admin/trucks' || requestURI == '/admin/trucks/form'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-truck"></i>
+                            <span>All Trucks</span>
+                        </a>
+                    </li>
                     <li>
                         <a href="/admin/trucks/shoot/fats"
                             th:classappend="${requestURI == '/admin/trucks/shoot/fats' || requestURI == '/admin/trucks/fats/shoot'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -52,29 +60,6 @@
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fa fa-arrows"></i>
                             <span>Truck Distances</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/trucks"
-                            th:classappend="${requestURI == '/admin/trucks' || requestURI == '/admin/trucks/form'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span>All Trucks</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Group: Inspections Management -->
-            <div class="mb-4">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Inspections</h3>
-                <ul>
-                    <li>
-                        <a href="/inspections"
-                            th:classappend="${requestURI == '/inspections'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-gears"></i>
-                            <span th:text="#{trucks_inspections}">Truck Inspections</span>
                         </a>
                     </li>
                 </ul>
@@ -104,8 +89,8 @@
                         <a href="/inspections/reports"
                             th:classappend="${requestURI == '/inspections/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-gears"></i>
-                            <span th:text="#{inspections_reports}">Inspections Report</span>
+                            <i class="menu-icon fas fa-truck"></i>
+                            <span>Inspections Report</span>
                         </a>
                     </li>
                 </ul>
@@ -115,14 +100,14 @@
             <div class="mb-4">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Users & Drivers</h3>
                 <ul>
-                    <!-- <li>
+                    <li>
                         <a href="/admin/drivers"
                             th:classappend="${requestURI.startsWith('/admin/drivers')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-users"></i>
                             <span>Drivers</span>
                         </a>
-                    </li> -->
+                    </li>
                     <li sec:authorize="!hasRole('REPAIRMAN')">
                         <a href="/admin/users"
                             th:classappend="${requestURI.startsWith('/admin/users')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"

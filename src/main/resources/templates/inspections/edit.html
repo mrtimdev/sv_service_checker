@@ -38,54 +38,50 @@
                 <form th:action="@{/inspections/save}" th:object="${inspectionForm}" method="post"
                     class="bg-white dark:bg-gray-800 p-6 rounded shadow">
                     <input type="hidden" th:field="*{id}"/>
+                    <input type="hidden" name="formType" value="edit"/>
 
                     <div class="grid grid-cols-1 gap-4">
-                        <!-- Date -->
-                        <div>
-                            <label for="date" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Date</label>
-                            <input type="text" th:field="*{date}" id="date"
-                                th:value="${currentDate}"
-                                class="datepicker shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></p>
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                            <div>
+                                <label for="date" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Date</label>
+                                <input type="text" th:field="*{date}" id="date"
+                                        class="datepicker shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400" 
+                                    th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></p>
+                            </div>
 
-                        <!-- Truck -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Truck</label>
-                            <select th:field="*{truckId}"
-                                    class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
+                            <div>
+                                <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Truck</label>
+                                <select th:field="*{truckId}" style="width: 100%;" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
                                 <option value="">-- Select truck --</option>
-                                <option th:each="t : ${trucks}" th:value="${t.id}" th:text="${t.licensePlate}"></option>
-                            </select>
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            th:if="${#fields.hasErrors('truckId')}" th:errors="*{truckId}"></p>
+                                <option th:each="t : ${trucks}" th:value="${t.id}" th:text="${t.licensePlate}"
+                                        ></option>
+                                </select>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400" 
+                                    th:if="${#fields.hasErrors('truckId')}" th:errors="*{truckId}"></p>
+                            </div>
+
+                        
+                            <div>
+                                <label for="expiredDate" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Expired Date</label>
+                                <input type="text" th:field="*{expiredDate}" id="expiredDate"
+                                    required
+                                    class="datepicker shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400" 
+                                    th:if="${#fields.hasErrors('expiredDate')}" th:errors="*{expiredDate}"></p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Quantity</label>
+                                <input type="number" required th:field="*{quantity}" min="0" class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600"/>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400" 
+                                    th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></p>
+                            </div>
                         </div>
 
-                        <!-- Expired Date -->
-                        <div>
-                            <label for="expiredDate" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Expired Date</label>
-                            <input type="text" th:field="*{expiredDate}" id="expiredDate"
-                                required
-                                class="datepicker shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            th:if="${#fields.hasErrors('expiredDate')}" th:errors="*{expiredDate}"></p>
-                        </div>
-
-                        <!-- Quantity -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Quantity</label>
-                            <input type="number" th:field="*{quantity}" min="0"
-                                class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600"/>
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></p>
-                        </div>
-
-                        <!-- Note -->
                         <div>
                             <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Note</label>
-                            <textarea th:field="*{note}" rows="4"
-                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600"></textarea>
+                            <textarea th:field="*{note}" rows="4" class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600"></textarea>
                         </div>
 
                         <!-- Buttons -->
@@ -94,7 +90,7 @@
                             class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cancel</a>
                             <button type="submit"
                                     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Save
+                                Save Change
                             </button>
                         </div>
                     </div>
@@ -111,7 +107,6 @@
     $(function () {
         $('select').select2();
         $("#date").flatpickr({
-            defaultDate: new Date(),
             dateFormat: "M d, Y",
             allowInput: true
         });

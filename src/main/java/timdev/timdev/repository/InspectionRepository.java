@@ -2,6 +2,7 @@ package timdev.timdev.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import timdev.timdev.entity.Inspection;
+import timdev.timdev.entity.Truck;
 
 @Repository
 public interface InspectionRepository extends JpaRepository<Inspection, Long> {
@@ -52,4 +54,19 @@ public interface InspectionRepository extends JpaRepository<Inspection, Long> {
             @Param("expiredToDate") LocalDate expiredToDate,
             Pageable pageable
     );
+
+        Optional<Inspection> findTopByTruckIdOrderByDateDesc(Long truckId);
+
+        @Query("SELECT i FROM Inspection i WHERE i.truck = :truck AND (i.expiredDate IS NULL OR i.expiredDate >= :today)")
+        Optional<Inspection> findActiveInspectionByTruck(@Param("truck") Truck truck, @Param("today") LocalDate today);
+
+
+        @Query("SELECT i FROM Inspection i " +
+           "WHERE i.truck.id = :truckId " +
+           "AND (:startDate <= i.expiredDate AND :endDate >= i.date)")
+        List<Inspection> findOverlappingInspections(
+                @Param("truckId") Long truckId,
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate
+        );
 }

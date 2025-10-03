@@ -1,11 +1,14 @@
 package timdev.timdev.entity;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,6 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import timdev.timdev.enums.InspectionStatus;
 
 @Entity
 @Table(name = "inspections")
@@ -26,6 +30,10 @@ public class Inspection {
 
     @NotNull
     private LocalDate date;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'COMPLETED'")
+    private InspectionStatus status = InspectionStatus.COMPLETED;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "truck_id", nullable = false)
@@ -60,6 +68,100 @@ public class Inspection {
         return expiredDate.isBefore(LocalDate.now()) || expiredDate.isEqual(LocalDate.now());
     }
 
+    public String getCreatedAgo() {
+        if (createdAt == null) return "Unknown";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // If createdAt is in the future
+        if (createdAt.isAfter(now)) {
+            return "in the future";
+        }
+
+        Duration duration = Duration.between(createdAt, now);
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) {
+            return "just now";
+        }
+
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes > 1 ? "s" : "") + " ago";
+        }
+
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+        }
+
+        long days = hours / 24;
+        if (days < 7) {
+            return days + " day" + (days > 1 ? "s" : "") + " ago";
+        }
+
+        long weeks = days / 7;
+        if (weeks < 4) {
+            return weeks + " week" + (weeks > 1 ? "s" : "") + " ago";
+        }
+
+        long months = days / 30;
+        if (months < 12) {
+            return months + " month" + (months > 1 ? "s" : "") + " ago";
+        }
+
+        long years = days / 365;
+        return years + " year" + (years > 1 ? "s" : "") + " ago";
+    }
+
+    public String getUpdatedAgo() {
+        if (updatedAt == null) return "Never updated";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // If updatedAt is in the future
+        if (updatedAt.isAfter(now)) {
+            return "in the future";
+        }
+
+        Duration duration = Duration.between(updatedAt, now);
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) {
+            return "just now";
+        }
+
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes > 1 ? "s" : "") + " ago";
+        }
+
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+        }
+
+        long days = hours / 24;
+        if (days < 7) {
+            return days + " day" + (days > 1 ? "s" : "") + " ago";
+        }
+
+        long weeks = days / 7;
+        if (weeks < 4) {
+            return weeks + " week" + (weeks > 1 ? "s" : "") + " ago";
+        }
+
+        long months = days / 30;
+        if (months < 12) {
+            return months + " month" + (months > 1 ? "s" : "") + " ago";
+        }
+
+        long years = days / 365;
+        return years + " year" + (years > 1 ? "s" : "") + " ago";
+    }
+
+
+
 
     public long expiredDurationDays() {
         if (expiredDate == null) return 0;
@@ -74,12 +176,46 @@ public class Inspection {
         else return "Expires today";
     }
 
-    public String expiredColor() {
-        long days = expiredDurationDays();
-        if (days <= 31) return "bg-red-500 dark:bg-red-700 text-white"; // less than or equal 31 days
-        else if (days <= 90) return "bg-yellow-500 dark:bg-yellow-600 text-white"; // 32-90 days
-        return ""; // more than 90 days → normal
+    public String expiredDurationKHText() {
+        if (expiredDate == null) return "មិនមានកាលបរិច្ឆេទផុតកំណត់";
+        long days = ChronoUnit.DAYS.between(LocalDate.now(), expiredDate);
+
+        if (days < 0) {
+            return "ផុតកំណត់ " + Math.abs(days) + " ថ្ងៃហើយ";
+        } else if (days == 0) {
+            return "ផុតកំណត់ថ្ងៃនេះ";
+        } else if (days <= 30) {
+            return "នៅសល់ " + days + " ថ្ងៃ (ជិតផុតកំណត់)";
+        } else {
+            return "នៅសល់ " + days + " ថ្ងៃ";
+        }
     }
+
+
+    public String expiredColor_() {
+        long days = expiredDurationDays();
+        if (days <= 31) return "bg-red-500 dark:bg-red-700 text-white need-to-inspection"; // less than or equal 31 days
+        else if (days <= 90) return "bg-yellow-500 dark:bg-yellow-600 text-white need-to-inspection"; // 32-90 days
+        return "insufficient"; // more than 90 days → normal
+    }
+
+    public String expiredColor() {
+        long days = expiredDurationDays() - 30; // expiredDate - today
+
+        if (days > 0 && days <= 30) {
+            // Will expire within the next 30 days
+            return "bg-yellow-500 dark:bg-yellow-600 text-white need-to-inspection";
+        } else if (days < 0) {
+            // Already expired → red
+            return "bg-red-500 dark:bg-red-700 text-white need-to-inspection";
+        }
+        // More than 30 days left → normal
+        return "insufficient";
+    }
+
+
+
+
 
 
     public Long getId() {
@@ -160,6 +296,16 @@ public class Inspection {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+
+    public InspectionStatus getStatus() {
+        return status;
+    }
+
+
+    public void setStatus(InspectionStatus status) {
+        this.status = status;
     }
 
 }

@@ -54,6 +54,18 @@
                         <i class="fa fa-excel"></i>
                         Import Distances
                     </a>
+                    <!-- Excel Export Button -->
+                    <a th:href="@{/admin/trucks/shoot/fats(
+                        page=${currentPage},
+                        size=${pageSize},
+                        all=${showAll},
+                        licensePlate=${licensePlate != null ? licensePlate : ''},
+                        export='excel'
+                    )}" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                        <i class="fas fa-file-excel"></i>
+                        <span>Export to Excel</span>
+                    </a>
                 </div>
                 
             </div>
@@ -98,7 +110,7 @@
                             <th class="py-3 px-6 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-600 text-sm">
+                    <tbody class="text-gray-600">
                        <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
                                 th:classappend="${
                                     (truck.kmForFatsShoot == 4000 and truck.getKmFatsBalance() < 500) ? 'bg-[#ff0000] need-to-update text-white' :
@@ -118,13 +130,13 @@
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForFatsShoot, 0, 'COMMA')}"></td>
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
 
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#temporals.format(truck.lastFatsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.currentKm, 0, 'COMMA')}"></span>
                             </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.nextRange, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6">

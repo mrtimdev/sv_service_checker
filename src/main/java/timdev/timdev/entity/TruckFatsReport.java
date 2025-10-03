@@ -1,5 +1,6 @@
 package timdev.timdev.entity;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -166,6 +167,53 @@ public class TruckFatsReport {
 
     public void setKmForFatsShoot(Double kmForFatsShoot) {
         this.kmForFatsShoot = kmForFatsShoot;
+    }
+
+
+    public String getCreatedAgo() {
+        if (createdAt == null) return "Unknown";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // If createdAt is in the future
+        if (createdAt.isAfter(now)) {
+            return "in the future";
+        }
+
+        Duration duration = Duration.between(createdAt, now);
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) {
+            return "just now";
+        }
+
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes > 1 ? "s" : "") + " ago";
+        }
+
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+        }
+
+        long days = hours / 24;
+        if (days < 7) {
+            return days + " day" + (days > 1 ? "s" : "") + " ago";
+        }
+
+        long weeks = days / 7;
+        if (weeks < 4) {
+            return weeks + " week" + (weeks > 1 ? "s" : "") + " ago";
+        }
+
+        long months = days / 30;
+        if (months < 12) {
+            return months + " month" + (months > 1 ? "s" : "") + " ago";
+        }
+
+        long years = days / 365;
+        return years + " year" + (years > 1 ? "s" : "") + " ago";
     }
     
 

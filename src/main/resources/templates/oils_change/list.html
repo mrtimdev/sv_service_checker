@@ -54,6 +54,19 @@
                         <i class="fa fa-excel"></i>
                         Import Distances
                     </a>
+
+                    <!-- Excel Export Button -->
+                    <a th:href="@{/admin/trucks/change/oils(
+                        page=${currentPage},
+                        size=${pageSize},
+                        all=${showAll},
+                        licensePlate=${licensePlate != null ? licensePlate : ''},
+                        export='excel'
+                    )}" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                        <i class="fas fa-file-excel"></i>
+                        <span>Export to Excel</span>
+                    </a>
                 </div>
                 
             </div>
@@ -74,6 +87,7 @@
                             </select>
                         </div>
                     </form>
+
                     <form th:action="@{/admin/trucks/change/oils}" method="get" class="mb-4 flex space-x-2">
                         <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
                             class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
@@ -98,7 +112,7 @@
                             <th class="py-3 px-6 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-600 text-sm">
+                    <tbody class="text-gray-600">
                         <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
                             th:classappend="${ 
                                 truck.kmOilsBalance == 500 ? 'bg-[#E87A7AFF] need-to-update text-white' :
@@ -115,13 +129,13 @@
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForOilsChange, 0, 'COMMA')}"></td>
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
 
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#temporals.format(truck.lastOilsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.currentKm, 0, 'COMMA')}"></span>
                             </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
+                            <td class="py-3 px-6 text-center">
                                 <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.nextRange, 0, 'COMMA')}"></span>
                             </td>
                             <td class="py-3 px-6">

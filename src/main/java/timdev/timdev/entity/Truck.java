@@ -120,6 +120,18 @@ public class Truck {
     @OneToOne(mappedBy = "truck", fetch = FetchType.LAZY)
     private Driver driver;
 
+    @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Inspection> inspections = new ArrayList<>();
+
+
+    // ✅ Get latest inspection
+    // public Optional<Inspection> getLatestInspection() {
+    //     return inspections.stream()
+    //             .sorted(Comparator.comparing(Inspection::getExpiredDate,
+    //                     Comparator.nullsLast(Comparator.reverseOrder())))
+    //             .findFirst();
+    // }
+
 
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
@@ -288,10 +300,22 @@ public class Truck {
         return lastFatsReport;
     }
 
+
+    @Transient
+    private Inspection lastInspection;
+
+    public Inspection getLasInspection() {
+        if (inspections != null && !inspections.isEmpty()) {
+            return inspections.get(inspections.size() - 1);
+        }
+        return null;
+    }
+
     @PostLoad
     private void populateLastFatsAndOilsReport() {
         this.lastFatsReport = getLastFatsReport();
         this.lastOilsReport = getLastOilsReport();
+        this.lastInspection = getLasInspection();
     }
     // @PostLoad
     // private void populateLastOilsReport() {
@@ -438,6 +462,22 @@ public class Truck {
 
     public void setSize(TruckSize size) {
         this.size = size;
+    }
+
+    public List<Inspection> getInspections() {
+        return inspections;
+    }
+
+    public void setInspections(List<Inspection> inspections) {
+        this.inspections = inspections;
+    }
+
+    public Inspection getLastInspection() {
+        return lastInspection;
+    }
+
+    public void setLastInspection(Inspection lastInspection) {
+        this.lastInspection = lastInspection;
     }
 
 

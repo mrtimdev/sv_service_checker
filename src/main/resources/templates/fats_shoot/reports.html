@@ -77,7 +77,7 @@
                                 <i class="fas fa-truck mr-2 text-primary-600"></i>Truck
                             </label>
                             <div class="relative">
-                                <select id="truck" name="truck_id" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none shadow-sm">
+                                <select id="truck" style="width: 100%;" name="truck_id" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none shadow-sm">
                                     <option value="">All trucks</option>
                                     <option th:each="truck : ${trucks}" 
                                         th:value="${truck.id}"
@@ -134,7 +134,7 @@
                     <!-- Page size selector -->
                     <div class="flex items-center">
                         <label for="size">Size:</label>
-                        <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
+                        <select id="size"  name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
                             <option th:value="5" th:selected="${pageSize == '5'}">5</option>
                             <option th:value="10" th:selected="${pageSize == '10'}">10</option>
                             <option th:value="20" th:selected="${pageSize == '20'}">20</option>
@@ -156,10 +156,12 @@
                             <th class="py-3 px-6 text-center">គីឡូដែលបានបាញ់</th>
                             <th class="py-3 px-6 text-center">គីឡូត្រូវបាញ់បន្ទាប់</th>
                             <th class="py-3 px-6 text-center">ចំណាំ</th>
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Created By</th>
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Created</th>
                             <th class="py-3 px-6 text-center" style="display: none;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-600 text-sm">
+                    <tbody class="text-gray-600">
                         <tr th:each="report, row : ${reports}" class="border-b border-gray-200 hover:bg-gray-50">
                             <td class="py-3 px-6 text-center" th:text="${row.index + 1}"></td>
                             <td class="py-3 px-6 text-center" th:text="${report.truck.licensePlate}"></td>
@@ -173,6 +175,13 @@
 
                             <td class="py-3 px-6 text-center">
                                 <div th:utext="${report.note}"></div>
+                            </td>
+
+                            <td class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" >
+                                <span th:text="${report.createdBy?.fullName()}"></span>
+                            </td>
+                            <td class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" >
+                                <span th:text="${report.getCreatedAgo()}"></span>
                             </td>
                             
                             <td class="py-3 px-6 text-center" style="display: none;">

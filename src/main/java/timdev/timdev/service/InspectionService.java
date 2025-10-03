@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
 import timdev.timdev.entity.Inspection;
+import timdev.timdev.entity.Truck;
 import timdev.timdev.repository.InspectionRepository;
+import jakarta.transaction.Transactional;
 
 @AllArgsConstructor
 @Service
@@ -47,6 +49,7 @@ public class InspectionService {
         return repo.save(ins);
     }
 
+    @Transactional
     public void delete(Long id) {
         repo.deleteById(id);
     }
@@ -78,6 +81,49 @@ public class InspectionService {
             Pageable pageable
     ) {
         return repo.findAllFilteredWithPageable(licensePlate, fromDate, toDate, expiredFromDate, expiredToDate, pageable);
+    }
+
+
+
+    public boolean isDuplicateInspection(Long truckId, LocalDate inspectionDate) {
+        // Find the latest inspection for this truck
+        Optional<Inspection> latestInspection = repo
+            .findTopByTruckIdOrderByDateDesc(truckId);
+        
+        if (latestInspection.isEmpty()) {
+            return false; // No existing inspections, so not duplicate
+        }
+        
+        Inspection lastInspection = latestInspection.get();
+        
+        // Check if the last inspection is still valid (not expired)
+        if (lastInspection.getExpiredDate() != null && 
+            !lastInspection.isExpired()) {
+            return true; // Duplicate - truck still has valid inspection
+        }
+        
+        return false; // Last inspection is expired, allow new one
+    }
+
+    public boolean hasActiveInspection(Truck truck) {
+        Optional<Inspection> existing = repo.findActiveInspectionByTruck(truck, LocalDate.now());
+        return existing.isPresent();
+    }
+
+    public boolean hasActiveWithAllowMoreNewInspection(Truck truck) {
+        Optional<Inspection> existing = repo.findActiveInspectionByTruck(truck, LocalDate.now());
+        Inspection inspection = existing.get();
+        if (inspection.getExpiredDate() == null) {
+            return false; // still active without expired date
+        }
+
+        long days = inspection.expiredDurationDays();
+        return days > 31; // allow new inspection if the current active one has more than 30 days left
+    }
+
+    // ✅ Service wrapper for repository method
+    public List<Inspection> findOverlappingInspections(Long truckId, LocalDate startDate, LocalDate endDate) {
+        return repo.findOverlappingInspections(truckId, startDate, endDate);
     }
 
 

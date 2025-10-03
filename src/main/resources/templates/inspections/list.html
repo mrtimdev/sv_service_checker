@@ -24,9 +24,6 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        #filterContent {
-            display: none;
-        }
     </style>
 </head>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
@@ -46,101 +43,36 @@
 
 
                 <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Inspections List</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{trucks_inspections}"></h1>
 
-                <div class="flex gap-2 items-center">
-                    <a th:href="@{/inspections/create}" 
+                <div class="flex gap-2 items-center mb-6">
+                    <a target="_blank" th:href="@{/inspections/create}" 
                         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200">
-                        <i class="fa fa-plus"></i>  
-                        Create Inspection
+                            
+                        <i class="fas fa-plus"></i>
+                        <span>Create Inspection</span>
                     </a>
-                    <a th:href="@{/inspections/import}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
-                        <i class="fa fa-file-excel"></i>  
-                         Import Inspection
-                    </a>
-
-                    <a id="toggleFilter" class="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800">
-                        <i class="fa fa-filter"></i>  
-                         Toggle Filter
+                    <!-- <a target="_blank" th:href="@{/inspections/import}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+                        <i class="fa fa-excel"></i>
+                        Import Inspections
+                    </a> -->
+                    <!-- Excel Export Button -->
+                    <a th:href="@{/inspections(
+                        page=${currentPage},
+                        size=${pageSize},
+                        all=${showAll},
+                        licensePlate=${licensePlate != null ? licensePlate : ''},
+                        export='excel'
+                    )}" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                        <i class="fas fa-file-excel"></i>
+                        <span>Export to Excel</span>
                     </a>
                 </div>
                 
             </div>
 
             <div class="">
-                <form th:action="@{/inspections}" method="get" class="mb-4 flex flex-col space-y-4" id="filterContent">
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Inspection Date Range -->
-                        <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
-                            <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Inspection Date</legend>
-
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
-                                </label>
-                                <input type="text"
-                                    name="fromDate"
-                                    th:value="${fromDate != null} ? ${#temporals.format(fromDate, 'MMM dd, yyyy')} : ''"
-                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                    placeholder="Select start date"/>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
-                                </label>
-                                <input type="text"
-                                    name="toDate"
-                                    th:value="${toDate != null} ? ${#temporals.format(toDate, 'MMM dd, yyyy')} : ''"
-                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                    placeholder="Select end date"/>
-                            </div>
-                        </fieldset>
-
-                        <!-- Expiration Date Range -->
-                        <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
-                            <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Expiration Date</legend>
-
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
-                                </label>
-                                <input type="text"
-                                    name="expiredFromDate"
-                                    th:value="${expiredFromDate != null} ? ${#temporals.format(expiredFromDate, 'MMM dd, yyyy')} : ''"
-                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                    placeholder="Select start date"/>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
-                                </label>
-                                <input type="text"
-                                    name="expiredToDate"
-                                    th:value="${expiredToDate != null} ? ${#temporals.format(expiredToDate, 'MMM dd, yyyy')} : ''"
-                                    class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                    placeholder="Select end date"/>
-                            </div>
-                        </fieldset>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="mt-4 flex justify-end">
-                        <div class="flex gap-2">
-                            <button type="submit"
-                                class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-                                Apply Filters
-                            </button>
-                            <a href="/inspections"
-                                    class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
-                                Reset
-                            </a>
-                        </div>
-                    </div>
-                </form>
-
-                
                 <div class="flex justify-between items-center">
                     <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
                         <!-- Page size selector -->
@@ -166,56 +98,74 @@
                 <table class="min-w-full table-auto border border-gray-300 dark:border-gray-600">
                     <thead>
                         <tr class="bg-gray-100 dark:bg-gray-700">
-                        <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">#</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Date</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Truck</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Expired Date</th>
-                        <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Qty</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Note</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Expired Status</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Expired Durations</th>
-                        <th class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-white text-center">Actions</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 w-[70px]">ល​.រ</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">លេខឡាន</th>
+
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_date}"></th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_expired_date}"></th>
+                    
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_quantity}">Qty</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_note}">Note</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_durations}">Expired Durations</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr th:each="ins, iterStat : ${inspections}" 
-                            th:classappend="${ins.expiredColor()}"
-                            class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${iterStat.index + 1}">1</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${#temporals.format(ins.date, 'MMM dd, yyyy')}">2025-01-01</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.truck != null ? ins.truck.licensePlate : 'N/A'}">Truck-1</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${#temporals.format(ins.expiredDate, 'MMM dd, yyyy')}">2025-06-01</td>
-                        <td class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.quantity}">10</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.note}">Note</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" >
-                            <p>Status: <span th:text="${ins.expired} ? 'Expired' : 'Active'"></span></p>
-                        </td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" >
-                            <p th:text="${ins.expiredDurationText()}"></p>
-                        </td>
-                        <td class="py-3 px-6 border border-gray-300 dark:border-gray-600 bg-white text-center">
-                            <div class="flex gap-2 justify-center items-center">
-                                <a th:href="@{/inspections/edit/{id}(id=${ins.id})}"
-                                    class="px-3 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-                                    Edit
-                                </a>
-                                <a th:href="@{/inspections/delete/{id}(id=${ins.id})}"
-                                    onclick="return confirm('Are you sure you want to delete this inspection record?')"
-                                    class="px-3 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
-                                    Delete
-                                </a>
-                            </div>
-                        </td>
-                        </tr>
-                        <tr th:if="${inspections.isEmpty()}">
-                        <td colspan="7" class="px-4 py-4 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">
-                            No inspections found
-                        </td>
+                    <tbody class="text-gray-600">
+                       <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
+                                th:classappend="${truck.lastInspection?.expiredColor()}"
+                            >
+
+
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${row.index + 1}"></td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${truck.licensePlate}"></td>
+
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truck.lastInspection?.date, 'MMM dd, yyyy')}">2025-01-01</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truck.lastInspection?.expiredDate, 'MMM dd, yyyy')}">2025-06-01</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truck.lastInspection?.quantity}">10</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${truck.lastInspection?.note}">Note</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" >
+                                <p th:text="${truck.lastInspection?.expiredDurationText()}"></p>
+                            </td>
+
+                            <td class="py-3 px-6 text-center">
+                                <div x-data="{ open: false }" class="relative">
+                                    <!-- Dropdown toggle button -->
+                                    <button 
+                                        @click="open = !open" 
+                                        class="m-auto bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center space-x-2">
+                                        <i class="fas fa-bars"></i>
+                                        <span>Actions</span>
+                                    </button>
+
+                                    <!-- Dropdown menu -->
+                                    <div 
+                                        x-show="open" 
+                                        x-cloak
+                                        @click.away="open = false" 
+                                        x-transition 
+                                        class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+
+                                        <a target="_blank" th:href="@{/inspections/create(truck_id=${truck.id})}" 
+                                            class="btnUpdateInspectionExpired rounded-lg flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 space-x-2">
+                                            <i class="fas fa-clipboard-check text-blue-500"></i>
+                                            <span th:text="#{new_inspection}"></span>
+                                        </a>
+
+                                        <a target="_blank" 
+                                            th:href="@{/inspections/reports(truck_id=${truck.id}, licensePlate=${truck.licensePlate})}" 
+                                            class="flex items-center rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
+                                            <i class="fas fa-history text-gray-500"></i>
+                                            <span th:text="#{inspections_reports}"></span>
+                                        </a>
+
+                                    </div>
+                                </div>
+                            </td>
+
+
                         </tr>
                     </tbody>
                 </table>
-
-
 
 
 
@@ -224,18 +174,20 @@
             </div>
 
             <div class="flex justify-center mt-4 items-center">
+
                 <ul class="inline-flex -space-x-px mr-4" 
                     th:if="${totalPages > 1}">
                     <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
                         <a th:href="@{/inspections(page=${i}, size=${pageSize})}"
-                        th:text="${i + 1}"
-                        class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
-                        th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
+                            th:text="${i + 1}"
+                            class="px-3 py-1 border rounded-md mr-1 hover:bg-blue-100 dark:hover:bg-gray-700"
+                            th:classappend="${i == currentPage} ? ' bg-blue-500 text-white' : 'text-blue-500'">
                         </a>
                     </li>
                 </ul>
 
-                <a th:href="@{/inspections(all=true)}"
+                <!-- Show All button -->
+                <a th:href="@{/inspections(size=all)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>
@@ -254,7 +206,7 @@
     $(function() {
         /*$('tr.insufficient').attr({
             'data-bs-toggle': 'tooltip',
-            'title': 'រថយន្តនេះមិនទាន់គ្រប់គីឡូប្ដូរប្រេងទេ' 
+            'title': 'រថយន្តនេះមិនទាន់គ្រប់គីឡូបាញ់ខ្លាញ់ទេ' 
         });
 
         // Initialize all tooltips
@@ -262,23 +214,14 @@
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });*/
-        //$("#filterContent").slideUp();
-        $("#toggleFilter").click(function(e) {
-            e.preventDefault();
-            $("#filterContent").slideToggle();
-        })
-        $(".datepicker").flatpickr({
-            dateFormat: "M d, Y",
-            allowInput: true
-        });
-        $(document).on('click', '.btnChangeOils', function (e) {
+        $(document).on('click', '.btnUpdateInspectionExpired', function (e) {
             const url = $(this).attr('href');
             const tr = $(this).closest('tr');
 
             if (tr.hasClass("insufficient")) {
                 e.preventDefault(); 
 
-                if (confirm("រថយន្តនេះមិនទាន់គ្រប់គីឡូប្ដូរប្រេងទេ។ តើអ្នកចង់បន្តទៀតឬទេ?")) {
+                if (confirm("រថយន្តនេះមិនទាន់ថ្ងៃដែលត្រូវធ្វើឆៀកទេ។ តើអ្នកចង់បន្តទៀតឬទេ?")) {
                     window.location.href = url;
                 } else {
                     return false;

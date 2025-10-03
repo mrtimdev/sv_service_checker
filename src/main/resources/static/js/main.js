@@ -1,26 +1,88 @@
+window.addEventListener('load', function () {
+    document.getElementById('preloader').classList.add('hidden');
+});
 document.addEventListener("DOMContentLoaded", function () {
 
     const sidebar = document.getElementById("sidebar");
     const toggleBtn = document.getElementById("sidebarToggle");
+    const overlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.getElementById('main-content');
+    const sidebarIcon = document.getElementById("sidebarIcon");
+    
+    if (window.innerWidth < 640) {
+        localStorage.setItem("sidebarOpen", "false");
+    } 
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            toggleSidebar();
+        }
+    });
+
+    
 
     if (sidebar && toggleBtn) {
         toggleBtn.addEventListener("click", () => {
-            // Toggle hidden class for mobile
-            sidebar.classList.toggle("-translate-x-full");
-
-            // Optionally store state in localStorage
-            if (!sidebar.classList.contains("-translate-x-full")) {
-                localStorage.setItem("sidebarOpen", "true");
-            } else {
-                localStorage.setItem("sidebarOpen", "false");
-            }
+            toggleSidebar();
         });
 
         // Restore last state from localStorage
         if (localStorage.getItem("sidebarOpen") === "true") {
             sidebar.classList.remove("-translate-x-full");
+            mainContent.classList.add('sidebar-open');
+            console.log("sidebarOpen True");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 19l-7-7 7-7" />
+            `;
+        } else {
+            sidebar.classList.add("-translate-x-full");
+            mainContent.classList.remove('sidebar-open');
+            console.log("sidebarOpen False");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
+        }
+
+        overlay?.addEventListener('click', () => {
+            sidebar.classList.add("-translate-x-full");
+            mainContent.classList.remove('sidebar-open');
+            console.log("sidebarOpen False");
+            $('#sidebarOverlay').removeClass('active');
+            localStorage.setItem("sidebarOpen", "false");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
+        });
+    }
+
+
+
+    const toggleSidebar = () => {
+        sidebar.classList.toggle("-translate-x-full");
+
+        if (!sidebar.classList.contains("-translate-x-full")) {
+            localStorage.setItem("sidebarOpen", "true");
+            mainContent.classList.add("sidebar-open");
+            $('#sidebarOverlay').addClass('active');
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 19l-7-7 7-7" />
+            `;
+        } else {
+            localStorage.setItem("sidebarOpen", "false");
+            mainContent.classList.remove("sidebar-open");
+            $('#sidebarOverlay').removeClass('active');
+             sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
         }
     }
+
+    
 });
 
 

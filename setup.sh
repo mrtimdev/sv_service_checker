@@ -18,6 +18,9 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 
+scp ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_truck_fats/
+scp ./messages_km.properties deverloper@154.26.134.117:~/sv_truck_fats/
+scp ./messages.properties deverloper@154.26.134.117:~/sv_truck_fats/
 
 # Repairman Request
 server.port=8083
@@ -26,6 +29,7 @@ sudo nano /etc/systemd/system/sv_repairman.service
 sudo nano /etc/systemd/system/sv_truck_fats.service
 
 sudo systemctl daemon-reload
+sudo systemctl stop sv_truck_fats
 sudo systemctl enable sv_truck_fats
 sudo systemctl restart sv_truck_fats
 sudo systemctl status sv_truck_fats
