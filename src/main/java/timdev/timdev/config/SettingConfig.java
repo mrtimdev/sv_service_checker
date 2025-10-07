@@ -8,7 +8,11 @@ import timdev.timdev.enums.OilStatus;
 import timdev.timdev.enums.RoleType;
 
 @Component("setting")
-public class Setting {
+public class SettingConfig {
+
+    public Number expiredDeduction() {
+        return 30;
+    }
 
     public String formatStatus(Enum<?> value) {
         if (value == null) return "";

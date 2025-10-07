@@ -36,8 +36,8 @@ public class Inspection {
     private InspectionStatus status = InspectionStatus.COMPLETED;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "truck_id", nullable = false)
-    private Truck truck; 
+    @JoinColumn(name = "truck_inspection_id", nullable = false)
+    private TruckInspection truckInspection; 
 
     private LocalDate expiredDate;
 
@@ -234,12 +234,12 @@ public class Inspection {
         this.date = date;
     }
 
-    public Truck getTruck() {
-        return truck;
+    public TruckInspection getTruckInspection() {
+        return truckInspection;
     }
 
-    public void setTruck(Truck truck) {
-        this.truck = truck;
+    public void setTruckInspection(TruckInspection truckInspection) {
+        this.truckInspection = truckInspection;
     }
 
     public LocalDate getExpiredDate() {

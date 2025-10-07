@@ -18,7 +18,7 @@ public class InspectionRequestDTO {
     private LocalDate date;
 
     @NotNull(message = "Truck is required")
-    private Long truckId;
+    private Long truckInspectionId;
 
     @NotNull(message = "Expired date is required")
     @DateTimeFormat(pattern = "MMM dd, yyyy")
@@ -47,12 +47,12 @@ public class InspectionRequestDTO {
         this.date = date;
     }
 
-    public Long getTruckId() {
-        return truckId;
+    public Long getTruckInspectionId() {
+        return truckInspectionId;
     }
 
-    public void setTruckId(Long truckId) {
-        this.truckId = truckId;
+    public void setTruckInspectionId(Long truckInspectionId) {
+        this.truckInspectionId = truckInspectionId;
     }
 
     public LocalDate getExpiredDate() {

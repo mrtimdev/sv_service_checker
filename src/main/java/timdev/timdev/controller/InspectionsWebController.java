@@ -1,11 +1,14 @@
 package timdev.timdev.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,6 +20,9 @@ import java.util.Set;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -24,11 +30,15 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,6 +49,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.ServletOutputStream;
@@ -48,11 +59,11 @@ import lombok.AllArgsConstructor;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.InspectionRequestDTO;
 import timdev.timdev.entity.Inspection;
-import timdev.timdev.entity.Truck;
+import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.InspectionStatus;
 import timdev.timdev.service.InspectionService;
-import timdev.timdev.service.TruckService;
+import timdev.timdev.service.TruckInspectionService;
 
 @AllArgsConstructor
 @Controller
@@ -61,60 +72,7 @@ public class InspectionsWebController {
 
     private final InspectionService inspectionService;
 
-    private final TruckService truckService;
-
-
-    // @GetMapping
-    // public String list(
-    //     Model model,
-    //     @RequestParam(value = "page", defaultValue = "0") int page,
-    //     @RequestParam(value = "size", defaultValue = "10") String sizeParam,
-    //     @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-    //     @RequestParam(value = "licensePlate", required = false) String licensePlate,
-    //     @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
-    //     @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
-    //     @RequestParam(value = "expiredFromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate expiredFromDate,
-    //     @RequestParam(value = "expiredToDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate expiredToDate
-    // ) {
-    //     model.addAttribute("inspections", inspectionService.findAll());
-    //     List<Inspection> inspections;
-    //     int totalPages = 1;
-    //     int size;
-        
-    //     if ("all".equalsIgnoreCase(sizeParam)) {
-    //         size = Integer.MAX_VALUE;
-    //     } else {
-    //         size = Integer.parseInt(sizeParam); 
-    //     }
-
-
-    //      if (showAll) {
-    //         inspections = inspectionService.findAllFiltered(
-    //             licensePlate, fromDate, toDate, expiredFromDate, expiredToDate
-    //         );
-    //     } else {
-    //         Pageable pageable = PageRequest.of(page, size);
-    //         Page<Inspection> itemsPage = inspectionService.findAllFilteredWithPageable(
-    //             licensePlate, fromDate, toDate, expiredFromDate, expiredToDate, pageable
-    //         );
-    //         inspections = itemsPage.getContent();
-    //         totalPages = itemsPage.getTotalPages();
-    //     }
- 
-    //     // inspections.sort(Comparator.comparingLong(Inspection::expiredDurationDays));
-
-    //     model.addAttribute("inspections", inspections);
-    //     model.addAttribute("currentPage", page);
-    //     model.addAttribute("totalPages", totalPages);
-    //     model.addAttribute("pageSize", sizeParam);
-    //     model.addAttribute("showAll", showAll);
-    //     model.addAttribute("licensePlate", licensePlate);  
-    //     model.addAttribute("fromDate", fromDate);
-    //     model.addAttribute("toDate", toDate);
-    //     model.addAttribute("expiredFromDate", expiredFromDate);
-    //     model.addAttribute("expiredToDate", expiredToDate);
-    //     return "inspections/list";
-    // }
+    private final TruckInspectionService truckService;
 
 
     // truck's inspection list
@@ -132,7 +90,7 @@ public class InspectionsWebController {
     ) throws IOException 
         {
 
-        List<Truck> allTrucks;
+        List<TruckInspection> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
             allTrucks = truckService.findByLicensePlateContaining(licensePlate);
         } else {
@@ -141,7 +99,7 @@ public class InspectionsWebController {
 
         allTrucks.sort(Comparator.comparingInt(this::getInspectionPriority));
 
-        List<Truck> trucks;
+        List<TruckInspection> trucks;
         int totalPages;
         int size;
         
@@ -182,7 +140,7 @@ public class InspectionsWebController {
         return "inspections/list";
     }
 
-    private void exportInspectionsToExcel(List<Truck> trucks, HttpServletResponse response) throws IOException {
+    private void exportInspectionsToExcel(List<TruckInspection> trucks, HttpServletResponse response) throws IOException {
         // Set response headers
         String fileName = "Inspections-Schedule-Reports-" + LocalDate.now() + ".xlsx";
         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
@@ -237,7 +195,7 @@ public class InspectionsWebController {
         // Create data rows with color coding
         int rowNum = 1;
         for (int i = 0; i < trucks.size(); i++) {
-            Truck truck = trucks.get(i);
+            TruckInspection truck = trucks.get(i);
             Row row = sheet.createRow(rowNum++);
             
             // Apply color style based on oil balance
@@ -343,7 +301,7 @@ public class InspectionsWebController {
         return style;
     }
 
-    private CellStyle getInspectionCellStyle(Workbook workbook, Truck truck) {
+    private CellStyle getInspectionCellStyle(Workbook workbook, TruckInspection truck) {
         CellStyle style = workbook.createCellStyle();
 
         // Common border styling
@@ -420,7 +378,7 @@ public class InspectionsWebController {
         return style;
     }
 
-    private int getInspectionPriority(Truck truck) {
+    private int getInspectionPriority(TruckInspection truck) {
         if (truck.getLastInspection() == null) return 3;
         if (truck.getLastInspection().isExpired()) return 0; // expired → no priority
 
@@ -434,7 +392,7 @@ public class InspectionsWebController {
             return 1;
         }
         // More than 30 days left → normal
-        return 3;
+        return 4;
     }
 
 
@@ -466,7 +424,7 @@ public class InspectionsWebController {
         }
 
        if(truckId != null) {
-        Truck truck = truckService.findById(truckId)
+        TruckInspection truck = truckService.findById(truckId)
                 .orElseThrow(() -> new RuntimeException("Truck not found"));
             licensePlate = truck.getLicensePlate();
        }
@@ -507,7 +465,7 @@ public class InspectionsWebController {
         model.addAttribute("expiredToDate", expiredToDate);
 
 
-        model.addAttribute("selectedTruckId", truckId != null ? truckId : null);
+        model.addAttribute("selectedTruckInspectionId", truckId != null ? truckId : null);
         model.addAttribute("inspection", new Inspection());
         model.addAttribute("trucks", truckService.getAll());
         return "inspections/reports";
@@ -584,7 +542,7 @@ public class InspectionsWebController {
             // Populate data
             createInspectionReportCell(row, 0, i + 1); // #
             createInspectionReportCell(row, 1, inspectionDate);
-            createInspectionReportCell(row, 2, inspection.getTruck().getLicensePlate());
+            createInspectionReportCell(row, 2, inspection.getTruckInspection().getLicensePlate());
             createInspectionReportCell(row, 3, inspectionExpiredDate);
             createInspectionReportCell(row, 4, quantity);
             createInspectionReportCell(row, 5, note);
@@ -625,9 +583,9 @@ public class InspectionsWebController {
         InspectionRequestDTO inspectionDTO = new InspectionRequestDTO();
         
         if (truckId != null) {
-            inspectionDTO.setTruckId(truckId);
+            inspectionDTO.setTruckInspectionId(truckId);
         } else {
-            inspectionDTO.setTruckId(null);
+            inspectionDTO.setTruckInspectionId(null);
             // Truck truck = truckService.findById(truckId)
             //     .orElseThrow(() -> new RuntimeException("Truck not found"));
 
@@ -636,7 +594,7 @@ public class InspectionsWebController {
         
 
         
-        model.addAttribute("selectedTruckId", truckId != null ? truckId : null);
+        model.addAttribute("selectedTruckInspectionId", truckId != null ? truckId : null);
         model.addAttribute("inspectionForm", inspectionDTO);
         model.addAttribute("inspection", new Inspection());
         model.addAttribute("trucks", truckService.getAll());
@@ -663,7 +621,7 @@ public class InspectionsWebController {
             }
             return "inspections/form";
         }
-        Truck truck = truckService.findById(inspectionDTO.getTruckId()).orElse(null);
+        TruckInspection truck = truckService.findById(inspectionDTO.getTruckInspectionId()).orElse(null);
 
         if (truck == null) {
             model.addAttribute("error_truck", "Truck not found.");
@@ -689,7 +647,7 @@ public class InspectionsWebController {
         }
 
         // ✅ Complete all old inspections for this truck
-        List<Inspection> oldInspections = inspectionService.findByTruckId(truck.getId());
+        List<Inspection> oldInspections = inspectionService.findByTruckInspectionId(truck.getId());
         for (Inspection old : oldInspections) {
             if (!old.getId().equals(inspectionDTO.getId())) {
                 old.setStatus(InspectionStatus.COMPLETED);
@@ -717,7 +675,7 @@ public class InspectionsWebController {
         inspection.setExpiredDate(inspectionDTO.getExpiredDate());
         inspection.setQuantity(inspectionDTO.getQuantity());
         inspection.setNote(inspectionDTO.getNote());
-        inspection.setTruck(truck);
+        inspection.setTruckInspection(truck);
 
         
 
@@ -771,7 +729,7 @@ public class InspectionsWebController {
         InspectionRequestDTO dto = new InspectionRequestDTO();
         dto.setId(inspection.getId());
         dto.setDate(inspection.getDate());
-        dto.setTruckId(inspection.getTruck() != null ? inspection.getTruck().getId() : null);
+        dto.setTruckInspectionId(inspection.getTruckInspection() != null ? inspection.getTruckInspection().getId() : null);
         dto.setExpiredDate(inspection.getExpiredDate());
         dto.setQuantity(inspection.getQuantity());
         dto.setNote(inspection.getNote());
@@ -786,7 +744,6 @@ public class InspectionsWebController {
             RedirectAttributes redirectAttributes
     ) {
         try {
-            // Find the inspection
             Optional<Inspection> inspectionOpt = inspectionService.findById(id);
             if (inspectionOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Inspection not found.");
@@ -795,22 +752,237 @@ public class InspectionsWebController {
 
             Inspection inspection = inspectionOpt.get();
 
-            // Find the truck (optional check)
-            Optional<Truck> truckOpt = truckService.findById(inspection.getTruck().getId());
-            String truckPlate = truckOpt.map(Truck::getLicensePlate).orElse("Unknown Truck");
+            Optional<TruckInspection> truckOpt = truckService.findById(inspection.getTruckInspection().getId());
+            if (truckOpt.isPresent()) {
+                TruckInspection truck = truckOpt.get();
 
-            // Delete the inspection
-            inspectionService.delete(id);
+                // Update truck's last inspection if needed
+                if (truck.getLastInspection() != null && truck.getLastInspection().getId().equals(inspection.getId())) {
+                    // The inspection being deleted is the last inspection
+                    truck.setLastInspection(null);
+                    truck.setExpiredDate(null);
+                }
 
-            // Success message
-            redirectAttributes.addFlashAttribute("success", truckPlate + " inspection deleted successfully.");
+                truckService.save(truck);
+
+                String truckPlate = truck.getLicensePlate();
+
+                // Delete inspection
+                inspectionService.deleteInspection(id);
+
+                redirectAttributes.addFlashAttribute("success", truckPlate + " inspection deleted successfully.");
+            } else {
+                // No truck found
+                inspectionService.deleteInspection(id);
+                redirectAttributes.addFlashAttribute("success", "Inspection deleted successfully.");
+            }
 
         } catch (Exception e) {
-            // Catch any unexpected error
             redirectAttributes.addFlashAttribute("error", "Failed to delete inspection: " + e.getMessage());
         }
 
         return "redirect:/inspections/reports";
+    }
+
+
+
+
+    @GetMapping("/import")
+    public String showImportForm() {
+        return "inspections/import"; 
+    }
+
+    @PostMapping("/import")
+    public String importExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes,
+                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try (InputStream is = file.getInputStream();
+            Workbook workbook = WorkbookFactory.create(is)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            User user = userDetails.getUser();
+
+            // Skip header row (row 0)
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                String licensePlate = row.getCell(1).getStringCellValue().trim();
+                TruckInspection truck = truckService.findByLicensePlate(licensePlate).orElse(null);
+                if (truck == null) {
+                    // Skip if no truck found
+                    continue;
+                }
+
+                
+
+                int quantity = (int) row.getCell(2).getNumericCellValue();
+
+                LocalDate date = parseExcelDate(row.getCell(3));
+                LocalDate expiredDate = parseExcelDate(row.getCell(4));
+
+                if (date == null || expiredDate == null) {
+                    redirectAttributes.addFlashAttribute("error", "Date or Expired Date is missing at row " + (i + 1));
+                    return "redirect:/inspections/import";
+                }
+
+                String note = (row.getCell(5) != null) ? row.getCell(5).getStringCellValue() : "";
+
+
+                List<Inspection> overlaps = inspectionService.findOverlappingInspections(
+                    truck.getId(),
+                    date,
+                    expiredDate
+                );
+
+                if (!overlaps.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", truck.getLicensePlate() + " Inspection overlaps with an existing active inspection!");
+                    return "redirect:/inspections/import";
+                }
+
+                // ✅ Complete all old inspections for this truck
+                List<Inspection> oldInspections = inspectionService.findByTruckInspectionId(truck.getId());
+                for (Inspection old : oldInspections) {
+                    old.setStatus(InspectionStatus.COMPLETED);
+                    inspectionService.save(old);
+                }
+
+                // ✅ Create new inspection
+                Inspection inspection = new Inspection();
+                inspection.setTruckInspection(truck);
+                inspection.setQuantity(quantity);
+                inspection.setDate(date);
+                inspection.setExpiredDate(expiredDate);
+                inspection.setNote(note);
+                inspection.setCreatedAt(LocalDateTime.now());
+                inspection.setCreatedBy(user);
+                inspection.setStatus(InspectionStatus.ACTIVE);
+
+                // ✅ Update truck expiredDate
+                truck.setExpiredDate(expiredDate);
+                truckService.save(truck);
+
+                inspectionService.save(inspection);
+            }
+
+            redirectAttributes.addFlashAttribute("success", "File imported successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to import file: " + e.getMessage());
+        }
+        return "redirect:/inspections";
+    }
+
+
+    private LocalDate parseExcelDate(Cell cell) {
+        if (cell == null) return null;
+
+        try {
+            if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+                return cell.getLocalDateTimeCellValue().toLocalDate();
+            } else if (cell.getCellType() == CellType.STRING) {
+                String dateStr = cell.getStringCellValue().trim();
+                if (dateStr.isEmpty()) return null;
+
+                DateTimeFormatter[] formatters = {
+                    DateTimeFormatter.ofPattern("dd-MMM-yy"),
+                    DateTimeFormatter.ofPattern("dd/MM/yy"),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                    DateTimeFormatter.ofPattern("MM/dd/yyyy")
+                };
+
+                for (DateTimeFormatter fmt : formatters) {
+                    try {
+                        return LocalDate.parse(dateStr, fmt);
+                    } catch (DateTimeParseException ignored) {}
+                }
+                throw new RuntimeException("Unsupported date format: " + dateStr);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing date: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    @GetMapping("/download-template")
+    public ResponseEntity<byte[]> downloadTemplate() throws IOException {
+        // Create workbook
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Truck Template");
+
+        // Header row
+        Row header = sheet.createRow(0);
+        String[] columns = {"NO", "ស្លាកលេខ", "ចំនួនភ្លៅ", "ថ្ងៃចូលឆៀក", "សពុលភាពឆៀក", "ផ្សេងៗ"};
+        for (int i = 0; i < columns.length; i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(columns[i]);
+
+            // Optional: style header
+            CellStyle style = workbook.createCellStyle();
+            Font font = workbook.createFont();
+            font.setBold(true);
+            style.setFont(font);
+            style.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            style.setAlignment(HorizontalAlignment.CENTER);
+            cell.setCellStyle(style);
+        }
+
+        // Sample rows
+        Object[][] sampleData = {
+                {1, "3E-9570", 2, "08-Jan-25", "08-Jan-26", "Note your reason!"},
+                {2, "3E-3363", 2, "22-Aug-24", "22-Aug-25", ""}
+        };
+
+        // Create styles for data cells
+        CellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.setAlignment(HorizontalAlignment.CENTER);
+
+        CellStyle textStyle = workbook.createCellStyle();
+        textStyle.setAlignment(HorizontalAlignment.LEFT);
+
+        CellStyle dateStyle = workbook.createCellStyle();
+        CreationHelper createHelper = workbook.getCreationHelper();
+        dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MMM-yy"));
+        dateStyle.setAlignment(HorizontalAlignment.CENTER);
+
+        int rowNum = 1;
+        for (Object[] rowData : sampleData) {
+            Row row = sheet.createRow(rowNum++);
+            for (int i = 0; i < rowData.length; i++) {
+                Cell cell = row.createCell(i);
+                Object value = rowData[i];
+
+                if (value instanceof Integer) {
+                    cell.setCellValue((Integer) value);
+                    cell.setCellStyle(numberStyle);
+                } else if (i == 3 || i == 4) { // Date columns
+                    cell.setCellValue((String) value);
+                    cell.setCellStyle(dateStyle);
+                } else {
+                    cell.setCellValue(value.toString());
+                    cell.setCellStyle(textStyle);
+                }
+            }
+        }
+
+        // Autosize columns
+        for (int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        // Write to byte array
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        workbook.write(bos);
+        workbook.close();
+
+        // Set headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDispositionFormData("attachment", "truck_inspections_template.xlsx");
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(bos.toByteArray());
     }
 
 }

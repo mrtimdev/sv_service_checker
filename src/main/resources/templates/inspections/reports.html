@@ -30,7 +30,7 @@
     </style>
 </th:block>
 
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Inspections Reports')}">
     <th:block th:fragment="content">
         <div class="">
             <div class="mx-auto sm:px-6 lg:px-8">
@@ -179,7 +179,7 @@
                                 <option th:each="t : ${trucks}" 
                                     th:value="${t.id}" 
                                     th:text="${t.licensePlate}"
-                                    th:selected="${selectedTruckId != null} ? ${t.id} == ${selectedTruckId} : false"
+                                    th:selected="${selectedTruckInspectionId != null} ? ${t.id} == ${selectedTruckInspectionId} : false"
                                     >
                                 </option>
                             </select>
@@ -199,6 +199,8 @@
                         <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">#</th>
                         <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Date</th>
                         <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Truck</th>
+                        <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="#{type}">Type</th>
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="#{size}">size</th>
                         <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Expired Date</th>
                         <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Qty</th>
                         <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Note</th>
@@ -215,7 +217,9 @@
                             class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${iterStat.index + 1}">1</td>
                         <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${#temporals.format(ins.date, 'MMM dd, yyyy')}">2025-01-01</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.truck != null ? ins.truck.licensePlate : 'N/A'}">Truck-1</td>
+                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.truckInspection != null ? ins.truckInspection.licensePlate : 'N/A'}">Truck-1</td>
+                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${ins.truckInspection != null ? ins.truckInspection.type : 'N/A'}">Type</td>
+                        <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${ins.truckInspection != null ? ins.truckInspection.size : 'N/A'}">Size</td>
                         <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${#temporals.format(ins.expiredDate, 'MMM dd, yyyy')}">2025-06-01</td>
                         <td class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.quantity}">10</td>
                         <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${ins.note}">Note</td>

@@ -144,8 +144,8 @@ public class TruckDistanceService {
                         }
                         
                         td.setDate(importDate);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error parsing date at row " + (i + 1) + ": " + e.getMessage());
+                    } catch (RuntimeException e) {
+                        throw new RuntimeException("Error parsing date at row " + (i) + ": " + e.getMessage());
                     }
                 }
 
@@ -162,35 +162,46 @@ public class TruckDistanceService {
                     if (truck != null) {
                         td.setTruck(truck);
                     } else {
-                        throw new RuntimeException("Truck not found: " + truckNumber + " at row " + (i + 1));
+                        throw new RuntimeException("Truck not found: " + truckNumber + " at row " + (i));
                     }
                 }
 
                 // Distance column (index 3)
                 Cell distanceCell = row.getCell(3);
-                if (distanceCell != null) {
-                    try {
-                        double distance;
-                        if (distanceCell.getCellType() == CellType.NUMERIC) {
-                            distance = distanceCell.getNumericCellValue();
-                        } else {
-                            String distStr = distanceCell.getStringCellValue().trim();
-                            distStr = distStr.replaceAll("[^0-9.]", "");
-                            if (distStr.isEmpty()) {
-                                distance = 0.0;
-                            } else {
-                                distance = Double.parseDouble(distStr);
-                            }
-                        }
-                        td.setDistance(distance);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error parsing distance at row " + (i + 1) + ": " + e.getMessage());
+                try {
+                    double distance;
+                    
+                    if (distanceCell == null) {
+                        throw new RuntimeException("Distance cell is null at row " + (i));
                     }
+                    
+                    if (distanceCell.getCellType() == CellType.NUMERIC) {
+                        distance = distanceCell.getNumericCellValue();
+                    } else {
+                        String distStr = distanceCell.getStringCellValue().trim();
+                        distStr = distStr.replaceAll("[^0-9.]", "");
+                        if (distStr.isEmpty()) {
+                            throw new RuntimeException("Empty distance value at row " + (i));
+                        } else {
+                            distance = Double.parseDouble(distStr);
+                        }
+                    }
+                    
+                    if (distance <= 0) {
+                        throw new RuntimeException(td.getTruck().getLicensePlate() + " Distance must be greater than 0 at row " + i + ": " + distance);
+                    }
+                    
+                    td.setDistance(distance);
+                    td.setCreatedBy(currentUser);
+                    distances.add(td); 
+                    
+                } catch (RuntimeException e) {
+                    throw new RuntimeException(td.getTruck().getLicensePlate() + " Error parsing distance at row " + (i) + ": " + e.getMessage());
                 }
                 
-                td.setCreatedBy(currentUser);
+                // td.setCreatedBy(currentUser);
 
-                distances.add(td);
+                // distances.add(td);
             }
         }
 

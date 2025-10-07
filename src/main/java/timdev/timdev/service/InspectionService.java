@@ -8,17 +8,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import timdev.timdev.entity.Inspection;
-import timdev.timdev.entity.Truck;
+import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.repository.InspectionRepository;
-import jakarta.transaction.Transactional;
+import timdev.timdev.repository.TruckInspectionRepository;
 
 @AllArgsConstructor
 @Service
 public class InspectionService {
 
     private final InspectionRepository repo;
+    private final TruckInspectionRepository truckRepo;
     
     
     /** Return all inspections (no paging) */
@@ -28,12 +30,12 @@ public class InspectionService {
 
     /** Return inspections filtered by truck license plate (no paging) */
     public List<Inspection> findByLicensePlateContaining(String licensePlate) {
-        return repo.findByTruck_LicensePlateContainingIgnoreCase(licensePlate);
+        return repo.findByTruckInspection_LicensePlateContainingIgnoreCase(licensePlate);
     }
 
     /** Return paged inspections filtered by license plate */
     public Page<Inspection> findByLicensePlateContainingWithPageable(String licensePlate, Pageable pageable) {
-        return repo.findByTruck_LicensePlateContainingIgnoreCase(licensePlate, pageable);
+        return repo.findByTruckInspection_LicensePlateContainingIgnoreCase(licensePlate, pageable);
     }
 
     /** Return paged inspections (no filter) */
@@ -54,8 +56,26 @@ public class InspectionService {
         repo.deleteById(id);
     }
 
-    public List<Inspection> findByTruckId(Long truckId) {
-        return repo.findByTruckId(truckId);
+    @Transactional
+    public void deleteInspection(Long inspectionId) {
+        Inspection inspection = repo.findById(inspectionId)
+                .orElseThrow(() -> new RuntimeException("Inspection not found"));
+
+        TruckInspection truck = inspection.getTruckInspection();
+
+        if (truck != null && truck.getLastInspection() != null
+                && truck.getLastInspection().getId().equals(inspectionId)) {
+            truck.setLastInspection(null);
+            truck.setExpiredDate(null);
+            truckRepo.save(truck); // flush before deleting inspection
+        }
+
+        repo.delete(inspection);
+    }
+
+
+    public List<Inspection> findByTruckInspectionId(Long truckInspectionId) {
+        return repo.findByTruckInspectionId(truckInspectionId);
     }
 
 
@@ -85,10 +105,10 @@ public class InspectionService {
 
 
 
-    public boolean isDuplicateInspection(Long truckId, LocalDate inspectionDate) {
+    public boolean isDuplicateInspection(Long truckInspectionId, LocalDate inspectionDate) {
         // Find the latest inspection for this truck
         Optional<Inspection> latestInspection = repo
-            .findTopByTruckIdOrderByDateDesc(truckId);
+            .findTopByTruckInspectionIdOrderByDateDesc(truckInspectionId);
         
         if (latestInspection.isEmpty()) {
             return false; // No existing inspections, so not duplicate
@@ -105,12 +125,12 @@ public class InspectionService {
         return false; // Last inspection is expired, allow new one
     }
 
-    public boolean hasActiveInspection(Truck truck) {
+    public boolean hasActiveInspection(TruckInspection truck) {
         Optional<Inspection> existing = repo.findActiveInspectionByTruck(truck, LocalDate.now());
         return existing.isPresent();
     }
 
-    public boolean hasActiveWithAllowMoreNewInspection(Truck truck) {
+    public boolean hasActiveWithAllowMoreNewInspection(TruckInspection truck) {
         Optional<Inspection> existing = repo.findActiveInspectionByTruck(truck, LocalDate.now());
         Inspection inspection = existing.get();
         if (inspection.getExpiredDate() == null) {
@@ -122,8 +142,8 @@ public class InspectionService {
     }
 
     // ✅ Service wrapper for repository method
-    public List<Inspection> findOverlappingInspections(Long truckId, LocalDate startDate, LocalDate endDate) {
-        return repo.findOverlappingInspections(truckId, startDate, endDate);
+    public List<Inspection> findOverlappingInspections(Long truckInspectionId, LocalDate startDate, LocalDate endDate) {
+        return repo.findOverlappingInspections(truckInspectionId, startDate, endDate);
     }
 
 

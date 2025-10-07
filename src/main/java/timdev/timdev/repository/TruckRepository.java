@@ -30,4 +30,17 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
 
     Page<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 
+    // Find all trucks that require fat and oil
+    List<Truck> findByRequiredFatOilTrue();
+    
+    List<Truck> findByRequiredFatOilFalse();
+    
+    List<Truck> findByRequiredFatOil(Boolean requiredFatOil);
+
+
+    // Inspection methods
+    List<Truck> findByRequiredInspectionTrue();
+    List<Truck> findByRequiredInspectionFalse();
+    List<Truck> findByRequiredInspection(Boolean requiredInspection);
+
 }

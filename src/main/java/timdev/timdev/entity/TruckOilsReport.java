@@ -35,6 +35,9 @@ public class TruckOilsReport {
     @JsonBackReference
     private Truck truck;
 
+    @Column(nullable = false)
+    private Double literQuantityOfOils = 0.0;
+
     @NotNull(message = "The Date is required")
     @Column(nullable = false)
     @DateTimeFormat(pattern = "MMM dd, yyyy")
@@ -214,6 +217,14 @@ public class TruckOilsReport {
 
         long years = days / 365;
         return years + " year" + (years > 1 ? "s" : "") + " ago";
+    }
+
+    public Double getLiterQuantityOfOils() {
+        return literQuantityOfOils;
+    }
+
+    public void setLiterQuantityOfOils(Double literQuantityOfOils) {
+        this.literQuantityOfOils = literQuantityOfOils;
     }
     
 

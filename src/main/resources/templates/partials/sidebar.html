@@ -71,10 +71,18 @@
                 <ul>
                     <li>
                         <a href="/inspections"
-                            th:classappend="${requestURI == '/inspections'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/inspections' || requestURI == '/inspections/create' || requestURI == '/inspections/import'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-gears"></i>
                             <span th:text="#{trucks_inspections}">Truck Inspections</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/trucks-inspection"
+                            th:classappend="${requestURI == '/admin/trucks-inspection' || requestURI == '/admin/trucks-inspection/form'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-truck"></i>
+                            <span>Trucks For Inspections</span>
                         </a>
                     </li>
                 </ul>
@@ -155,7 +163,7 @@
         </nav>
 
         <!-- Theme Toggle -->
-        <div class="mt-auto pt-4">
+        <div class="mt-auto pt-4 border-t border-gray-500 dark:border-gray-700 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
             <button id="theme-toggle" class="flex items-center space-x-2 w-full p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
                 <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>

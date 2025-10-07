@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import timdev.timdev.entity.Driver;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.service.DriverService;
-import timdev.timdev.service.ServiceCheckerService;
 import timdev.timdev.service.TruckService;
 
 
@@ -30,7 +29,6 @@ import timdev.timdev.service.TruckService;
 public class DriverWebController {
 
     private final DriverService driverService;
-    private final ServiceCheckerService serviceCheckerService;
     private final TruckService truckService;
 
 
@@ -118,13 +116,6 @@ public class DriverWebController {
         Driver driver = driverService.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Driver not found with id: " + id));
         
-        // Check if driver is assigned to any service checkers
-        boolean hasServiceCheckers = serviceCheckerService.existsByDriver(driver);
-        
-        if (hasServiceCheckers) {
-            redirectAttributes.addFlashAttribute("error", driver.getFullName() + " Cannot delete driver: Driver is assigned to one or more service checkers");
-            return "redirect:/admin/drivers";
-        } 
         driverService.deleteDriver(id);
         return "redirect:/admin/drivers";
     }

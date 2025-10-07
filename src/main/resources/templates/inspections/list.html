@@ -24,6 +24,9 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        tr:not(.need-to-inspection):hover {
+            @apply bg-gray-50 dark:bg-gray-800;
+        }
     </style>
 </head>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
@@ -52,10 +55,10 @@
                         <i class="fas fa-plus"></i>
                         <span>Create Inspection</span>
                     </a>
-                    <!-- <a target="_blank" th:href="@{/inspections/import}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+                    <a target="_blank" th:href="@{/inspections/import}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
                         <i class="fa fa-excel"></i>
                         Import Inspections
-                    </a> -->
+                    </a>
                     <!-- Excel Export Button -->
                     <a th:href="@{/inspections(
                         page=${currentPage},
@@ -100,32 +103,43 @@
                         <tr class="bg-gray-100 dark:bg-gray-700">
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 w-[70px]">ល​.រ</th>
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">លេខឡាន</th>
-
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="#{type}">Type</th>
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="#{size}">size</th>
+                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_quantity}">Qty</th>
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_date}"></th>
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_expired_date}"></th>
                     
-                            <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_quantity}">Qty</th>
-                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_note}">Note</th>
+                            
+                            
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_durations}">Expired Durations</th>
+                            <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 bg-green-500" th:text="#{inspection_note}">Note</th>
                             <th class="text-center px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-600">
-                       <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
-                                th:classappend="${truck.lastInspection?.expiredColor()}"
+                       <tr th:each="truckInspection, row : ${trucks}" class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                th:classappend="${truckInspection.lastInspection?.expiredColor()}"
                             >
 
 
                             <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${row.index + 1}"></td>
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${truck.licensePlate}"></td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truckInspection.licensePlate}"></td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truckInspection.type}"></td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truckInspection.size}"></td>
 
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truck.lastInspection?.date, 'MMM dd, yyyy')}">2025-01-01</td>
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truck.lastInspection?.expiredDate, 'MMM dd, yyyy')}">2025-06-01</td>
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truck.lastInspection?.quantity}">10</td>
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${truck.lastInspection?.note}">Note</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${truckInspection.lastInspection?.quantity}">10</td>
+
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truckInspection.lastInspection?.date, 'MMM dd, yyyy')}">2025-01-01</td>
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" th:text="${#temporals.format(truckInspection.lastInspection?.expiredDate, 'MMM dd, yyyy')}">2025-06-01</td>
+                            
+                            
                             <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-center" >
-                                <p th:text="${truck.lastInspection?.expiredDurationText()}"></p>
+                                <p th:text="${truckInspection.lastInspection?.expiredDurationText()}"></p>
+                                <!-- <p th:text="${truckInspection.lastInspection != null ? truckInspection.lastInspection.expiredDurationDays() - @setting.expiredDeduction() : 0}"></p> -->
+
                             </td>
+
+                            <td class="px-4 py-2 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" th:text="${truckInspection.lastInspection?.note}">Note</td>
 
                             <td class="py-3 px-6 text-center">
                                 <div x-data="{ open: false }" class="relative">
@@ -143,16 +157,16 @@
                                         x-cloak
                                         @click.away="open = false" 
                                         x-transition 
-                                        class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                        class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg z-50">
 
-                                        <a target="_blank" th:href="@{/inspections/create(truck_id=${truck.id})}" 
+                                        <a target="_blank" th:href="@{/inspections/create(truck_id=${truckInspection.id})}" 
                                             class="btnUpdateInspectionExpired rounded-lg flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 space-x-2">
                                             <i class="fas fa-clipboard-check text-blue-500"></i>
                                             <span th:text="#{new_inspection}"></span>
                                         </a>
 
                                         <a target="_blank" 
-                                            th:href="@{/inspections/reports(truck_id=${truck.id}, licensePlate=${truck.licensePlate})}" 
+                                            th:href="@{/inspections/reports(truck_id=${truckInspection.id}, licensePlate=${truckInspection.licensePlate})}" 
                                             class="flex items-center rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
                                             <i class="fas fa-history text-gray-500"></i>
                                             <span th:text="#{inspections_reports}"></span>

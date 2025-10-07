@@ -43,6 +43,18 @@ public class Truck {
     @Column(name = "license_plate", nullable = false, unique = true)
     private String licensePlate;
 
+    @Column(nullable = false)
+    private Double literQuantityOfFats = 0.0;
+
+    @Column(nullable = false)
+    private Double literQuantityOfOils = 0.0;
+
+    @Column(name = "required_fat_oil", nullable = true)
+    private Boolean requiredFatOil = true;
+    // for inspection
+    @Column(name = "required_inspection", nullable = true)
+    private Boolean requiredInspection = true;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "model_id", nullable = true)
     private Model model;
@@ -119,9 +131,6 @@ public class Truck {
 
     @OneToOne(mappedBy = "truck", fetch = FetchType.LAZY)
     private Driver driver;
-
-    @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Inspection> inspections = new ArrayList<>();
 
 
     // ✅ Get latest inspection
@@ -301,21 +310,10 @@ public class Truck {
     }
 
 
-    @Transient
-    private Inspection lastInspection;
-
-    public Inspection getLasInspection() {
-        if (inspections != null && !inspections.isEmpty()) {
-            return inspections.get(inspections.size() - 1);
-        }
-        return null;
-    }
-
     @PostLoad
     private void populateLastFatsAndOilsReport() {
         this.lastFatsReport = getLastFatsReport();
         this.lastOilsReport = getLastOilsReport();
-        this.lastInspection = getLasInspection();
     }
     // @PostLoad
     // private void populateLastOilsReport() {
@@ -464,20 +462,44 @@ public class Truck {
         this.size = size;
     }
 
-    public List<Inspection> getInspections() {
-        return inspections;
+    public Boolean getRequiredFatOil() {
+        return requiredFatOil;
     }
 
-    public void setInspections(List<Inspection> inspections) {
-        this.inspections = inspections;
+    public void setRequiredFatOil(Boolean requiredFatOil) {
+        this.requiredFatOil = requiredFatOil;
     }
 
-    public Inspection getLastInspection() {
-        return lastInspection;
+    public boolean isRequiredFatOil() {
+        return Boolean.TRUE.equals(requiredFatOil);
     }
 
-    public void setLastInspection(Inspection lastInspection) {
-        this.lastInspection = lastInspection;
+    public Boolean getRequiredInspection() {
+        return requiredInspection;
+    }
+
+    public void setRequiredInspection(Boolean requiredInspection) {
+        this.requiredInspection = requiredInspection;
+    }
+
+    public boolean isRequiredInspection() {
+        return Boolean.TRUE.equals(requiredInspection);
+    }
+
+    public Double getLiterQuantityOfFats() {
+        return literQuantityOfFats;
+    }
+
+    public void setLiterQuantityOfFats(Double literQuantityOfFats) {
+        this.literQuantityOfFats = literQuantityOfFats;
+    }
+
+    public Double getLiterQuantityOfOils() {
+        return literQuantityOfOils;
+    }
+
+    public void setLiterQuantityOfOils(Double literQuantityOfOils) {
+        this.literQuantityOfOils = literQuantityOfOils;
     }
 
 

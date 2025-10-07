@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+
     <style>
         .file-upload-area {
             transition: all 0.3s ease;
@@ -18,7 +21,7 @@
         }
     </style>
 </th:block>
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Truck Distances Import')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Inspections Import')}">
     <th:block th:fragment="content">
         <div class="mx-auto sm:px-6 lg:px-8">
             <!-- Success/Error Messages -->
@@ -31,8 +34,8 @@
             </div>
 
             <div class="flex justify-between items-center mb-6 gap-2">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Truck Distances Record</h1>
-                <a th:href="@{/truck-distances}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Inspections Record</h1>
+                <a th:href="@{/inspections}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
                     Back to List
                 </a>
             </div>
@@ -45,10 +48,13 @@
                     <div class="card">
                         <div class="flex justify-between items-center mb-2 gap-2">
                             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Upload Excel File</h2>
+                            <a th:href="@{/inspections/download-template}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200">
+                                Download Excel Template
+                            </a>
                         </div>
                         
                         <div class="px-6 py-5">
-                            <form id="upload-form" th:action="@{/truck-distances/import}" enctype="multipart/form-data" method="post">
+                            <form id="upload-form" th:action="@{/inspections/import}" enctype="multipart/form-data" method="post">
                                 <label for="file-input" class="btn-primary cursor-pointer">  
                                     <div class="file-upload-area border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center mb-6 transition-colors">
                                         <i class="fas fa-file-excel text-4xl text-green-500 mb-4"></i>
@@ -100,7 +106,19 @@
 
 
 <th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    
     <script>
+        $(document).ready(function() {
+            // Initialize datepicker
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: true
+            });
+        });
 
         // File upload functionality
         const fileInput = document.getElementById('file-input');

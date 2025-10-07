@@ -35,6 +35,9 @@ public class TruckFatsReport {
     @JsonBackReference
     private Truck truck;
 
+    @Column(nullable = false)
+    private Double literQuantityOfFats = 0.0;
+
     @NotNull(message = "The Date is required")
     @Column(nullable = false)
     @DateTimeFormat(pattern = "MMM dd, yyyy")
@@ -214,6 +217,14 @@ public class TruckFatsReport {
 
         long years = days / 365;
         return years + " year" + (years > 1 ? "s" : "") + " ago";
+    }
+
+    public Double getLiterQuantityOfFats() {
+        return literQuantityOfFats;
+    }
+
+    public void setLiterQuantityOfFats(Double literQuantityOfFats) {
+        this.literQuantityOfFats = literQuantityOfFats;
     }
     
 

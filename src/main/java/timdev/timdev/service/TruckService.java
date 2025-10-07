@@ -39,6 +39,12 @@ public class TruckService {
         return truckRepo.findById(id);
     }
 
+    public Optional<Truck> findByLicensePlate(String lp) {
+        return truckRepo.findByLicensePlate(lp);
+    }
+
+    
+
     public Truck save(Truck truck) {
         return truckRepo.save(truck);
     }
@@ -54,6 +60,22 @@ public class TruckService {
 
     public void deleteById(Long id) {
         truckRepo.deleteById(id); 
+    }
+
+
+    public List<Truck> getTrucksRequiringFatAndOil() {
+        return truckRepo.findByRequiredFatOilTrue();
+    }
+    
+    public List<Truck> getTrucksNotRequiringFatAndOil() {
+        return truckRepo.findByRequiredFatOilFalse();
+    }
+    
+    public List<Truck> getAllTrucksByFatAndOilRequirement(Boolean required) {
+        if (required == null) {
+            return truckRepo.findAll();
+        }
+        return truckRepo.findByRequiredFatOil(required);
     }
 
 

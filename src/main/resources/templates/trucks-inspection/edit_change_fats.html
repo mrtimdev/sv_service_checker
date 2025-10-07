@@ -26,10 +26,10 @@
             <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200">បាញ់ខ្លាញ់ សម្រាប់ឡាន <i class="fa fa-arrow-right"></i> <span th:text="${truck.licensePlate}"></span></h1>
 
             <div class="overflow-x-auto">
-                <form th:action="@{/admin/trucks/fats/shoot/{id}(id=${truck.id})}" 
+                <form th:action="@{/admin/trucks/fats/edit/{id}(id=${truck.id})}" 
                       th:object="${truckFatsReport}" method="post">
 
-                    <div class="grid grid-cols-3 gap-6 mb-2">
+                    <div class="grid grid-cols-2 gap-6 mb-2">
 
                         <!-- Date -->
                         <div>
@@ -37,13 +37,6 @@
                             <input type="text" th:field="*{date}" id="date"
                                    th:value="${currentDate}"
                                    class="datepicker shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                        </div>
-
-                        <div>
-                            <label for="literQuantityOfFats" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Liter Quantity Of Fats</label>
-                            <input type="number" step="0.01" th:field="*{literQuantityOfFats}" id="literQuantityOfFats"
-                                
-                                class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600">
                         </div>
 
                         <!-- Current KM -->
@@ -65,12 +58,12 @@
                                     class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600"></textarea>
                     </div>
 
-                    <div class="flex items-center justify-start gap-2">
-                        <a th:href="@{/admin/trucks/shoot/fats}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cancel</a>
+                    <div class="flex items-center justify-between">
                         <button type="submit"
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Save
                         </button>
+                        <a th:href="@{/admin/trucks}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cancel</a>
                     </div>
                 </form>
             </div>
