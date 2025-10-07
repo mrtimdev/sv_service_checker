@@ -2,6 +2,10 @@
 
 body{background-color:inherit;position:relative}#main-content{margin-left:230px}.dt-container .top{display:flex;justify-content:space-around}.dt-container .top:nth-child(1),.dt-container .top:nth-child(2){width:50% !important}.dt-container .top:nth-child(1){text-align:start !important}.dt-container .top:nth-child(2){text-align:end !important}.dt-container .dataTable thead th .dt-column-header .dt-column-title{align-items:center !important}[x-cloak]{display:none !important}#queueMonitor{width:280px;transition:all .3s ease}#queueMonitor:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.1)}.dark #queueMonitor{box-shadow:0 4px 6px rgba(0,0,0,.3)}.custom-backdrop-blur-md{backdrop-filter:blur(12px) !important}/*# sourceMappingURL=admin.css.map */
 
+body {
+    font-size: 12px;
+}
+
 /* Smooth transitions for cards & links */
 .card-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -96,15 +100,7 @@ body {
   font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang",
                "Khmer OS System", "Khmer UI", "DaunPenh", sans-serif;
 }
-#header
-{
-    z-index: 50 !important;
-}
 
-#sidebar
-{
-    z-index: 40 !important;
-}
 
 #main-content {
   transition: margin-left 0.1s ease-in-out; /* smooth animation */
@@ -203,3 +199,35 @@ body {
 }
 
 
+.select2-container .select2-selection--single
+{
+    height: 38px !important;
+}
+
+.select2-container--default .select2-selection--single
+{
+    background-color: #ffffff;
+}
+.dark .select2-container--default .select2-selection--single
+{
+    background-color: #1f2937;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered
+{
+    
+    color: rgb(31 41 55 / var(--tw-text-opacity, 1)) !important;
+}
+
+.dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: rgb(229 231 235 / var(--tw-text-opacity, 1)) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered
+{
+    line-height: 38px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow
+{
+    top: 7px !important;
+}

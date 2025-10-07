@@ -23,6 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import timdev.timdev.dto.ExternalDriverDTO;
 import timdev.timdev.entity.ServiceChecker;
 import timdev.timdev.entity.ServiceCheckerItem;
 import timdev.timdev.entity.ServiceCheckerItemNote;
@@ -30,6 +31,8 @@ import timdev.timdev.entity.ServiceCheckerItemNote;
 @Service
 @RequiredArgsConstructor
 public class ExcelExportService {
+
+    private final DriverProxyService driverProxyService;
 
     public ByteArrayInputStream exportToExcel(List<ServiceChecker> data) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -71,8 +74,14 @@ public class ExcelExportService {
     
     for (ServiceChecker sc : data) {
         String serviceInfo = "SC-" + sc.getId();
-        String driverInfo = sc.getDriver().getFirstName() + " " + sc.getDriver().getLastName() + 
-                          " (" + sc.getDriver().getPlateNumber() + ")";
+
+        ExternalDriverDTO exDriver = sc.getExDriver() != null 
+                    ? driverProxyService.getDriverById(sc.getExDriver().getId()) 
+                    : null;
+        String driverInfo = exDriver != null 
+                    ? (exDriver.getName() + " (" + (exDriver.getAssignedVehicle() != null 
+                        ? exDriver.getAssignedVehicle().getLicensePlate() : "No Vehicle") + ")")
+                    : "No Driver";
         
         if (sc.getItems() != null && !sc.getItems().isEmpty()) {
             for (ServiceCheckerItem item : sc.getItems()) {

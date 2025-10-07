@@ -10,8 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import timdev.timdev.enums.RoleType;
-import timdev.timdev.enums.UserType;
->>>>>>> e46db96ed2f8b48ae51f508fbfec53af20d81dc5
 
 
 @Entity

@@ -5,8 +5,8 @@
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'SV Satisfaction Survey'">SV Satisfaction Survey</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <title th:text="${pageTitle} ?: 'SV Services Checker'">SV Services Checker</title>
+    
     
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons@3.3.1/css/all/all.min.css">
     <!-- In your <head> -->
     <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
-    <link href="/css/output.css" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
     
     <style>
@@ -24,10 +23,16 @@
         {
             padding-bottom: 10px !important;
         }
+
+        [is-show="true"]
+        {
+            display: block !important;
+        }
     </style>
 
     <th:block th:fragment="body-scripts"></th:block>
-    
+     <link rel="stylesheet" th:href="@{/css/main.css}">
+
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full">
     <!-- Preloader -->
@@ -41,18 +46,13 @@
     <!-- Header -->
     <div th:insert="~{partials/header :: header}"></div>
 
-    <!-- Sidebar -->
-    <!-- <div id="sidebar" class="fixed top-0 bottom-0 left-0 overflow-x-auto">
-        <div th:insert="~{partials/sidebar :: sidebar}"></div>
-    </div> -->
 
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <!-- dark overlay behind sidebar, hidden initially -->
         <div id="sidebarOverlay"
             class=""></div>
 
-        <div id="sidebar" class="fixed top-0 bottom-0 left-0 z-50">
+        <div id="sidebar" class="fixed top-0 bottom-0 left-0 z-40">
             <div th:insert="~{partials/sidebar :: sidebar}"></div>
         </div>
     </div>
@@ -60,7 +60,7 @@
     <th:block th:fragment="layout(content, title)">
         <main id="main-content">
             <!-- Main Content -->
-            <div class="transition-[margin-left] duration-100 ease-in-out min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans ml-0 sm:ml-[230px]" 
+            <div class="transition-[margin-left] duration-100 ease-in-out min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans ml-0" 
                 id="content-body" 
                 th:insert="${content}"></div>
         </main>
@@ -83,9 +83,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
+    <script>
+        dayjs.extend(dayjs_plugin_relativeTime);
+    </script>
+
     <script th:src="@{/js/main.js}"></script>
 
    
+
+
 
     <script>
         // On page load or when changing themes, best to add inline in `head` to avoid FOUC
@@ -123,12 +133,6 @@
             const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
             const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
             const themeToggleText = document.getElementById('theme-toggle-text');
-
-
-            /*const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            const mainContent = document.getElementById('main-content');*/
             
             // Check for saved theme preference or use system preference
             if (localStorage.getItem('color-theme') === 'dark' || 
@@ -157,35 +161,6 @@
                 }
             });
 
-
-            /*toggleBtn.addEventListener('click', () => {
-                if (sidebar.classList.contains('-translate-x-full')) {
-                    openSidebar();
-                    
-                    console.log("open");
-                } else {
-                    closeSidebar();
-                    console.log("close");
-                }
-            });
-
-            function openSidebar() {
-                sidebar.classList.remove('-translate-x-full');
-                sidebar.classList.add('translate-x-0');
-                overlay?.classList.remove('hidden');
-                // add class to main content for margin-left animation
-                mainContent.classList.add('sidebar-open');
-            }
-            function closeSidebar() {
-                sidebar.classList.add('-translate-x-full');
-                sidebar.classList.remove('translate-x-0');
-                overlay?.classList.add('hidden');
-                // remove class from main content
-                mainContent.classList.remove('sidebar-open');
-            }
-
-            overlay.addEventListener('click', closeSidebar);
-            */
         });
     </script>
 

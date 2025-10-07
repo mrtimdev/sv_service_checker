@@ -33,13 +33,14 @@
                             <!-- Driver Dropdown -->
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-bold mb-2" for="driverId">Driver</label>
-                                <select id="driverId" name="driver"
-                                    style="width: 100%; height: 38px !important;"
-                                        class="shadow appearance-none border rounded !w-full !h-[38px] py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                                <select id="driverId" name="driverId"
+                                    style="width: 100%; height: 38px;"
+                                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                                     <option value="">Select a driver</option>
                                     <option th:each="driver : ${drivers}" 
                                             th:value="${driver.id}" 
-                                            th:text="${driver.plateNumber + ' - ' +  driver.firstName + ' ' + driver.lastName}"></option>
+                                            th:text="${driver.assignedVehicle != null ? driver.assignedVehicle.licensePlate + ' - ' +  driver.getFullName() : driver.getFullName() }"
+                                            th:selected="${driver.id == serviceChecker.exDriver?.id}"></option>
                                 </select>
                             </div>
                         </div>
@@ -144,11 +145,11 @@
     <script>
         $(function () {
             $('select').select2({
-                placeholder: 'Select an option',
+                placeholder: 'Select a driver',
                 allowClear: true
             });
 
-            $('#driverId').select2({
+            /*$('#driverId').select2({
                 placeholder: 'Select a driver',
                 allowClear: true,
                 ajax: {
@@ -160,13 +161,11 @@
                     type: 'GET',
                     delay: 250,
                     processResults: function(data) {
-                        // Map API JSON to Select2 format
-                        // Assuming API returns an array of driver objects
                         return {
                             results: $.map(data, function(driver) {
                                 return {
                                     id: driver.id,
-                                    text: driver.name  // or driver.licenseNumber if you prefer
+                                    text: driver.licenseNumber +' - '+ driver.name  
                                 };
                             })
                         };
@@ -174,7 +173,7 @@
                     cache: true
                 },
                 minimumInputLength: 1
-            });
+            });*/
         });
         document.addEventListener('DOMContentLoaded', function() {
             // Show/hide notes when radio buttons change

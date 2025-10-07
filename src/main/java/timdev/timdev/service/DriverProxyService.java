@@ -17,6 +17,7 @@ import timdev.timdev.dto.ExternalDriverDTO;
 public class DriverProxyService {
     
     private static final String API_URL = "https://svtms.svtrucking.biz/api/v1/integrations/drivers/search";
+    private static final String API_DRIVER_URL = "https://svtms.svtrucking.biz/api/v1/integrations/drivers/";
     private static final String API_KEY = "1234567890abcdef";
 
     private final RestTemplate restTemplate;
@@ -35,7 +36,7 @@ public class DriverProxyService {
         headers.set("x-api-key", API_KEY);
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
-        String url = API_URL + "?id=" + externalDriverId;
+        String url = API_DRIVER_URL + externalDriverId;
         ResponseEntity<ExternalDriverDTO> response = restTemplate.exchange(url, HttpMethod.GET, request, ExternalDriverDTO.class);
 
         return response.getBody();
@@ -49,9 +50,20 @@ public class DriverProxyService {
         headers.set("x-api-key", API_KEY);
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
-        String url = API_URL + "?term=" + term;
+        String url = API_URL  + "?keyword=" + term;
         ResponseEntity<ExternalDriverDTO[]> response = restTemplate.exchange(url, HttpMethod.GET, request, ExternalDriverDTO[].class);
 
+        return response.getBody() != null ? Arrays.asList(response.getBody()) : Collections.emptyList();
+    }
+
+    /**
+     * get all drivers 
+     */ 
+    public List<ExternalDriverDTO> getAllDrivers() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x-api-key", API_KEY);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<ExternalDriverDTO[]> response = restTemplate.exchange(API_URL, HttpMethod.GET, request, ExternalDriverDTO[].class);
         return response.getBody() != null ? Arrays.asList(response.getBody()) : Collections.emptyList();
     }
 }

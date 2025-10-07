@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:insert="~{layouts/main :: head}"></th:block>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <style>
+            .dataTables_filter input {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.375rem !important;
+                padding: 0.375rem 0.75rem !important;
+            }
+            .dataTables_length select {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.375rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+            .dataTables_processing {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            .status-badge {
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            .status-pending {
+                background-color: #fef3c7;
+                color: #92400e;
+            }
+            .status-approved {
+                background-color: #d1fae5;
+                color: #065f46;
+            }
+            .status-rejected {
+                background-color: #fee2e2;
+                color: #b91c1c;
+            }
+            .status-in-progress {
+                background-color: #dbeafe;
+                color: #1e40af;
+            }
+            .status-completed {
+                background-color: #e0e7ff;
+                color: #3730a3;
+            }
+            .status-cancelled {
+                background-color: #f3f4f6;
+                color: #374151;
+            }
+            .action-btn {
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.875rem;
+                transition: all 0.2s;
+            }
+            .btn-view {
+                background-color: #3b82f6;
+                color: white;
+            }
+            .btn-view:hover {
+                background-color: #2563eb;
+            }
+            .btn-edit {
+                background-color: #10b981;
+                color: white;
+            }
+            .btn-edit:hover {
+                background-color: #059669;
+            }
+            .btn-delete {
+                background-color: #ef4444;
+                color: white;
+            }
+            .btn-delete:hover {
+                background-color: #dc2626;
+            }
+            .filter-section {
+                background-color: #f9fafb;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+        </style>
+    </head>
+    <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Requests List')}">
+        <th:block th:fragment="content">
+            <div class="">
+                <div class="mx-auto sm:px-6 lg:px-8">
+
+                    <!-- Success Message -->
+                    <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <span th:text="${success}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-2xl font-bold text-gray-700 dark:text-gray-100">Requests List</h1>
+                        <a th:href="@{/requests/create}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200 flex items-center">
+                            <i class="fas fa-plus-circle mr-2"></i> Create New Request
+                        </a>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="bg-white dark:bg-gray-800 p-5 mb-6 rounded-md text-gray-800 dark:text-gray-200">
+                        <h2 class="text-lg font-semibold mb-3">Filter Requests</h2>
+                        <div 
+                            class="grid grid-cols-1 gap-4">
+
+                            <!-- Row 1: Filters -->
+                            <div class="grid md:grid-cols-3 grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Urgency</label>
+                                    <select id="urgency" 
+                                            class="bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
+                                        <option value="">All Urgency Levels</option>
+                                        <option value="LOW" th:selected="${param.urgency == 'LOW'}">Low</option>
+                                        <option value="MEDIUM" th:selected="${param.urgency == 'MEDIUM'}">Medium</option>
+                                        <option value="HIGH" th:selected="${param.urgency == 'HIGH'}">High</option>
+                                        <option value="CRITICAL" th:selected="${param.urgency == 'CRITICAL'}">Critical</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="fromDate" required class="block text-sm font-medium mb-1">From Date</label>
+                                    <input type="text" id="fromDate" name="fromDate" class="datepicker bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full flatpickr-input"/>
+                                </div>
+                
+                                <div>
+                                    <label for="toDate" required class="block text-sm font-medium mb-1">To Date</label>
+                                    <input type="text" id="toDate" name="toDate" class="datepicker bg-gray-50 dark:bg-gray-700 border-0 text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full flatpickr-input"/>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Buttons -->
+                            <div class="flex justify-between item-center gap-2">
+                                <div class="flex justify-center item-center gap-2">
+                                    <button type="submit" 
+                                        id="btnFilter"
+                                        class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                                        Apply Filters
+                                    </button>
+                                    <a 
+                                        id="btnResetFilter"
+                                        th:href="@{/approvals/requests/pending}" 
+                                        class="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition duration-200 flex items-center justify-center">
+                                        <i class="fas fa-refresh mr-1"></i> Reset
+                                    </a>
+                                </div>
+
+                                <div class="flex justify-center item-center gap-2">
+                                    <a data-type="excel" class="cursor-pointer export-btn px-4 py-2 dark:bg-cyan-600 bg-cyan-600 text-white rounded hover:bg-cyan-700">
+                                        Export as Excel
+                                    </a>
+                                    <a data-type="pdf" class="cursor-pointer export-btn px-4 py-2 dark:bg-blue-600 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                        Export as PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-700 shadow-md rounded-lg overflow-hidden text-gray-700 dark:text-gray-100">
+                        <table id="requestsTable" class="table min-w-full divide-y divide-gray-200">
+                            <thead class="text-center bg-white dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">
+                                        <input id="check-all" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Request By</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Items</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Urgency</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Created Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-100 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-700">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+        </th:block>
+    </th:block>
+</html>
+
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+<!--
+<script th:src="@{/js/main.js}"</script> -->
+
+    <script>
+    var table = $('#requestsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '/requests/filters',
+            data: function(d) {
+                d.status = $('#statusFilter').val();       
+                d.urgency = $('#urgency').val();  
+                d.fromDate = $('#fromDate').val();    
+                d.toDate = $('#toDate').val();        
+            }
+        },
+        columns: [
+             { data: 'id',
+
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                
+                     return `
+                        <input type="checkbox" class="row-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded" value="${data}">
+                    `;
+                }
+            
+            },   
+            { data: 'title' },    
+            {
+                data: 'date',
+                render: function(data, type, row) {
+                    return formatDate(data, { showTime: false, showAgo: false });
+                }
+            },
+            { data: 'requestBy' },      
+            { data: 'items' },  
+            { data: 'description' },      
+            { data: 'urgency', className: "text-center", },       
+            { 
+                data: 'status',
+                className: "text-center",
+                render: (data, type, row) => {
+                    return statusFormat(data)
+                }
+            },
+            {
+                data: 'createdAt',
+                render: function(data, type, row) {
+                    return formatDate(data, { showTime: true, showAgo: true });
+                }
+            },
+
+            { 
+                data: null,             
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    var cloneBtn = `<a href="/requests/${row.id}/clone" class="action-btn bg-warning mr-2"><i class="fas fa-clone"></i> Duplicate </a>`;
+                    var viewBtn = `<a href="/requests/${row.id}" class="action-btn btn-view mr-2"><i class="fas fa-eye"></i> View</a>`;
+                    var editBtn = row.status === 'PENDING'
+                        ? `<a href="/requests/edit/${row.id}" class="action-btn btn-edit mr-2"><i class="fas fa-edit"></i> Edit</a>` : '';
+                    var deleteBtn = row.status != 'APPROVED' ? `
+                        <a href="#" class="action-btn btn-delete" onclick="deleteRequest(${row.id}); return false;">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </a>` : ``;
+                        return cloneBtn + viewBtn + editBtn + deleteBtn;
+                }
+            }
+        ]
+    });
+
+
+
+    
+
+    function deleteRequest(id) {
+        if (!confirm("Are you sure you want to delete this request?")) return;
+
+        fetch(`/requests/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content // if CSRF enabled
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("Request deleted successfully!");
+                location.reload(); // refresh table
+            } else {
+                alert("Failed to delete request!");
+            }
+        })
+        .catch(error => console.error("Error deleting request:", error));
+    }
+
+
+    $(function() {
+        $(".datepicker").flatpickr({
+            defaultDate: new Date(),
+            dateFormat: "M d, Y",
+        });
+
+        $("#btnFilter").on('click', function(e) {
+            e.preventDefault();
+            table.ajax.reload();
+        })
+
+
+        // Check/uncheck all rows
+        $('#check-all').on('click', function() {
+            const checked = $(this).is(':checked');
+            $('.row-checkbox').prop('checked', checked);
+        });
+
+        // Optional: uncheck "check-all" if any row is unchecked
+        $(document).on('click', '.row-checkbox', function() {
+            if (!$(this).is(':checked')) {
+                $('#check-all').prop('checked', false);
+            } else if ($('.row-checkbox:checked').length === $('.row-checkbox').length) {
+                $('#check-all').prop('checked', true);
+            }
+        });
+
+
+
+        $('.export-btn').on('click', function() {
+            var selectedIds = [];
+            const exportType = $(this).data('type');
+            $('.row-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            if (selectedIds.length === 0) {
+                alert('No rows selected!');
+                return;
+            }
+            const exportOption = exportType === "excel" ? 'asExcel=true' : 'asPdf=true'
+            var url = `/requests/export?${exportOption}&ids=` + selectedIds.join(',');
+            window.location.href = url;
+        });
+    })
+
+
+
+</script>

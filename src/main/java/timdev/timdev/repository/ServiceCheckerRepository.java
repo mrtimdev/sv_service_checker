@@ -18,8 +18,23 @@ import timdev.timdev.enums.ServiceCheckerStatus;
 
 public interface ServiceCheckerRepository extends JpaRepository<ServiceChecker, Long> {
     
+    @Query(value = "SELECT * FROM service_checkers sc WHERE sc.ex_driver_id = :exDriverId", 
+           nativeQuery = true)
+    List<ServiceChecker> findByExDriverId(@Param("exDriverId") Long exDriverId);
+
     List<ServiceChecker> findByDriverId(Long driverId);
+    List<ServiceChecker> findByDate(LocalDate startDate);
     List<ServiceChecker> findByDateBetween(LocalDate startDate, LocalDate endDate);
+
+    @Query(value = "SELECT * FROM service_checkers sc " +
+               "WHERE sc.ex_driver_id = :exDriverId " +
+               "AND sc.date BETWEEN :start AND :end", 
+       nativeQuery = true)
+    List<ServiceChecker> findByExDriverIdAndDateBetween(@Param("exDriverId") Long exDriverId,
+                                                    @Param("start") LocalDate start,
+                                                    @Param("end") LocalDate end);
+
+
     List<ServiceChecker> findByDateBetweenAndDriverId(LocalDate startDate, LocalDate endDate, Long driverId);
 
     @Query("SELECT sc FROM ServiceChecker sc " +
@@ -32,11 +47,49 @@ public interface ServiceCheckerRepository extends JpaRepository<ServiceChecker, 
         @Param("driverId") Long driverId);
 
 
+    @Query("SELECT sc FROM ServiceChecker sc " +
+       "WHERE (:start IS NULL OR sc.date >= :start) " +
+       "AND (:end IS NULL OR sc.date <= :end)")
+    List<ServiceChecker> findByOptionalDates(@Param("start") LocalDate start,
+                                         @Param("end") LocalDate end);
+
+
+
 
     List<ServiceChecker> findByIdNot(Long id);
+
     boolean existsByDriverAndDate(Driver driver, LocalDate date);
 
+    boolean existsByDriverIdAndDate(Long driverId, LocalDate date);
+    
+
+    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END " +
+                   "FROM service_checkers sc " +
+                   "WHERE sc.ex_driver_id = :exDriverId " +
+                   "AND sc.date = :date", 
+           nativeQuery = true)
+    boolean existsByExDriverIdAndDate(@Param("exDriverId") Long exDriverId,
+                                      @Param("date") LocalDate date);
+
+
+
     boolean existsByDriverAndDateAndIdNot(Driver driver, LocalDate date, Long id);
+
+    @Query(value = "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END " +
+                   "FROM service_checkers sc " +
+                   "WHERE sc.ex_driver_id = :exDriverId " +
+                   "AND sc.date = :date " +
+                   "AND sc.id <> :id",
+           nativeQuery = true)
+    boolean existsByExDriverAndDateAndIdNot(@Param("exDriverId") Long exDriverId,
+                                            @Param("date") LocalDate date,
+                                            @Param("id") Long id);
+
+    @Query("SELECT sc FROM ServiceChecker sc " +
+       "WHERE sc.date = :date AND sc.id <> :excludeId")
+    List<ServiceChecker> findByDateAndIdNot(@Param("date") LocalDate date, 
+                                        @Param("excludeId") Long excludeId);
+
 
 
     @Query("SELECT sc FROM ServiceChecker sc " +

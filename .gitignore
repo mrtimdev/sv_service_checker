@@ -21,6 +21,7 @@ node_modules/
 *.iws
 *.iml
 *.ipr
+*.zip
 
 ### NetBeans ###
 /nbproject/private/

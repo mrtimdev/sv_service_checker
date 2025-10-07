@@ -2,31 +2,28 @@ window.addEventListener('load', function () {
     document.getElementById('preloader').classList.add('hidden');
 });
 document.addEventListener("DOMContentLoaded", function () {
+
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const overlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.getElementById('main-content');
+    const sidebarIcon = document.getElementById("sidebarIcon");
     
     if (window.innerWidth < 640) {
         localStorage.setItem("sidebarOpen", "false");
     } 
 
-    const sidebar = document.getElementById("sidebar");
-    const toggleBtn = document.getElementById("sidebarToggle");
-     const overlay = document.getElementById('sidebarOverlay');
-    const mainContent = document.getElementById('main-content');
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            toggleSidebar();
+        }
+    });
+
+    
 
     if (sidebar && toggleBtn) {
         toggleBtn.addEventListener("click", () => {
-            // Toggle hidden class for mobile
-            sidebar.classList.toggle("-translate-x-full");
-
-            // Optionally store state in localStorage
-            if (!sidebar.classList.contains("-translate-x-full")) {
-                localStorage.setItem("sidebarOpen", "true");
-                mainContent.classList.add('sidebar-open');
-                $('#sidebarOverlay').addClass('active');
-            } else {
-                localStorage.setItem("sidebarOpen", "false");
-                mainContent.classList.remove('sidebar-open');
-                $('#sidebarOverlay').removeClass('active');
-            }
+            toggleSidebar();
         });
 
         // Restore last state from localStorage
@@ -34,10 +31,18 @@ document.addEventListener("DOMContentLoaded", function () {
             sidebar.classList.remove("-translate-x-full");
             mainContent.classList.add('sidebar-open');
             console.log("sidebarOpen True");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 19l-7-7 7-7" />
+            `;
         } else {
             sidebar.classList.add("-translate-x-full");
             mainContent.classList.remove('sidebar-open');
             console.log("sidebarOpen False");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
         }
 
         overlay?.addEventListener('click', () => {
@@ -46,66 +51,42 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("sidebarOpen False");
             $('#sidebarOverlay').removeClass('active');
             localStorage.setItem("sidebarOpen", "false");
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
         });
+    }
+
+
+
+    const toggleSidebar = () => {
+        sidebar.classList.toggle("-translate-x-full");
+
+        if (!sidebar.classList.contains("-translate-x-full")) {
+            localStorage.setItem("sidebarOpen", "true");
+            mainContent.classList.add("sidebar-open");
+            $('#sidebarOverlay').addClass('active');
+            sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 19l-7-7 7-7" />
+            `;
+        } else {
+            localStorage.setItem("sidebarOpen", "false");
+            mainContent.classList.remove("sidebar-open");
+            $('#sidebarOverlay').removeClass('active');
+             sidebarIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            `;
+        }
     }
 
     
 });
 
 
-// document.addEventListener('DOMContentLoaded', () => {
-//   const sidebar = document.getElementById('sidebar');
-//   const overlay = document.getElementById('sidebarOverlay');
-//   const toggleBtn = document.getElementById('sidebarToggle');
-//   const mainContent = document.getElementById('main-content');
 
-//   function openSidebar() {
-//     console.log("open");
-//     sidebar.classList.remove('-translate-x-full');
-//     sidebar.classList.add('translate-x-0');
-//     overlay?.classList.remove('hidden');
-//     // add class to main content for margin-left animation
-//     mainContent.classList.add('sidebar-open');
-//   }
-
-//   function closeSidebar() {
-//     console.log("close");
-//     sidebar.classList.add('-translate-x-full');
-//     sidebar.classList.remove('translate-x-0');
-//     overlay?.classList.add('hidden');
-//     // remove class from main content
-//     mainContent.classList.remove('sidebar-open');
-//   }
-
-//   toggleBtn.addEventListener('click', () => {
-//     if (!sidebar.classList.contains('-translate-x-full')) {
-//       closeSidebar();
-//       console.log("close");
-//     } else {
-      
-//       openSidebar();
-//       console.log("open");
-//     }
-//   });
-
-// //   overlay.addEventListener('click', closeSidebar);
-
-//   // Ensure proper state when resizing
-//   window.addEventListener('resize', () => {
-//     if (window.innerWidth > 640) {
-//       // keep sidebar visible, main-content open
-//       sidebar.classList.remove('-translate-x-full');
-//       sidebar.classList.add('translate-x-0');
-//       mainContent.classList.add('sidebar-open');
-//       overlay?.classList.add('hidden');
-//     } else {
-//       // mobile defaults closed
-//       sidebar.classList.add('-translate-x-full');
-//       sidebar.classList.remove('translate-x-0');
-//       mainContent.classList.remove('sidebar-open');
-//     }
-//   });
-// });
 
 
 
@@ -129,34 +110,6 @@ function updateSelectedCount() {
     $('#bulkDeleteBtn').toggleClass('opacity-50 cursor-not-allowed', count === 0);
 }
 
-
-// =====================
-// Chart.js Example Setup
-// =====================
-if (typeof Chart !== "undefined") {
-    const ctx = document.getElementById("trafficChart");
-    if (ctx) {
-        new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-                datasets: [{
-                    label: "Visitors",
-                    data: [320, 450, 300, 500, 600, 750, 900],
-                    borderColor: "#3b82f6",
-                    backgroundColor: "rgba(59, 130, 246, 0.2)",
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true } }
-            }
-        });
-    }
-}
-
 // =====================
 // Ripple Effect on Buttons
 // =====================
@@ -177,3 +130,64 @@ document.querySelectorAll(".btn-ripple").forEach(button => {
         this.appendChild(circle);
     });
 });
+
+
+
+function statusFormat(status) {
+    if (!status) return "";
+
+    switch (status) {
+        case "APPROVED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
+                        Approved
+                    </span>`;
+        case "REJECTED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-md">
+                        Rejected
+                    </span>`;
+        case "PENDING":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
+                        Pending
+                    </span>`;
+        case "CANCELLED":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-gray-400 rounded-md">
+                        Cancelled
+                    </span>`;
+        case "INREVIEW":
+            return `<span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-md">
+                        In Review
+                    </span>`;
+        default:
+            return `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-md">
+                        ${status}
+                    </span>`;
+    }
+}
+
+function formatDate(dateStr, options = { showTime: false, showAgo: false }) {
+    if (!dateStr) return "";
+
+    const date = new Date(dateStr);
+
+    let formatted = date.toLocaleDateString("en-GB", {  
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+    });
+
+    if (options.showTime) {
+        const time = date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true
+        });
+        formatted += `, ${time}`;
+    }
+
+    if (options.showAgo) {
+        formatted += ` ${dayjs(dateStr).fromNow()}`;
+    }
+
+    return formatted;
+}

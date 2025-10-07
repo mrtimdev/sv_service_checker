@@ -9,6 +9,10 @@ public class ExternalDriverDTO {
     private String licenseNumber;
     private String name;
     private String phone;
+    private Double rating;
+    private String status;
+    private AssignedVehicleDTO assignedVehicle;
+    
     public Long getId() {
         return id;
     }
@@ -44,5 +48,28 @@ public class ExternalDriverDTO {
     }
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getFullName()
+    {
+        return this.firstName + ' ' + this.lastName;
+    }
+    public Double getRating() {
+        return rating;
+    }
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+    public String getStatus() {
+        return status;
+    }
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public AssignedVehicleDTO getAssignedVehicle() {
+        return assignedVehicle;
+    }
+    public void setAssignedVehicle(AssignedVehicleDTO assignedVehicle) {
+        this.assignedVehicle = assignedVehicle;
     }
 }

@@ -2,7 +2,7 @@
           xmlns:th="http://www.thymeleaf.org"
           xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-    <div id="header" class="fixed top-0 left-0 right-0 z-10 bg-gray-600 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div id="header" class="fixed top-0 left-0 right-0 z-50 bg-gray-600 dark:bg-gray-800 border-b border-gray-500 dark:border-gray-700">
 
         <header class="flex items-center justify-between p-4 text-white shadow-md
                        dark:bg-gray-800 dark:text-gray-100">
@@ -10,28 +10,26 @@
             <div class="flex gap-2 items-center">
                 <!-- Left: Hamburger only on mobile -->
                 <button id="sidebarToggle"
-                        class="sm:hidden p-2 rounded-md text-gray-200 hover:bg-gray-800 dark:hover:bg-gray-600">
-                    <!-- simple hamburger icon -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="p-2 rounded-md text-gray-200 hover:bg-gray-800 dark:hover:bg-gray-600">
+                    <!-- Default hamburger icon -->
+                    <svg id="sidebarIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
+
                 <!-- Logo -->
                 <div class="flex items-center space-x-2">
                     <img src="/images/logo.png" alt="Logo" class="h-8 w-[50px]">
-                    <span class="text-xl font-semibold">SV Service Checker</span>
+                    <span class="text-sm sm:text-base md:text-lg">SV Services Checker</span>
                 </div>
             </div>
 
             <div class="flex items-center space-x-4">
-
                 <!-- User Menu -->
                 <div class="relative" x-data="{ open: false }" @click.away="open = false">
-
                     <button @click="open = !open"
-                            class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                                   dark:bg-gray-700 dark:hover:bg-gray-600">
+                            class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:hover:bg-gray-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>

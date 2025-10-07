@@ -1,42 +1,246 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+    <link href="/css/main.css" rel="stylesheet">
+
+    <style>
+        .animate-float {
+            animation: float 3s ease-out infinite;
+        }
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+                animation-timing-function: ease-out;
+            }
+            33% {
+                transform: translateY(-6px);
+                animation-timing-function: ease-out;
+            }
+            66% {
+                transform: translateY(3px);
+                animation-timing-function: ease-out;
+            }
+        }
+    </style>
+</th:block>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard - SV Services Checker')}">
     <th:block th:fragment="content">
-        <div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans">
-            <div class="mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto sm:px-6 lg:px-8">
 
-                <!-- Welcome Section -->
-                <div class="bg-white shadow-lg rounded-xl flex-1 w-full mb-8 p-4">
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
-                        Welcome Back, <span class="text-primary" th:text="${user.username}">User</span>!
-                    </h1>
-                    <p class="text-gray-500">Here's what's happening with your invoices today</p>
-                </div>
+            <div class="shadow-lg rounded-xl flex-1 w-full mb-8 p-6
+                        bg-gradient-to-r 
+                        dark:from-gray-800 dark:via-gray-700 dark:to-gray-900
+                        text-white transition-colors duration-500">
+                <h1 class="text-1xl sm:text-4xl font-extrabold mb-2 text-gray-800 dark:text-gray-200">
+                    Welcome Back, <span class="text-blue-400" th:text="${currentUser.user.fullName}">User</span>!
+                </h1>
+                <p class="text-gray-800 dark:text-gray-200">Here's what's happening with your trucks today</p>
+            </div>
 
-                <!-- Dashboard Header with Filters -->
-                <div class="mb-8 w-full">
-                    <div class="bg-white shadow-lg rounded-xl p-4 w-full">
-                        <div class="flex flex-col sm:flex-row gap-3 items-center">
-                            <div class="relative flex-1">
-                                <select id="timeRange" class="appearance-none bg-gray-100 border-0 text-gray-700 py-2 pl-3 pr-8 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full">
-                                    <option value="today">Today</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month" selected>This Month</option>
-                                    <option value="quarter">This Quarter</option>
-                                    <option value="year">This Year</option>
-                                    <option value="custom">Custom Range</option>
-                                </select>
-                            </div>
+            <div class="mb-8 shadow-lg rounded-xl p-4 w-full bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Filter</h2>
+                <form th:action="@{/dashboard}" method="get">
+                    <div class="grid grid-cols-1 md:grid-cols-[auto_auto_10%] gap-6">
+                        <div>
+                            <select id="truckType" name="truckType" style="width: 100%; height: 38px;" class="bg-white dark:bg-gray-800 border-0 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full">
+                                <option value="">All truck types</option>
+                                <option value="">All</option>
+                                <option value="BIG_TRUCK">Big</option>
+                                <option value="SMALL_VAN">Small</option>
+                            </select>
+                        </div>
+                        <div id="customRangePicker" class="flex gap-2 flex-1">
+                            <input type="text" id="startDate" name="startDate"
+                                    class="datepicker bg-white dark:bg-gray-800 border-0 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full" 
+                                    placeholder="Start Date" />
+                            <span class="flex items-center text-gray-500">to</span>
+                            <input type="text" id="endDate" name="endDate"
+                                    class="datepicker bg-white dark:bg-gray-800 border-0 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full" 
+                                    placeholder="End Date" />
+                        </div>
 
-                            <div id="customRangePicker" class="hidden sm:flex gap-2 flex-1">
-                                <input type="text" id="startDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="Start Date" />
-                                <span class="flex items-center text-gray-400">to</span>
-                                <input type="text" id="endDate" class="datepicker bg-gray-100 border-0 text-gray-700 py-2 px-3 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none w-full" placeholder="End Date" />
-                            </div>
-
-                            <button id="applyFilter" class="bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                        <div class="flex">
+                            <button id="applyFilter" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg shadow transition duration-200 flex items-center gap-2 justify-center">
                                 <i class="fas fa-filter"></i> Apply
                             </button>
+                        </div>
+                    </div>
+                </form>
+                
+            </div>
+
+            <div class="mb-8 w-full">
+                <div class="shadow-lg rounded-xl p-4 w-full bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                    <div class="main-content overflow-y-auto">
+                        <div class="">
+
+                            <!-- Stats Cards with Cool Backgrounds -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
+                                <!-- Total Checks Card -->
+                                <div class="rounded-lg shadow p-6 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-blue-900/20 border border-blue-100 dark:border-blue-800">
+                                    <div class="flex items-center">
+                                        <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Checks</p>
+                                            <p class="text-2xl font-semibold text-gray-900 dark:text-white" th:text="${totalChecks}">0</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Completed Card -->
+                                <div class="rounded-lg shadow p-6 bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/20 border border-green-100 dark:border-green-800">
+                                    <div class="flex items-center">
+                                        <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Checked</p>
+                                            <p class="text-2xl font-semibold text-gray-900 dark:text-white" th:text="${completedChecks}">0</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- With Issues Card -->
+                                <div class="rounded-lg shadow p-6 bg-gradient-to-br from-white to-red-50 dark:from-gray-800 dark:to-red-900/20 border border-red-100 dark:border-red-800">
+                                    <div class="flex items-center">
+                                        <div class="p-3 bg-red-100 dark:bg-red-900 rounded-lg">
+                                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-600 dark:text-gray-300">With Issues</p>
+                                            <p class="text-1xl font-semibold text-gray-900 dark:text-white" >
+                                                <span th:text="'Unchecked ' + ${unCheckedCount}"></span>
+                                                <span class="">With</span>
+                                                <span th:text="${issuesCount} + ' Items Issues'"></span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Section -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                                <!-- Status Distribution Chart -->
+                                <div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Check Status Distribution</h3>
+                                    <div class="h-64">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Issues Trend Chart -->
+                                <div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Weekly Issues/Checked Trend</h3>
+                                    <div class="h-64">
+                                        <canvas id="issuesTrendChart"></canvas>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Truck Type Statistics Chart</h3>
+                                <div class="h-64"> <!-- Fixed height container -->
+                                    <canvas id="truckStatsChart" height="250"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="mb-8 flex items-center justify-center">
+                                <svg class="w-7 h-7 text-green-500 animate-float" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 4V20M12 20L18 14M12 20L6 14" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+
+                            <div class="mb-8 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Truck Type Statistics</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Truck Type</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Trucks</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Checked Count</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unchecked Count</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Issue Items</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr th:each="entry : ${truckStats_}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100" th:text="${entry.key}">Truck Type</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${entry.value.total}">0</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-semibold" th:text="${entry.value.checkedCount}">0</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400 font-semibold" th:text="${entry.value.unCheckedCount}">0</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-semibold" th:text="${entry.value.issueItemCount}">0</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Recent Checks Section -->
+                            <div class="rounded-lg shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Recent Service Checks</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead class="bg-gray-50 dark:bg-gray-700">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Driver</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">License Plate</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Truck Type</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Issues</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created By</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Updated</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr th:each="check : ${recentChecks}" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.date}">Jan 01, 2024</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.driverName}">Driver Name</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.licensePlate}">ABC-123</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.truckType}">Large Truck</td>
+                                         
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span th:classappend="${check.issuesStatus == 'Checked'} ? 
+                                                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
+                                                        class="px-2 py-2 inline-flex text-xs leading-5 font-semibold rounded-md"
+                                                        th:text="${check.issuesStatus}">
+                                                        No Issues
+                                                    </span>
+                                                </td>
+
+                                                
+
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span th:classappend="${check.notCheckedCount == 0} ? 
+                                                        'text-green-600 dark:text-green-400' : 
+                                                        'text-red-600 dark:text-red-400'"
+                                                        class="px-2 inline-flex text-xs leading-5 rounded-full font-extrabold"
+                                                        th:text="${check.notCheckedCount}">
+                                                        0
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.createdBy}">Created By</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" th:text="${check.timeAgo}">2 hours ago</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -44,4 +248,181 @@
         </div>
     </th:block>
 </th:block>
-</html>
+
+
+
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <!-- Select2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <script th:inline="javascript">
+        const labels = [[${trendLabels}]];
+            document.addEventListener('DOMContentLoaded', function() {
+                // Status Distribution Chart
+                const statusCtx = document.getElementById('statusChart').getContext('2d');
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Total Services Check', 'Checked', 'Unchecked'],
+                        datasets: [{
+                            data: [[${statusData}]],
+                            backgroundColor: ['rgb(30 58 138)', 'rgb(20 83 45)', 'rgb(127 29 29)'],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Issues Trend Chart
+                const trendCtx = document.getElementById('issuesTrendChart').getContext('2d');
+
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+
+                        datasets: [
+                            {
+                                label: 'Issues Found',
+                                data: [[${trendData.issues}]],
+                                borderColor: '#EF4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Checked Count',
+                                data: [[${trendData.checked}]], // checked list
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Truck Type Distribution
+                const ctx = document.getElementById('truckStatsChart').getContext('2d');
+
+                // Extract data using proper Thymeleaf syntax
+                const labels_ = [[${truckStats_.keySet()}]];
+                const totalData = [[${truckStats_.values().![total]}]];
+                const checkedData = [[${truckStats_.values().![checkedCount]}]];
+                const unCheckedData = [[${truckStats_.values().![unCheckedCount]}]];
+                const issuesData = [[${truckStats_.values().![issueItemCount]}]];
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels_,
+                        datasets: [
+                            {
+                                label: 'Total Trucks',
+                                data: totalData,
+                                backgroundColor: '#3B82F6', // Blue
+                                borderColor: '#2563EB',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Checked',
+                                data: checkedData,
+                                backgroundColor: '#10B981', // Green
+                                borderColor: '#059669',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Unchecked',
+                                data: unCheckedData,
+                                backgroundColor: '#FACC15', // Yellow
+                                borderColor: '#EAB308',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Issue Items',
+                                data: issuesData,
+                                backgroundColor: '#EF4444', // Red
+                                borderColor: '#DC2626',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
+                                },
+                                grid: { 
+                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#374151' : '#E5E7EB'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
+                                },
+                                grid: { 
+                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#374151' : '#E5E7EB'
+                                }
+                            }
+                        }
+                    }
+                });
+
+
+
+                
+            });
+        $(function () {
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: false
+            });
+            $('select').select2({
+                placeholder: 'Select a driver',
+                allowClear: true
+            });
+
+
+            
+        });
+    </script>
+</th:block>
+
+

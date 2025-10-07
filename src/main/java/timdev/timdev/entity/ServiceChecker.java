@@ -3,6 +3,7 @@ package timdev.timdev.entity;
 
 
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -25,9 +27,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import timdev.timdev.converter.ExternalDriverDTOConverter;
+import timdev.timdev.dto.ExternalDriverDTO;
 import timdev.timdev.enums.ServiceCheckerStatus;
 
 @Entity
@@ -56,8 +61,13 @@ public class ServiceChecker {
     private List<InspectionResult> inspectionResults;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "driver_id")
+    @JoinColumn(name = "driver_id", nullable=true)
     private Driver driver;
+
+    @Column(name = "ex_driver_id", nullable = true)
+    @Convert(converter = ExternalDriverDTOConverter.class)
+    private ExternalDriverDTO exDriver;
+
 
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -233,5 +243,45 @@ public class ServiceChecker {
             return "Unchecked";
         }
         return "Checked";
+    }
+
+    public ExternalDriverDTO getExDriver() {
+        return exDriver;
+    }
+
+    public void setExDriver(ExternalDriverDTO exDriver) {
+        this.exDriver = exDriver;
+    }
+
+
+    @Transient
+    public String getTimeAgo() {
+        Duration duration = Duration.between(this.createdAt, LocalDateTime.now());
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) return seconds + " seconds ago";
+        if (seconds < 3600) return (seconds / 60) + " minutes ago";
+        if (seconds < 86400) return (seconds / 3600) + " hours ago";
+        if (seconds < 2592000) return (seconds / 86400) + " days ago";
+        if (seconds < 31104000) return (seconds / 2592000) + " months ago";
+        return (seconds / 31104000) + " years ago";
+    }
+
+    @Transient
+    public long getHoursSinceEdit() {
+        if (this.createdAt == null) {
+            return 0; 
+        }
+        return Duration.between(this.createdAt, LocalDateTime.now()).toHours();
+    }
+
+    @Transient
+    public boolean canEdit() {
+        return getHoursSinceEdit() <= 24;
+    }
+
+    @Transient
+    public String getEditNote() {
+        return canEdit() ? "Editable" : "Cannot edit (over 24h)";
     }
 }
