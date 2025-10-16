@@ -61,7 +61,7 @@ public class TruckDistance {
 
     @Transient
     public String getDistanceFormat() {
-        return String.format("%,.0f km", distance); 
+        return String.format("%,.2f km", distance); 
     }
 
     @Column(name = "note")

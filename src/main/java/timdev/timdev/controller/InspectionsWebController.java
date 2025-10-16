@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,9 +71,10 @@ import timdev.timdev.service.TruckInspectionService;
 @RequestMapping("/inspections")
 public class InspectionsWebController {
 
-    private final InspectionService inspectionService;
-
-    private final TruckInspectionService truckService;
+    @Autowired
+    private InspectionService inspectionService;
+    @Autowired
+    private TruckInspectionService truckService;
 
 
     // truck's inspection list
@@ -97,7 +99,32 @@ public class InspectionsWebController {
             allTrucks = truckService.getAll();
         }
 
-        allTrucks.sort(Comparator.comparingInt(this::getInspectionPriority));
+        // allTrucks.sort(Comparator.comparingInt(this::getColorPriority));
+
+        allTrucks.sort((a, b) -> {
+            int colorCompare = Integer.compare(getColorPriority(a), getColorPriority(b));
+            if (colorCompare != 0) return colorCompare;
+
+            // Same color group → sort by days ascending (most expired first)
+            return Long.compare(a.expiredDurationDays(), b.expiredDurationDays());
+        });
+
+        // allTrucks.sort((a, b) -> {
+        //     long da = a.expiredDurationDays() - 30;
+        //     long db = b.expiredDurationDays() - 30;
+
+        //     boolean aExpired = da < 0;
+        //     boolean bExpired = db < 0;
+
+        //     if (aExpired && bExpired) {
+        //         return Long.compare(da, db); // reverse for expired ones
+        //     } else if (aExpired) {
+        //         return -1; // expired ones first
+        //     } else if (bExpired) {
+        //         return 1;
+        //     }
+        //     return Long.compare(da, db); // normal for non-expired
+        // });
 
         List<TruckInspection> trucks;
         int totalPages;
@@ -315,7 +342,7 @@ public class InspectionsWebController {
         font.setColor(IndexedColors.BLACK.getIndex());
 
         // Get priority
-        int priority = getInspectionPriority(truck);
+        int priority = getColorPriority(truck);
 
         switch (priority) {
             case 0 -> {
@@ -378,22 +405,37 @@ public class InspectionsWebController {
         return style;
     }
 
-    private int getInspectionPriority(TruckInspection truck) {
-        if (truck.getLastInspection() == null) return 3;
-        if (truck.getLastInspection().isExpired()) return 0; // expired → no priority
+    // private int getColorPriority(TruckInspection truck) {
+    //     if (truck.getLastInspection() == null) return 3;
+    //     if (truck.getLastInspection().isExpired()) return 0; // expired → no priority
 
-        long daysRemaining = truck.getLastInspection().expiredDurationDays() - 30;
+    //     long daysRemaining = truck.getLastInspection().expiredDurationDays() - 30;
 
-        if (daysRemaining > 0 && daysRemaining <= 30) {
-        // Will expire within the next 30 days
-        return 2;
-        } else if (daysRemaining < 0) {
-            // Already expired → red
-            return 1;
+    //     if (daysRemaining > 0 && daysRemaining <= 30) {
+    //     // Will expire within the next 30 days
+    //     return 2;
+    //     } else if (daysRemaining < 0) {
+    //         // Already expired → red
+    //         return 1;
+    //     }
+    //     // More than 30 days left → normal
+    //     return 4;
+    // }
+
+    private int getColorPriority(TruckInspection truck) {
+        if (truck.getLastInspection() == null) return 4;
+        
+        long days = truck.expiredDurationDays();
+
+        if (days <= 30) {
+            if (truck.getLastInspection().isExpired()) return 0;
+            return 1; // 🔴 red — expired or will expire soon
+        } else if (days <= 90) {
+            return 2; // 🟡 yellow — mid-term expiring
         }
-        // More than 30 days left → normal
-        return 4;
+        return 3; // ⚪ normal
     }
+
 
 
     @GetMapping("/reports")

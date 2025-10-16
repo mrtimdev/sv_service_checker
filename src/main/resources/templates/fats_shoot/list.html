@@ -128,19 +128,19 @@
                             
                             <td class="py-3 px-6" th:text="${truck.year}"></td>
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForFatsShoot, 0, 'COMMA')}"></td>
-                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
+                            <td class="py-3 px-6" th:text="${truck.getCurrentKmFormat()}"></td>
 
                             <td class="py-3 px-6 text-center">
                                 <span th:text="${#temporals.format(truck.lastFatsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center">
-                                <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.currentKm, 0, 'COMMA')}"></span>
+                                <span th:text="${truck.lastFatsReport?.getDistanceFormat()}"></span>
                             </td>
                             <td class="py-3 px-6 text-center">
-                                <span th:text="${#numbers.formatInteger(truck.lastFatsReport?.nextRange, 0, 'COMMA')}"></span>
+                                <span th:text="${truck.lastFatsReport?.getNextRangeFormat()}"></span>
                             </td>
                             <td class="py-3 px-6">
-                                <div th:text="${#numbers.formatInteger(truck.getKmFatsBalance(), 0, 'COMMA')}"></div>
+                                <div th:text="${truck.getKmFatsBalance()}"></div>
                             </td>
                             
                             <td class="py-3 px-6 text-center">

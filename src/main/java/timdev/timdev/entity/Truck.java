@@ -1,5 +1,7 @@
 package timdev.timdev.entity;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -356,7 +358,10 @@ public class Truck {
         } else {
             balance = this.kmForFatsShoot - currentKm;
         }
-        return balance;
+        BigDecimal bd = BigDecimal.valueOf(balance);
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+
+        return bd.doubleValue();
     }
 
     public Double getKmOilsBalance()
@@ -367,7 +372,10 @@ public class Truck {
         } else {
             balance = this.kmForOilsChange - currentKm;
         }
-        return balance;
+        BigDecimal bd = BigDecimal.valueOf(balance);
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+
+        return bd.doubleValue();
     }
 
     public Double getKmFatsBetween() {
@@ -500,6 +508,12 @@ public class Truck {
 
     public void setLiterQuantityOfOils(Double literQuantityOfOils) {
         this.literQuantityOfOils = literQuantityOfOils;
+    }
+
+
+    @Transient
+    public String getCurrentKmFormat() {
+        return String.format("%,.2f km", currentKm); 
     }
 
 

@@ -89,11 +89,10 @@
                             <th class="py-3 px-6 text-left">ប្រភេទ/ម៉ាក</th>
                             <th class="py-3 px-6 text-left">លេខឡាន</th>
                             <th class="py-3 px-6 text-left">ឆ្នាំផលិត</th>
+                            <th class="py-3 px-6 text-left">Size</th>
                             <th class="py-3 px-6 text-left">គីឡូកំណត់បាញ់ខ្លាញ់</th>
+                            <th class="py-3 px-6 text-left">គីឡូកំណត់ប្ដូរប្រេង</th>
                             <th class="py-3 px-6 text-left">គីឡូបច្ចុប្បន្ន</th>
-                            <th class="py-3 px-6 text-center bg-green-500">ថ្ងៃដែលបានចូលបាញ់</th>
-                            <th class="py-3 px-6 text-center bg-green-500">គីឡូដែលបានបាញ់</th>
-                            <th class="py-3 px-6 text-center bg-green-500">គីឡូត្រូវបាញ់បន្ទាប់</th>
                             <th class="py-3 px-6 text-left">គីឡូនៅសល់</th>
                             <th class="py-3 px-6 text-center">Actions</th>
                         </tr>
@@ -103,18 +102,10 @@
                             <td class="py-3 px-6" th:text="${truck.model.name}"></td>
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
                             <td class="py-3 px-6" th:text="${truck.year}"></td>
+                            <td class="py-3 px-6" th:text="${truck.size}"></td>
                             <td class="py-3 px-6" th:text="${truck.kmForFatsShoot}"></td>
-                            <td class="py-3 px-6" th:text="${truck.currentKm}"></td>
-
-                            <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${#temporals.format(truck.lastFatsReport?.date, 'MMM dd, yyyy')}"></span>
-                            </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastFatsReport?.currentKm}"></span>
-                            </td>
-                            <td class="py-3 px-6 text-center text-warning-dark">
-                                <span th:text="${truck.lastFatsReport?.nextRange}"></span>
-                            </td>
+                            <td class="py-3 px-6" th:text="${truck.kmForOilsChange}"></td>
+                            <td class="py-3 px-6" th:text="${truck.getCurrentKmFormat()}"></td>
                             <td class="py-3 px-6">
                                 <div th:text="${truck.getKmFatsBalance()} "></div>
                             </td>

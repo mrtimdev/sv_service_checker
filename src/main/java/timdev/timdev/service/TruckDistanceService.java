@@ -215,4 +215,9 @@ public class TruckDistanceService {
     public List<TruckDistance> getAllFiltered(Long truckId, LocalDate from, LocalDate to, Sort sort) {
         return truckDistanceRepo.findFiltered(truckId, from, to, sort);
     }
+
+    public Double getTotalDistanceFromDate(Long truckId, LocalDate selectedDate) {
+        Double totalDistance = truckDistanceRepo.getTotalDistanceFromDate(truckId, selectedDate);
+        return totalDistance != null ? totalDistance : 0.0;
+    }
 }

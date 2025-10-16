@@ -1,14 +1,19 @@
 package timdev.timdev.controller;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -28,6 +33,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -52,6 +58,7 @@ import timdev.timdev.entity.TruckOilsReport;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.OilStatus;
 import timdev.timdev.service.ModelService;
+import timdev.timdev.service.TruckDistanceService;
 import timdev.timdev.service.TruckFatsReportService;
 import timdev.timdev.service.TruckOilsReportService;
 import timdev.timdev.service.TruckService;
@@ -65,6 +72,8 @@ public class TruckWebController {
     private final ModelService modelService;
     private final TruckFatsReportService fatsReportService;
     private final TruckOilsReportService oilsReportService;
+
+    private final TruckDistanceService truckDistanceService;
 
 
     @GetMapping
@@ -718,7 +727,7 @@ public class TruckWebController {
         }
 
         // calculate next range
-        Double nextKmForFatShot = truck.getKmForFatsShoot() + truck.getCurrentKm();
+        Double nextKmForFatShot = truck.getKmForFatsShoot() + report.getDistanceKm();
         User user = userDetails.getUser();
         // always set truck & timestamps
         report.setId(null);
@@ -730,6 +739,7 @@ public class TruckWebController {
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
 
+        report.setDistanceKm(report.getDistanceKm());
         report.setCreatedBy(user);
         report.setUpdatedBy(user);
         fatsReportService.save(report);
@@ -872,6 +882,19 @@ public class TruckWebController {
         return "oils_change/change";
     }
 
+    @GetMapping("/oils/get-distance-km-with-date-truck")
+    public ResponseEntity<BigDecimal> getDistanceKmWithDateTruck(
+            @RequestParam("truckId") Long truckId,
+            @RequestParam(value = "date", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate selectedDate) {
+
+        Double totalDistance = truckDistanceService.getTotalDistanceFromDate(truckId, selectedDate);
+        BigDecimal rounded = BigDecimal.valueOf(totalDistance)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        return ResponseEntity.ok(rounded);
+    }
+
+ 
     @PostMapping("/oils/change/{id}")
     public String saveChangeOil(
         @PathVariable("id") Long truckId,
@@ -892,7 +915,7 @@ public class TruckWebController {
         }
 
         // calculate next range
-        Double nextKmForOilsChange = truck.getKmForOilsChange() + truck.getCurrentKm();
+        Double nextKmForOilsChange = truck.getKmForOilsChange() + report.getDistanceKm();
 
         User user = userDetails.getUser();
         // always set truck & timestamps
@@ -905,6 +928,7 @@ public class TruckWebController {
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
         
+        report.setDistanceKm(report.getDistanceKm());
         report.setCreatedBy(user);
         report.setUpdatedBy(user);
         oilsReportService.save(report);

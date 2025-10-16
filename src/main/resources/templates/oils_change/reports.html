@@ -170,7 +170,9 @@
                             <td class="py-3 px-6 text-center" th:text="${report.truck.currentKm}"></td>
                             <td class="py-3 px-6 text-center" th:text="${#temporals.format(report.date, 'MMM dd, yyyy')}"></td>
 
-                            <td class="py-3 px-6 text-center" th:text="${report.currentKm}"></td>
+                            <td class="py-3 px-6 text-center"
+                                th:text="${report.distanceKm == 0 ? report.currentKm : report.distanceKm}">
+                            </td>
                             <td class="py-3 px-6 text-center" th:text="${report.nextRange}"></td>
                             <td class="py-3 px-6 text-center" th:text="${report.literQuantityOfOils}"></td>
 

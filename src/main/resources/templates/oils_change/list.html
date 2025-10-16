@@ -133,13 +133,13 @@
                                 <span th:text="${#temporals.format(truck.lastOilsReport?.date, 'MMM dd, yyyy')}"></span>
                             </td>
                             <td class="py-3 px-6 text-center">
-                                <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.currentKm, 0, 'COMMA')}"></span>
+                                <span th:text="${truck.lastOilsReport?.getDistanceFormat()}"></span>
                             </td>
                             <td class="py-3 px-6 text-center">
-                                <span th:text="${#numbers.formatInteger(truck.lastOilsReport?.nextRange, 0, 'COMMA')}"></span>
+                                <span th:text="${truck.lastOilsReport?.getNextRangeFormat()}"></span>
                             </td>
                             <td class="py-3 px-6">
-                                <div th:text="${#numbers.formatInteger(truck.getKmOilsBalance(), 0, 'COMMA')}"></div>
+                                <div th:text="${truck.getKmOilsBalance()}"></div>
                             </td>
                             
                             <td class="py-3 px-6 text-center">

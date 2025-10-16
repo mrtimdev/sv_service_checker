@@ -19,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import timdev.timdev.enums.OilStatus;
 
@@ -45,6 +46,9 @@ public class TruckOilsReport {
 
     @Column(name = "current_km", nullable = false)
     private Double currentKm;
+
+    @Column(name = "distance_km", nullable = false)
+    private Double distanceKm;
 
     @Column(name = "next_range", nullable = false)
     private Double nextRange;
@@ -225,6 +229,31 @@ public class TruckOilsReport {
 
     public void setLiterQuantityOfOils(Double literQuantityOfOils) {
         this.literQuantityOfOils = literQuantityOfOils;
+    }
+
+    public Double getDistanceKm() {
+        return distanceKm;
+    }
+
+    public void setDistanceKm(Double distanceKm) {
+        this.distanceKm = distanceKm;
+    }
+
+
+
+    @Transient
+    public String getCurrentKmFormat() {
+        return String.format("%,.2f km", currentKm); 
+    }
+
+    @Transient
+    public String getDistanceFormat() {
+        return String.format("%,.2f km", distanceKm); 
+    }
+
+    @Transient
+    public String getNextRangeFormat() {
+        return String.format("%,.2f km", nextRange); 
     }
     
 

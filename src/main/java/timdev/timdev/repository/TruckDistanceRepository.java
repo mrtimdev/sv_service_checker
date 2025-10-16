@@ -50,4 +50,8 @@ public interface TruckDistanceRepository extends JpaRepository<TruckDistance, Lo
         @Param("toDate") LocalDate toDate,
         Sort sort
     );
+
+    @Query("SELECT COALESCE(SUM(td.distance), 0) FROM TruckDistance td WHERE td.truck.id = :truckId AND td.date <= :selectedDate")
+    Double getTotalDistanceFromDate(@Param("truckId") Long truckId, @Param("selectedDate") LocalDate selectedDate);
+
 }

@@ -1,9 +1,28 @@
 package timdev.timdev.controller;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +40,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import timdev.timdev.dto.TruckDistanceDto;
 import timdev.timdev.dto.TruckDistanceForm;
@@ -47,16 +68,18 @@ public class TruckDistanceWebController {
 
     // Display all truck distances
     @GetMapping
-    public String listTruckDistances(
+    public Object listTruckDistances(
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "50") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
         @RequestParam(value = "truck_id", required = false) Long truckId,
         @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
         @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
         @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
         @RequestParam(value = "order", defaultValue = "desc") String order,
-        Model model) 
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response,
+        Model model) throws IOException 
     {
         List<Truck> trucks = truckService.getAll();
         List<TruckDistance> distancesPage;
@@ -97,10 +120,18 @@ public class TruckDistanceWebController {
         }
 
 
-        int totalDistance = (int) distancesPage.stream()
-                                       .mapToDouble(TruckDistance::getDistance)
-                                       .sum();
-        String totalDistanceFormatted = String.format("%,d km", totalDistance);
+        double totalDistance = distancesPage.stream()
+                                    .mapToDouble(TruckDistance::getDistance)
+                                    .sum();
+
+        String totalDistanceFormatted = String.format("%,.2f km", totalDistance);
+
+
+        if ("excel".equalsIgnoreCase(export)) {
+            exportTruckDistancesToExcel(distancesPage, totalDistanceFormatted, response);
+            return null; 
+        }
+
 
         // put everything into model
         model.addAttribute("distances", distancesPage);
@@ -121,6 +152,168 @@ public class TruckDistanceWebController {
 
         return "truck-distances/list";
     }
+
+
+    private void exportTruckDistancesToExcel(List<TruckDistance> distances, String totalDistance, HttpServletResponse response) throws IOException {
+    String fileName = "Truck Distances-" + LocalDate.now() + ".xlsx";
+    String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+            .replace("+", "%20");
+    
+    response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+    response.setCharacterEncoding("UTF-8");
+    
+    try (Workbook workbook = new XSSFWorkbook()) {
+        Sheet sheet = workbook.createSheet("Truck Distances");
+        
+        // Create styles
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        CellStyle totalStyle = createTotalStyle(workbook);
+            
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"Date", "Truck License Plate", "Distance (km)", "Recorded By"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        // Create data rows
+        int rowNum = 1;
+        for (TruckDistance distance : distances) {
+            Row row = sheet.createRow(rowNum++);
+            
+            // Date
+            Cell dateCell = row.createCell(0);
+            dateCell.setCellValue(distance.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+            dateCell.setCellStyle(dataStyle);
+            
+            // Truck License Plate
+            Cell truckCell = row.createCell(1);
+            truckCell.setCellValue(distance.getTruck().getLicensePlate());
+            truckCell.setCellStyle(dataStyle);
+            
+            // Distance
+            Cell distanceCell = row.createCell(2);
+            distanceCell.setCellValue(distance.getDistance());
+            distanceCell.setCellStyle(dataStyle);
+            
+            // Recorded By
+            Cell recordedByCell = row.createCell(3);
+            recordedByCell.setCellValue(distance.getCreatedBy() != null ? 
+                distance.getCreatedBy().getUsername() : "System");
+            recordedByCell.setCellStyle(dataStyle);
+        }
+        
+        // Add summary section
+        addSummarySection(sheet, rowNum, distances.size(), totalDistance, totalStyle, headers.length);
+        
+        // Apply auto-filter to the data range (header + all data rows)
+        if (rowNum > 1) { // Only apply if there's data
+            sheet.setAutoFilter(new CellRangeAddress(0, rowNum - 1, 0, headers.length - 1));
+        }
+        
+        // Freeze the header row
+        sheet.createFreezePane(0, 1);
+        
+        // Auto-size and optimize columns
+        optimizeColumnSizes(sheet, headers.length);
+        
+        // Set the active cell to A2 for better user experience
+        sheet.setActiveCell(new CellAddress("A2"));
+        
+        try (ServletOutputStream outputStream = response.getOutputStream()) {
+            workbook.write(outputStream);
+            outputStream.flush();
+        }
+    }
+}
+
+private CellStyle createHeaderStyle(Workbook workbook) {
+    CellStyle style = workbook.createCellStyle();
+    Font font = workbook.createFont();
+    font.setBold(true);
+    font.setColor(IndexedColors.WHITE.getIndex());
+    style.setFont(font);
+    style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+    style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+    style.setBorderBottom(BorderStyle.MEDIUM);
+    style.setBorderTop(BorderStyle.MEDIUM);
+    style.setBorderLeft(BorderStyle.MEDIUM);
+    style.setBorderRight(BorderStyle.MEDIUM);
+    style.setAlignment(HorizontalAlignment.CENTER);
+    return style;
+}
+
+private CellStyle createDataStyle(Workbook workbook) {
+    CellStyle style = workbook.createCellStyle();
+    style.setBorderBottom(BorderStyle.THIN);
+    style.setBorderTop(BorderStyle.THIN);
+    style.setBorderLeft(BorderStyle.THIN);
+    style.setBorderRight(BorderStyle.THIN);
+    return style;
+}
+
+private CellStyle createTotalStyle(Workbook workbook) {
+    CellStyle style = workbook.createCellStyle();
+    Font font = workbook.createFont();
+    font.setBold(true);
+    style.setFont(font);
+    style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+    style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+    style.setBorderBottom(BorderStyle.MEDIUM);
+    style.setBorderTop(BorderStyle.MEDIUM);
+    style.setBorderLeft(BorderStyle.MEDIUM);
+    style.setBorderRight(BorderStyle.MEDIUM);
+    return style;
+}
+
+private void addSummarySection(Sheet sheet, int startRow, int recordCount, String totalDistance, CellStyle style, int numColumns) {
+    int currentRow = startRow + 1;
+    
+    // Record count
+    Row countRow = sheet.createRow(currentRow++);
+    Cell countLabelCell = countRow.createCell(1);
+    countLabelCell.setCellValue("Total Records:");
+    countLabelCell.setCellStyle(style);
+    
+    Cell countValueCell = countRow.createCell(2);
+    countValueCell.setCellValue(recordCount);
+    countValueCell.setCellStyle(style);
+    
+    // Total distance
+    Row distanceRow = sheet.createRow(currentRow++);
+    Cell distanceLabelCell = distanceRow.createCell(1);
+    distanceLabelCell.setCellValue("Total Distance:");
+    distanceLabelCell.setCellStyle(style);
+    
+    Cell distanceValueCell = distanceRow.createCell(2);
+    distanceValueCell.setCellValue(totalDistance);
+    distanceValueCell.setCellStyle(style);
+    
+    // Export date
+    Row dateRow = sheet.createRow(currentRow++);
+    Cell dateLabelCell = dateRow.createCell(1);
+    dateLabelCell.setCellValue("Export Date:");
+    dateLabelCell.setCellStyle(style);
+    
+    Cell dateValueCell = dateRow.createCell(2);
+    dateValueCell.setCellValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));
+    dateValueCell.setCellStyle(style);
+}
+
+private void optimizeColumnSizes(Sheet sheet, int numColumns) {
+    for (int i = 0; i < numColumns; i++) {
+        sheet.autoSizeColumn(i);
+        int currentWidth = sheet.getColumnWidth(i);
+        // Set reasonable column widths with some padding
+        int newWidth = Math.min(currentWidth + 1000, 8000); // Cap at reasonable width
+        sheet.setColumnWidth(i, newWidth);
+    }
+}
 
     @GetMapping("/create/v2")
     public String showCreateFormV2(Model model) {

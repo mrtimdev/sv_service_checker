@@ -159,18 +159,43 @@ public class TruckInspection {
     }
 
     public String expiredDurationText() {
-        if (expiredDate == null) return "No expiration date";
+        if (expiredDate == null) {
+            return "No expiration date";
+        }
+
         long days = expiredDurationDays();
-        if (days > 0) return days + " days left";
-        else if (days < 0) return Math.abs(days) + " days expired";
-        else return "Expires today";
+
+        if (days > 1) {
+            return days + " days left";
+        } else if (days == 1) {
+            return "1 day left";
+        } else if (days == 0) {
+            return "Expires today";
+        } else if (days == -1) {
+            return "Expired 1 day ago";
+        } else {
+            return "Expired " + Math.abs(days) + " days ago";
+        }
     }
+
+
+    // public String expiredColor() {
+    //     long days = expiredDurationDays();
+    //     if (days <= 31) return "bg-red-500 dark:bg-red-700 text-white"; // less than or equal 31 days
+    //     else if (days <= 90) return "bg-yellow-500 dark:bg-yellow-600 text-white"; // 32-90 days
+    //     return ""; // more than 90 days → normal
+    // }
 
     public String expiredColor() {
         long days = expiredDurationDays();
-        if (days <= 31) return "bg-red-500 dark:bg-red-700 text-white"; // less than or equal 31 days
-        else if (days <= 90) return "bg-yellow-500 dark:bg-yellow-600 text-white"; // 32-90 days
-        return ""; // more than 90 days → normal
+        if (days <= 0) {
+            return "bg-gray-500 dark:bg-gray-700 text-white"; // expired
+        } else if (days <= 30) {
+            return "bg-red-500 dark:bg-red-700 text-white"; // expires within 30 days
+        } else if (days <= 90) {
+            return "bg-yellow-500 dark:bg-yellow-600 text-white"; // expires within 90 days
+        }
+        return ""; // normal
     }
 
     public LocalDate getExpiredDate() {
