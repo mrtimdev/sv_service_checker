@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oil Change Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body class="bg-gray-50">
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Oil Change Dashboard</h1>
+            <p class="text-gray-600">Monitor truck oil change status in real-time</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="statsCards">
+            <!-- Cards will be populated by JavaScript -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Pie Chart -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Status Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="statusPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar Chart -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Status Overview</h3>
+                <div class="chart-container">
+                    <canvas id="statusBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Alerts</h3>
+            <div id="recentAlerts">
+                <!-- Alerts will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="/js/dashboard-stats.js"></script>
+    <script src="/js/dashboard-charts.js"></script>
+    <script src="/js/dashboard-alerts.js"></script>
+    <script src="/js/dashboard-main.js"></script>
+</body>
+</html>

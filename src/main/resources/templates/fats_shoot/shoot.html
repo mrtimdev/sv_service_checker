@@ -171,17 +171,34 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     $(function () {
-        $(".datepicker").flatpickr({
-            defaultDate: new Date(),
-            dateFormat: "M d, Y",
-            allowInput: true
+        const $dateInput = $('#date');
+
+        // Initialize Flatpickr
+        const datePicker = $dateInput.flatpickr({
+            defaultDate: new Date(),      // show today by default
+            dateFormat: "M d, Y",         // e.g. Oct 24, 2025
+            allowInput: true,
+
+            onReady: function (selectedDates, dateStr) {
+                // Automatically trigger once when page is ready
+                if (dateStr) {
+                    console.log('Flatpickr ready:', dateStr);
+                    handleDateChange(dateStr);
+                }
+            },
+
+            onChange: function (selectedDates, dateStr) {
+                // Trigger every time user selects or edits date
+                handleDateChange(dateStr);
+            }
         });
 
-        $('#date').on('change', function () {
-            const selectedDate = $(this).val();
-            const truckId = $(this).data('truck-id');
-
+        // --- Function to handle AJAX request ---
+        function handleDateChange(selectedDate) {
+            const truckId = $dateInput.data('truck-id');
             if (!selectedDate || !truckId) return;
+
+            console.log('Selected Date:', selectedDate, 'Truck ID:', truckId);
 
             $.ajax({
                 url: '/admin/trucks/oils/get-distance-km-with-date-truck',
@@ -191,7 +208,7 @@
                     date: selectedDate
                 },
                 success: function (response) {
-                    console.log({response})
+                    console.log('AJAX success:', response);
                     $('#distanceResultText').text(`Total distance since ${selectedDate}: ${response.toFixed(2)} km`);
                     $('#distanceResult').val(response.toFixed(2));
                 },
@@ -200,6 +217,6 @@
                     $('#distanceResultText').text('Total distance');
                 }
             });
-        });
-    })
+        }
+    });
 </script>

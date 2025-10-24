@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -27,6 +28,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "truck_distances")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TruckDistance {
 
     @Id
@@ -45,19 +47,6 @@ public class TruckDistance {
 
     @Column(name = "distance", nullable = false)
     private Double distance = 0.0;
-
-    @OneToMany(mappedBy = "truckDistance", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<TruckDistanceItem> items;
-
-    public List<TruckDistanceItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<TruckDistanceItem> items) {
-        this.items = items;
-    }
-
 
     @Transient
     public String getDistanceFormat() {

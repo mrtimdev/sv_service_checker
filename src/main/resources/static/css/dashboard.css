@@ -1,0 +1,99 @@
+/* Custom Dashboard Styles */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.table-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.table-container table {
+    min-width: 100%;
+}
+
+.table-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+}
+
+.stat-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card.danger {
+    border-left-color: #ef4444;
+}
+
+.stat-card.warning {
+    border-left-color: #f59e0b;
+}
+
+.stat-card.normal {
+    border-left-color: #10b981;
+}
+
+.status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-danger {
+    @apply bg-red-100 text-red-800;
+}
+
+.status-warning {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-normal {
+    @apply bg-green-100 text-green-800;
+}
+
+.status-unknown {
+    @apply bg-gray-100 text-gray-800;
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* Custom scrollbar for tables */
+.table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

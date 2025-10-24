@@ -4,11 +4,11 @@
     <!-- Sidebar -->
     <aside style="height: 100vh;" class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200 transition-all duration-300 overflow-y-auto scrollbar-hide">
         <!-- Menu Header -->
-        <!-- <div class="mb-6 pt-[72px]" id="custom-padding-top_">
+        <div class="mb-6 pt-[72px]" id="custom-padding-top_">
             <h2 class="text-sm uppercase tracking-wide text-gray-200 dark:text-gray-400">
                 Menu
             </h2>
-        </div> -->
+        </div>
 
         <nav class="flex-1 overflow-y-auto scrollbar-hide text-sm">
             <!-- Group: Dashboard -->
@@ -16,11 +16,11 @@
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Dashboard</h3>
                 <ul>
                     <li>
-                        <a href="/admin/dashboard"
-                            th:classappend="${requestURI == '/admin/dashboard'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/dashboard/maintenance"
+                            th:classappend="${requestURI == '/dashboard/maintenance'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-chart-pie"></i>
-                            <span>Dashboard</span>
+                            <span>Dashboard <span class="text-purple-500">Fats/Oils</span></span>
                         </a>
                     </li>
                 </ul>

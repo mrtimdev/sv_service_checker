@@ -442,7 +442,7 @@ public class InspectionsWebController {
     public Object inspectionsReports(
         Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "10") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "50") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate,
         @RequestParam(name = "truckId", required = false) Long truckId,

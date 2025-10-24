@@ -10,7 +10,7 @@ public class HomeController {
     @GetMapping("/")
     public String handleRootRequest(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
-            return "redirect:/admin/dashboard";
+            return "redirect:/dashboard/maintenance";
         }
         return "redirect:/auth/login";
     }

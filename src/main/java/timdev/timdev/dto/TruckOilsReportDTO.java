@@ -1,20 +1,20 @@
 package timdev.timdev.dto;
-import timdev.timdev.enums.OilStatus;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import timdev.timdev.enums.OilStatus;
 
-
-public class TruckFatsReportDTO {
+public class TruckOilsReportDTO {
     private Long id;
     private Long truckId;
-    private String truckName; // optional, if you want to show truck info
-    private Double literQuantityOfFats;
+    private String truckName; // optional
+    private Double literQuantityOfOils;
     private LocalDate date;
     private Double currentKm;
     private Double distanceKm;
     private Double nextRange;
-    private Double kmForFatsShoot;
+    private Double kmForOilsChange;
     private OilStatus status;
     private String note;
     private LocalDateTime createdAt;
@@ -32,8 +32,8 @@ public class TruckFatsReportDTO {
     public String getTruckName() { return truckName; }
     public void setTruckName(String truckName) { this.truckName = truckName; }
 
-    public Double getLiterQuantityOfFats() { return literQuantityOfFats; }
-    public void setLiterQuantityOfFats(Double literQuantityOfFats) { this.literQuantityOfFats = literQuantityOfFats; }
+    public Double getLiterQuantityOfOils() { return literQuantityOfOils; }
+    public void setLiterQuantityOfOils(Double literQuantityOfOils) { this.literQuantityOfOils = literQuantityOfOils; }
 
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
@@ -47,8 +47,8 @@ public class TruckFatsReportDTO {
     public Double getNextRange() { return nextRange; }
     public void setNextRange(Double nextRange) { this.nextRange = nextRange; }
 
-    public Double getKmForFatsShoot() { return kmForFatsShoot; }
-    public void setKmForFatsShoot(Double kmForFatsShoot) { this.kmForFatsShoot = kmForFatsShoot; }
+    public Double getKmForOilsChange() { return kmForOilsChange; }
+    public void setKmForOilsChange(Double kmForOilsChange) { this.kmForOilsChange = kmForOilsChange; }
 
     public OilStatus getStatus() { return status; }
     public void setStatus(OilStatus status) { this.status = status; }

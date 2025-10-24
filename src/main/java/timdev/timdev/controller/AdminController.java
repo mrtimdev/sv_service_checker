@@ -1,8 +1,13 @@
 package timdev.timdev.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,11 +15,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.FatsOilsSettingsForm;
+import timdev.timdev.dto.TruckDTOResponse;
 import timdev.timdev.entity.Request;
 import timdev.timdev.entity.Setting;
 import timdev.timdev.entity.Truck;
@@ -59,7 +66,7 @@ public class AdminController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        return "redirect:/admin/dashboard";
+        return "redirect:/dashboard/maintenance";
     }
 
     @GetMapping("/admin/dashboard")
@@ -165,6 +172,66 @@ public class AdminController {
         model.addAttribute("settings", fatsOilsSettingService.getAll());
         return "admin/fats_oils_settings"; // name of the template
     }
+
+
+
+
+    @GetMapping("/dashboard/maintenance")
+    public String maintenanceDashboard(Model model) {
+        List<Truck> allTrucks = truckService.getAll();
+        
+        // Calculate trucks without oil reports
+        long noOilReports = allTrucks.stream()
+            .filter(truck -> truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty())
+            .count();
+        
+        // Calculate trucks without fat reports  
+        long noFatReports = allTrucks.stream()
+            .filter(truck -> truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty())
+            .count();
+            
+        // Calculate trucks without any reports
+        long noReportsAtAll = allTrucks.stream()
+            .filter(truck -> 
+                (truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty()) &&
+                (truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty())
+            )
+            .count();
+        
+        model.addAttribute("trucks", allTrucks);
+        model.addAttribute("noOilReports", noOilReports);
+        model.addAttribute("noFatReports", noFatReports);
+        model.addAttribute("noReportsAtAll", noReportsAtAll);
+        
+        return "admin/report_dashboard";
+    }
+
+    // Add this API endpoint for AJAX calls
+    @GetMapping("/api/trucks/status")
+    public ResponseEntity<Map<String, Object>> getTrucksStatus() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<TruckDTOResponse> trucks = truckService.getAll().stream()
+                .map(TruckDTOResponse::fromEntity)
+                .toList();
+
+            response.put("status", "success");
+            response.put("count", trucks.size());
+            response.put("data", trucks);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+
+
+
 
 
 
