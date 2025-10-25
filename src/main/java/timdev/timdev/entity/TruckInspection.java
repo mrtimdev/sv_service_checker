@@ -6,9 +6,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -25,8 +31,11 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import timdev.timdev.enums.TruckSize;
 import timdev.timdev.enums.TruckType;
+import timdev.timdev.listener.AuditListener;
 
 @Entity
+@Audited
+@EntityListeners(AuditListener.class)
 @Table(name = "truck_inspections")
 public class TruckInspection {
 
@@ -42,6 +51,7 @@ public class TruckInspection {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "model_id", nullable = true)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Model model;
 
     @Column(name = "year", nullable = true)
@@ -65,9 +75,11 @@ public class TruckInspection {
 
 
     @Column(name = "created_at", updatable = false, nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     public Long getId() {

@@ -127,7 +127,7 @@
                             
                             <td class="py-3 px-6" th:text="${truck.year}"></td>
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForOilsChange, 0, 'COMMA')}"></td>
-                            <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.currentKm, 0, 'COMMA')}"></td>
+                            <td class="py-3 px-6" th:text="${truck.getCurrentKmFormat()}"></td>
 
                             <td class="py-3 px-6 text-center">
                                 <span th:text="${#temporals.format(truck.lastOilsReport?.date, 'MMM dd, yyyy')}"></span>

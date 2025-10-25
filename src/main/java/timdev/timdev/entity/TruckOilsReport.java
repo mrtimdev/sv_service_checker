@@ -4,6 +4,9 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.envers.Audited;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -11,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -23,10 +27,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import timdev.timdev.enums.OilStatus;
+import timdev.timdev.listener.AuditListener;
 
 @Entity
 @Table(name = "truck_oils_reports")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Audited
+@EntityListeners(AuditListener.class)
 public class TruckOilsReport {
 
     @Id
@@ -69,9 +76,11 @@ public class TruckOilsReport {
 
      // --- Audit fields ---
     @Column(name = "created_at", updatable = false, nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -38,7 +38,7 @@ public class TruckInspectionWebController {
     @GetMapping
     public String index(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "50") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate
     ) {

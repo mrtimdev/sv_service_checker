@@ -4,14 +4,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.envers.Audited;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,8 +29,11 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
+import timdev.timdev.listener.AuditListener;
 
 @Entity
+@Audited
+@EntityListeners(AuditListener.class)
 @Table(name = "truck_distances")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TruckDistance {
@@ -41,8 +48,12 @@ public class TruckDistance {
     private LocalDate date;
 
     @NotNull(message = "The Truck is required")
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "truck_id", nullable = false)
+    // @OneToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "truck_id", nullable = false)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "truck_id")
+    @JsonIgnore
     private Truck truck;
 
     @Column(name = "distance", nullable = false)
@@ -73,6 +84,7 @@ public class TruckDistance {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", updatable = false)
+    @JsonIgnore
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -22,16 +22,6 @@ public class TruckService {
         return truckRepo.findAll();
     }
 
-    public List<Truck> getAllWithReports() {
-        List<Truck> trucks = truckRepo.findAll();
-        trucks.forEach(truck -> {
-            truck.getTruckFatsReports().size();
-            truck.getTruckOilsReports().size();
-        });
-        return trucks;
-    }
-
-
     public Page<Truck> getAllWithPageable(Pageable pageable) {
         return truckRepo.findAll(pageable);
     }

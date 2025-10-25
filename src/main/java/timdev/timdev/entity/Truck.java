@@ -8,12 +8,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -31,10 +35,17 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import timdev.timdev.enums.OilStatus;
 import timdev.timdev.enums.TruckSize;
+import timdev.timdev.listener.AuditListener;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "trucks")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Audited
+@EntityListeners(AuditListener.class)
 public class Truck {
 
     @Id
@@ -61,6 +72,7 @@ public class Truck {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "model_id", nullable = true)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Model model;
 
     @Column(name = "year", nullable = false)
@@ -147,14 +159,17 @@ public class Truck {
 
 
     @Column(name = "created_at", updatable = false, nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     // Optionally store the selected setting directly
     @ManyToOne
     @JoinColumn(name = "fats_oils_setting_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private FatsOilsSetting setting;
 
     public Driver getDriver() {
@@ -206,6 +221,8 @@ public class Truck {
     }
 
     @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    @JsonIgnoreProperties("truck")
     private List<TruckDistance> distances = new ArrayList<>();
     
 
