@@ -9,8 +9,8 @@
             
             <div class="flex items-center gap-2 justify-between">
                 <button id="sidebarToggle"
+                    title="Toggle by ESC key"
                     class="p-2 rounded-md text-gray-200 hover:bg-gray-800 dark:hover:bg-gray-600">
-                    <!-- Default hamburger icon -->
                     <svg id="sidebarIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16" />
@@ -25,19 +25,21 @@
 
             <div class="flex items-center space-x-4">
                <div class="flex gap-2">
-                    <a th:href="@{/?lang=en}"
+
+                    <a th:href="@{__${currentUrl}__(lang='en')}"
                         th:classappend="${currentLang == 'en'} ?
                         'bg-blue-600 text-white px-3 py-1 rounded-lg shadow' :
                         'bg-gray-200 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-300'">
-                        English
+                        <span th:text="#{english}"></span>
                     </a>
 
-                    <a th:href="@{/?lang=km}"
+                    <a th:href="@{__${currentUrl}__(lang='km')}"
                         th:classappend="${currentLang == 'km'} ?
-                        'bg-blue-600 text-white px-3 py-1 rounded-lg shadow' :
-                        'bg-gray-200 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-300'">
-                        Khmer
+                            'bg-blue-600 text-white px-3 py-1 rounded-lg shadow' :
+                            'bg-gray-200 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-300'">
+                        <span th:text="#{khmer}"></span>
                     </a>
+
                 </div>
 
                 <!-- User Menu -->

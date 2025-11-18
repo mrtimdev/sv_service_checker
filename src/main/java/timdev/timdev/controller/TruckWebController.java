@@ -68,12 +68,12 @@ import timdev.timdev.service.TruckService;
 @RequestMapping("/admin/trucks")
 public class TruckWebController {
 
-    private final TruckService truckService;
-    private final ModelService modelService;
-    private final TruckFatsReportService fatsReportService;
-    private final TruckOilsReportService oilsReportService;
+    private TruckService truckService;
+    private ModelService modelService;
+    private TruckFatsReportService fatsReportService;
+    private TruckOilsReportService oilsReportService;
 
-    private final TruckDistanceService truckDistanceService;
+    private TruckDistanceService truckDistanceService;
 
 
     @GetMapping
@@ -232,7 +232,7 @@ public class TruckWebController {
                 redirectAttributes.addFlashAttribute("error", "Truck not found");
             } else {
                 Truck truck = truckOpt.get();
-                if(truck.getLastFatsReport() != null) {
+                if(truck.getLastOilsChangeReport() != null) {
                     redirectAttributes.addFlashAttribute("error", "This Truck can not delete");
                     return "redirect:/admin/trucks";
                 }

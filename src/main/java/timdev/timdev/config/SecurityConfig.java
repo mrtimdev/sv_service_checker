@@ -58,8 +58,8 @@ public class SecurityConfig {
                 .hasAnyRole(
                     RoleType.ADMIN.toString(),
                     RoleType.MANAGER.toString(),
-                    RoleType.SUPERVISOR.toString(),
-                    RoleType.REPAIRMAN.toString()
+                    RoleType.USER.toString()
+                    
                 )
 
                 // Web endpoints
@@ -67,8 +67,8 @@ public class SecurityConfig {
                 .hasAnyRole(
                     RoleType.ADMIN.toString(),
                     RoleType.MANAGER.toString(),
-                    RoleType.SUPERVISOR.toString(),
-                    RoleType.REPAIRMAN.toString()
+                    RoleType.USER.toString()
+                    
                 )
 
                 .anyRequest().authenticated()

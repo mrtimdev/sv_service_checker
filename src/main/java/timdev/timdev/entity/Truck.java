@@ -289,6 +289,8 @@ public class Truck {
     @JsonManagedReference
     private List<TruckOilsReport> truckOilsReports = new ArrayList<>();
 
+
+
     public List<TruckOilsReport> getTruckOilsReports() {
         return truckOilsReports;
     }
@@ -297,6 +299,36 @@ public class Truck {
         this.truckOilsReports = truckOilsReports;
     }
 
+
+    @OneToMany(mappedBy = "truck", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference
+    private List<CompanyTruck> companyTrucks = new ArrayList<>();
+
+    public List<CompanyTruck> getCompanyTrucks() {
+        return companyTrucks;
+    }
+
+    public void setCompanyTrucks(List<CompanyTruck> companyTrucks) {
+        this.companyTrucks = companyTrucks;
+    }
+
+    @Transient
+    private CompanyTruck lastOilsChangeReport;
+
+    public void setLastOilsChangeReport(CompanyTruck lastOilsChangeReport) {
+        this.lastOilsChangeReport = lastOilsChangeReport;
+    }
+
+    public CompanyTruck getLastOilsChangeReport() {
+        if (companyTrucks != null && !companyTrucks.isEmpty()) {
+            return companyTrucks.get(companyTrucks.size() - 1);
+        }
+        return null;
+    }
+
+    // public CompanyTruck getLastComOilsChangeReport() {
+    //     return lastOilsChangeReport;
+    // }
 
 
     @Transient
@@ -335,6 +367,8 @@ public class Truck {
     private void populateLastFatsAndOilsReport() {
         this.lastFatsReport = getLastFatsReport();
         this.lastOilsReport = getLastOilsReport();
+        // for Company trucks
+        this.lastOilsChangeReport = getLastOilsChangeReport();
     }
     // @PostLoad
     // private void populateLastOilsReport() {

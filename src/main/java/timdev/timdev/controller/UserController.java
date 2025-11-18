@@ -36,7 +36,8 @@ public class UserController {
     
     @GetMapping
     public String listUsers(Model model) {
-        List<User> users = userService.getUsersNotInRoles(List.of(RoleType.REPAIRMAN));
+        // List<User> users = userService.getUsersNotInRoles(List.of(RoleType.USER));
+        List<User> users = userService.findAllUsers();
         model.addAttribute("users", users);
         model.addAttribute("roleTypes", RoleType.values());
         return "admin/users/list";
@@ -195,7 +196,7 @@ public class UserController {
     public String showAssignLevelForm(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails, RedirectAttributes redirectAttributes, Model model) {
         User user = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user ID: " + id));
-        if (user.getRole() == RoleType.REPAIRMAN) {
+        if (user.getRole() == RoleType.USER) {
             redirectAttributes.addFlashAttribute("error", "An Assign Level Is Not Allowed, Please, check the user's role!");
             return "redirect:/admin/users?error=access_denied";
         }

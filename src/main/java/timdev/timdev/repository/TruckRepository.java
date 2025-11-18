@@ -43,4 +43,7 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     List<Truck> findByRequiredInspectionFalse();
     List<Truck> findByRequiredInspection(Boolean requiredInspection);
 
+
+    
+
 }

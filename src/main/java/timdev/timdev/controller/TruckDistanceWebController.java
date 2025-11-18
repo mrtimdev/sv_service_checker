@@ -58,10 +58,10 @@ import timdev.timdev.service.UserService;
 @RequestMapping("/truck-distances")
 public class TruckDistanceWebController {
 
-    private final TruckDistanceService truckDistanceService;
-    private final TruckService truckService;
-    private final UserService userService;
-    private final TruckRepository truckRepo;
+    private TruckDistanceService truckDistanceService;
+    private TruckService truckService;
+    private UserService userService;
+    private TruckRepository truckRepo;
 
   
 

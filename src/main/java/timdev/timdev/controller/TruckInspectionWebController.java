@@ -31,8 +31,8 @@ import timdev.timdev.service.TruckInspectionService;
 @RequestMapping("/admin/trucks-inspection")
 public class TruckInspectionWebController {
 
-    private final TruckInspectionService truckService;
-    private final ModelService modelService;
+    private TruckInspectionService truckService;
+    private ModelService modelService;
 
 
     @GetMapping

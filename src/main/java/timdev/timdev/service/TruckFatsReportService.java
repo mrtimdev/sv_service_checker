@@ -17,7 +17,7 @@ import timdev.timdev.repository.TruckFatsReportRepository;
 @Service
 public class TruckFatsReportService {
 
-    private final TruckFatsReportRepository reportRepo;
+    private TruckFatsReportRepository reportRepo;
 
     public TruckFatsReport save(TruckFatsReport report) {
         return reportRepo.save(report);

@@ -80,7 +80,7 @@ public class RequestController {
         User user = userDetails.getUser();
         List<Request> requests;
 
-        if (!RoleType.REPAIRMAN.equals(user.getRole())) {
+        if (!RoleType.USER.equals(user.getRole())) {
             requests = requestService.findAllRequests();
         } else {
             requests = requestService.findByUser(user);
@@ -140,7 +140,7 @@ public class RequestController {
         // 1. Fetch all requests (admin or user)
         User user = userDetails.getUser();
         List<Request> requests;
-        if(user.getRole().equals(RoleType.REPAIRMAN)) {
+        if(user.getRole().equals(RoleType.USER)) {
             requests = requestService.findByUser(user);
         } else {
             requests = requestService.findAllRequests(); 

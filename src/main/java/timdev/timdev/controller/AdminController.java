@@ -80,7 +80,7 @@ public class AdminController {
         long rejectedRequests = 0;
         List<Request> recentRequests;
 
-        if (!RoleType.REPAIRMAN.equals(user.getRole())) {
+        if (!RoleType.USER.equals(user.getRole())) {
             // Get request statistics
             totalRequests = requestService.getTotalRequestCount();
             pendingRequests = requestService.getRequestCountByStatus(ApprovalStatus.PENDING);

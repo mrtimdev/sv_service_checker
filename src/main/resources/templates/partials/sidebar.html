@@ -28,61 +28,30 @@
 
             <!-- Group: Trucks Management -->
             <div class="mb-4">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Trucks</h3>
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Transactions</h3>
                 <ul>
                     <li>
-                        <a href="/admin/trucks/shoot/fats"
-                            th:classappend="${requestURI == '/admin/trucks/shoot/fats' || requestURI == '/admin/trucks/fats/shoot'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-bolt"></i>
-                            <span>បាញ់ខ្លាញ់</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/trucks/change/oils"
-                            th:classappend="${requestURI == '/admin/trucks/change/oils' || requestURI == '/admin/trucks/oils/change'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-refresh"></i>
-                            <span>ប្តូរប្រេង</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/truck-distances"
-                            th:classappend="${requestURI.startsWith('/truck-distances')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fa fa-arrows"></i>
-                            <span>Truck Distances</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/trucks"
-                            th:classappend="${requestURI == '/admin/trucks' || requestURI == '/admin/trucks/form'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/company-trucks/oils-change"
+                            th:classappend="${requestURI.startsWith('/company-trucks')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
-                            <span>All Trucks</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Group: Inspections Management -->
-            <div class="mb-4">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Inspections</h3>
-                <ul>
-                    <li>
-                        <a href="/inspections"
-                            th:classappend="${requestURI == '/inspections' || requestURI == '/inspections/create' || requestURI == '/inspections/import'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-gears"></i>
-                            <span th:text="#{trucks_inspections}">Truck Inspections</span>
+                            <span th:text="#{company_trucks}"></span>
                         </a>
                     </li>
                     <li>
-                        <a href="/admin/trucks-inspection"
-                            th:classappend="${requestURI == '/admin/trucks-inspection' || requestURI == '/admin/trucks-inspection/form'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/sub-trucks"
+                            th:classappend="${requestURI.startsWith('/sub-trucks')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span>Trucks For Inspections</span>
+                            <i class="menu-icon fas fa-sitemap"></i>
+                            <span th:text="#{sub_trucks}">Sub Trucks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/fuel-requests"
+                            th:classappend="${requestURI.startsWith('/fuel-requests')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-random"></i>
+                            <span th:text="#{fuel_requests}">Fuel Requests</span>
                         </a>
                     </li>
                 </ul>
@@ -90,30 +59,30 @@
 
             <!-- Group: Reports -->
             <div class="mb-4">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Reports</h3>
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
                     <li>
-                        <a href="/admin/trucks/fats/reports"
-                            th:classappend="${requestURI == '/admin/trucks/fats/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/company-trucks?reportPage=true"
+                            th:classappend="${requestURI == '/company-trucks'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fa fa-arrows-rotate"></i>
-                            <span>របាយការណ៍បាញ់ខ្លាញ់</span>
+                            <i class="menu-icon fas fa-truck"></i>
+                            <span th:text="#{company_trucks_reports}"></span>
                         </a>
                     </li>
                     <li>
-                        <a href="/admin/trucks/oils/reports"
-                            th:classappend="${requestURI == '/admin/trucks/oils/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/sub-trucks/reports?reportPage=true"
+                            th:classappend="${requestURI == '/sub-trucks/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fa fa-arrows-rotate"></i>
-                            <span>របាយការណ៍ប្ដូរប្រេង</span>
+                            <i class="menu-icon fas fa-sitemap"></i>
+                            <span th:text="#{sub_trucks_reports}"></span>
                         </a>
                     </li>
                     <li>
-                        <a href="/inspections/reports"
-                            th:classappend="${requestURI == '/inspections/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/fuel-requests/reports?reportPage=true"
+                            th:classappend="${requestURI == '/fuel-requests/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-gears"></i>
-                            <span th:text="#{inspections_reports}">Inspections Report</span>
+                            <i class="menu-icon fas fa-random"></i>
+                            <span th:text="#{fuel_requests_reports}"></span>
                         </a>
                     </li>
                 </ul>
@@ -121,7 +90,7 @@
 
             <!-- Group: Users & Drivers -->
             <div class="mb-4">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Users & Drivers</h3>
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{users}">Users</h3>
                 <ul>
                     <!-- <li>
                         <a href="/admin/drivers"
@@ -131,21 +100,29 @@
                             <span>Drivers</span>
                         </a>
                     </li> -->
-                    <li sec:authorize="!hasRole('REPAIRMAN')">
+                    <li sec:authorize="!hasRole('USER')">
                         <a href="/admin/users"
                             th:classappend="${requestURI.startsWith('/admin/users')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-users"></i>
-                            <span>Users</span>
+                            <span th:text="#{users}">Users</span>
                         </a>
                     </li>
                 </ul>
             </div>
 
             <!-- Group: Settings -->
-            <div class="mb-4" sec:authorize="!hasRole('REPAIRMAN')">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Settings</h3>
+            <div class="mb-4" sec:authorize="!hasRole('USER')">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{settings}">Settings</h3>
                 <ul>
+                    <li>
+                        <a href="/truck-groups"
+                            th:classappend="${requestURI.startsWith('/truck-groups')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-truck"></i>
+                            <span th:text="#{truck_groups}"></span>
+                        </a>
+                    </li>
                     <li>
                         <a href="/fats-oils-settings"
                             th:classappend="${requestURI.startsWith('/fats-oils-settings')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"

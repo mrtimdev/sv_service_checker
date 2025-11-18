@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+    <style>
+    </style>
+</th:block>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Sub Trucks')}">
+    <th:block th:fragment="content">
+        <div class="">
+            <div class="mx-auto sm:px-6 lg:px-8">
+
+                <!-- Success Message -->
+                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${success}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${error}"></span>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Sub Trucks</h1>
+
+                    <div class="flex gap-2 items-center mb-6">
+                        <a th:href="@{/sub-trucks/form}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            <i class="fa fa-plus-circle"></i>  <span th:text="#{add_new_entry}"></span>
+                        </a>
+
+                        <a th:href="@{/sub-trucks(
+                                    page=${currentPage},
+                                    size=${pageSize},
+                                    all=${showAll},
+                                    licensePlate=${licensePlate != null ? licensePlate : ''},
+                                    truckOwner=${truckOwner != null ? truckOwner : ''},
+                                    status=${status != null ? status : ''},
+                                    startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                                    endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                                    export='excel'
+                                )}" 
+                            class="cursor-pointer inline-flex gap-2 items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-green-800">
+                            <i class="fas fa-file-excel"></i>
+                            <span th:text="#{export_to_excel}"></span>
+                        </a>
+
+                        <a id="toggleFilter" class="cursor-pointer inline-flex gap-2 items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800">
+                            <i class="fa fa-filter"></i>  
+                            <span>Toggle Filter</span>
+                        </a>
+                    </div>
+                    
+                </div>
+
+                <form th:action="@{/sub-trucks}" method="get" 
+                    th:class="${startDate != null or endDate != null or truckId != null or licensePlate != null or truckOwner != null} ? '' : 'hidden'" 
+                    class="mb-4 flex flex-col space-y-4" 
+                    id="filterContent">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                                <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Date Range</legend>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
+                                    </label>
+                                    <input type="text"
+                                        name="startDate"
+                                        th:value="${startDate != null} ? ${#temporals.format(startDate, 'MMM dd, yyyy')} : ''"
+                                        class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                        placeholder="Select start date"/>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
+                                    </label>
+                                    <input type="text"
+                                        name="endDate"
+                                        th:value="${endDate != null} ? ${#temporals.format(endDate, 'MMM dd, yyyy')} : ''"
+                                        class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                        placeholder="Select end date"/>
+                                </div>
+                            </fieldset>
+                        </div>
+
+
+                        <div>
+                            <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                                <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Date Range</legend>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-truck mr-2 text-primary-600"></i> <span th:text="#{truck}"></span>
+                                    </label>
+                                    <select name="truckId" style="width: 100%;" id="truck"
+                                        class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 focus:outline-none focus:ring focus:ring-blue-500">
+                                        <option value="" th:text="#{select_one}"></option>
+                                        <option th:each="t : ${trucks}" 
+                                                th:value="${t.id}" 
+                                                th:text="${t.licensePlate}"
+                                                th:selected="${truckId != null} ? ${t.id} == ${truckId} : false">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-user mr-2 text-primary-600"></i> <span th:text="#{truck_owner}"></span>
+                                    </label>
+                                    <input type="text"
+                                        name="truckOwner"
+                                        th:value="${truckOwner}"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                        />
+                                </div>
+                            </fieldset>
+                        </div>
+
+
+
+                        
+                    </div>
+
+                    <div class="mt-4 mb-4 flex justify-end">
+                        <div class="flex gap-2">
+                            <button type="submit"
+                                th:text="#{apply_filters}"
+                                class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+                                Apply Filters
+                            </button>
+                            <a href="/sub-trucks"
+                                th:text="#{reset}"
+                                class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+
+                
+
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                                <div class="flex items-center">
+                                    <label for="size">Size:</label>
+                                    <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
+                                        <option th:value="5" th:selected="${pageSize == '5'}">5</option>
+                                        <option th:value="10" th:selected="${pageSize == '10'}">10</option>
+                                        <option th:value="20" th:selected="${pageSize == '20'}">20</option>
+                                        <option th:value="50" th:selected="${pageSize == '50'}">50</option>
+                                        <option th:value="100" th:selected="${pageSize == '100'}">100</option>
+                                        <option th:value="all" th:selected="${pageSize.toString() == 'all'}">All</option>
+                                    </select>
+                                </div>
+                            </form>
+
+                            <form th:action="@{/sub-trucks}" method="get" class="mb-4 flex space-x-2">
+                                <div>
+                                    <select name="status" style="width: 150px;" class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 focus:outline-none focus:ring focus:ring-blue-500">
+                                        <option th:each="s : ${statuses}" 
+                                                th:value="${s}" 
+                                                th:text="${s}" 
+                                                th:selected="${s == status}">
+                                        </option>
+                                    </select>
+
+                                </div>
+                                <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
+                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                                <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
+                            </form>
+                        </div>
+                        <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                            <thead>
+                                <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{date}">Date</th>
+                                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{license_plate}">License Plate</th>
+                                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{truck_owner}">Truck Owner</th>
+                                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{oils_quantity}">Oil Qty</th>
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">Status</th>
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{note}">Note</th>
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
+                                    
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr th:each="st,iterStat : ${subTrucks}" 
+                                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${iterStat.index + 1}"></td>
+
+                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${#temporals.format(st.date, 'MMM dd, yyyy')}"></td>
+
+                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${st.truck.licensePlate}"></td>
+
+                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${st.truckOwner}"></td>
+
+                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${st.oilsQuantity}"></td>
+
+                                    <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                                        <span th:class="${st.status.toString() == 'PENDING' ? 
+                                            'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                            'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                            th:text="${st.status}">
+                                        </span>
+                                    </td>
+
+                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${st.note}"></td>
+
+                                    <td class="p-3 text-center border border-gray-300 dark:border-gray-700">
+                                        <div x-data="{ open: false }" class="relative inline-block text-left">
+
+                                            <button @click="open = !open" 
+                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md shadow transition duration-300 flex items-center gap-2">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                                <span>Actions</span>
+                                                <i class="fas fa-chevron-down text-xs" :class="{ 'rotate-180': open }"></i>
+                                            </button>
+
+                                            <div x-show="open" @click.away="open = false"
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="transform opacity-0 scale-95"
+                                                x-transition:enter-end="transform opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="transform opacity-100 scale-100"
+                                                x-transition:leave-end="transform opacity-0 scale-95"
+                                                class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+
+                                                <div class="py-1">
+
+                                                    <!-- Edit -->
+                                                    <a th:href="@{'/sub-trucks/edit/' + ${st.id}}" 
+                                                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                                        <i class="fas fa-edit w-5 text-blue-600"></i>
+                                                        <span th:text="#{edit}"></span>
+                                                    </a>
+
+                                                    <a target="_blank" th:href="@{'/sub-trucks/clone/' + ${st.id}}" 
+                                                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                                        <i class="fas fa-plus-circle w-5 text-blue-600"></i>
+                                                        <span th:text="#{clone}"></span>
+                                                    </a>
+
+                                                    <!-- Approve -->
+                                                    <div th:if="${st.status.toString() == 'PENDING'}">
+                                                        <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
+                                                            onsubmit="return confirm('Are you sure you want to approve this truck?')">
+                                                            <input type="hidden" name="status" value="APPROVED" />
+                                                            <button type="submit"
+                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                                                <i class="fas fa-check-circle w-5 text-green-600"></i>
+                                                                <span th:text="#{approve}"></span>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Unapprove -->
+                                                    <div th:if="${st.status.toString() == 'APPROVED'}">
+                                                        <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
+                                                            onsubmit="return confirm('Are you sure you want to unapprove this truck?')">
+                                                            <input type="hidden" name="status" value="PENDING" />
+                                                            <button type="submit"
+                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                                                                <i class="fas fa-times-circle w-5 text-red-600"></i>
+                                                                <span th:text="#{unapprove}"></span>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Delete -->
+                                                    <div th:if="${st.status.toString() == 'PENDING'}">
+                                                        <form th:action="@{'/sub-trucks/delete/' + ${st.id}}" method="get"
+                                                            onsubmit="return confirm('Are you sure you want to delete this truck?')">
+                                                            <button type="submit"
+                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-100 hover:text-red-700">
+                                                                <i class="fas fa-trash-alt w-5"></i>
+                                                                <span th:text="#{delete}"></span>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+
+                        <div class="flex justify-start mt-4 items-center">
+
+                            <ul class="inline-flex -space-x-px mr-4" 
+                                th:if="${totalPages > 1}">
+                                <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                                    <a th:href="@{/sub-trucks(page=${i}, size=${pageSize})}"
+                                    th:text="${i + 1}"
+                                    class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
+                                    th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <a th:href="@{/sub-trucks(all=true)}"
+                                class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                                th:text="#{show_all}"
+                                >
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    
+    <script>
+        $(function() {
+            $('#truck').select2({
+                placeholder: "Select Truck",
+                allowClear: true
+            });
+            $('#truck').on('change', function () {
+                $('#licensePlate').val('');
+            });
+
+            $("#toggleFilter").click(function(e) {
+                e.preventDefault();
+                $("#filterContent").slideToggle();
+            })
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: true
+            });
+            $(document).on('click', '.btnChangeOils', function (e) {
+                const url = $(this).attr('href');
+                const tr = $(this).closest('tr');
+
+                if (tr.hasClass("insufficient")) {
+                    e.preventDefault(); 
+
+                    if (confirm("រថយន្តនេះមិនទាន់គ្រប់គីឡូប្ដូរប្រេងទេ។ តើអ្នកចង់បន្តទៀតឬទេ?")) {
+                        window.location.href = url;
+                    } else {
+                        return false;
+                    }
+                }
+
+                console.log({ tr });
+            });
+
+        })
+    </script>
+        
+</th:block>

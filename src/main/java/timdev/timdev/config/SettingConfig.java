@@ -20,17 +20,10 @@ public class SettingConfig {
         // Handle RoleType enum
         if (value instanceof RoleType roleType) {
             switch (roleType) {
-                case REPAIRMAN -> {
+                case USER -> {
                     return """
                                                    <span class="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded-md">
-                                                       Repairman
-                                                   </span>
-                                               """;
-                }
-                case SUPERVISOR -> {
-                    return """
-                                                   <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
-                                                       Supervisor
+                                                       User
                                                    </span>
                                                """;
                 }

@@ -1,10 +1,9 @@
 package timdev.timdev.enums;
 
 public enum RoleType {
-    REPAIRMAN("Repairman"),
-    SUPERVISOR("Supervisor"),
-    MANAGER("Manager"),
-    ADMIN("Admin");
+    USER("User"),
+    ADMIN("Admin"),
+    MANAGER("Manager");
 
     private final String label;
 
