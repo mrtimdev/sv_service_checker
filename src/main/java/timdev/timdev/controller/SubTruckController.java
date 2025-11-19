@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
@@ -23,6 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,6 +39,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import timdev.timdev.dto.ApproveStatus;
+import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.dto.RequestStatus;
+import timdev.timdev.dto.Status;
 import timdev.timdev.dto.SubTruckRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.SubTruck;
@@ -522,4 +527,101 @@ public class SubTruckController {
         
         return style;
     }
+
+    // for users if admin approved
+    @GetMapping({"/user-record"})
+    public Object listApprovedForUser(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        if (status == null) {
+            status = ApproveStatus.APPROVED;
+        }
+
+        // Fetch filtered list
+        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("subTrucks", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "sub-trucks/index_for_user";
+    }
+
+
+    @GetMapping("/update-fuel-quantity")
+    public String changeOilStatus(
+            @RequestParam("id") Long id,
+            @RequestParam("backUrl") String backUrl,
+            @RequestParam(required = true) Double oilsQuantity,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+            ) {
+
+        SubTruck subTruck = service.findById(id);
+        if (subTruck == null) {
+            redirectAttributes.addFlashAttribute("error", "Sub Truck not found");
+            return "redirect:"+backUrl;
+        }
+        User user = userDetails.getUser();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String dateString = subTruck.getDate().format(formatter);
+
+        subTruck.setOilsQuantity(oilsQuantity);
+        subTruck.setChangedAt(LocalDateTime.now());
+        subTruck.setChangedBy(user);
+
+        service.save(subTruck);
+
+        redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + subTruck.getTruck().getLicensePlate() + " fuel quantity updated to "+ oilsQuantity);
+        
+        return "redirect:"+backUrl;
+    }
+
+
+
+
 }

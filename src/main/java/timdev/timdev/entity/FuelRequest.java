@@ -61,6 +61,12 @@ public class FuelRequest {
     @JoinColumn(name = "updated_by", nullable = true)
     private User updatedBy;
 
+    private LocalDateTime changedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "changed_by", nullable = true)
+    private User changedBy;
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
@@ -214,5 +220,21 @@ public class FuelRequest {
 
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public LocalDateTime getChangedAt() {
+        return changedAt;
+    }
+
+    public void setChangedAt(LocalDateTime changedAt) {
+        this.changedAt = changedAt;
+    }
+
+    public User getChangedBy() {
+        return changedBy;
+    }
+
+    public void setChangedBy(User changedBy) {
+        this.changedBy = changedBy;
     }
 }

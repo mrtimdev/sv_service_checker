@@ -42,12 +42,16 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.InspectionRequestDTO;
 import timdev.timdev.dto.Measurement;
+import timdev.timdev.dto.RequestStatus;
+import timdev.timdev.dto.Status;
 import timdev.timdev.dto.TruckInspectionRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
+import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanyTruckService;
@@ -705,5 +709,204 @@ public class CompanyTruckController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm a");
         return dateTime.format(formatter);
     }
+
+
+    @GetMapping("/status/update")
+    public String changeOilStatus(
+            @RequestParam("id") Long id,
+            @RequestParam("action") String action,
+            @RequestParam("backUrl") String backUrl,
+            @RequestParam(required = false) String requestNote,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+            ) {
+
+        Optional<CompanyTruck> optional = service.findById(id);
+        if (optional.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "CompanyTruck not found");
+            return "redirect:"+backUrl;
+        }
+
+        CompanyTruck truck = optional.get();
+        User user = userDetails.getUser();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String dateString = truck.getDate().format(formatter);
+
+
+        switch (action.toUpperCase()) {
+            case "DEDUCTED" -> {
+                truck.setStatus(Status.DEDUCTED);
+                truck.setDeductedAt(LocalDateTime.now());
+                truck.setDeductedBy(user);
+                redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
+            }
+            case "PENDING" -> {
+                truck.setStatus(Status.PENDING);
+                truck.setPendingAt(LocalDateTime.now());
+                truck.setPendingBy(user);
+
+                truck.setRequestStatus(RequestStatus.REQUESTED);
+                redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
+            }
+            case "REQUESTED" -> {
+                truck.setRequestNote(requestNote.trim());
+                truck.setRequestStatus(RequestStatus.REQUESTED);
+                truck.setRequested(true);
+                truck.setRequestedAt(LocalDateTime.now());
+                truck.setRequestedBy(user);
+                redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " is now on requesting!");
+            }
+            default -> {
+                redirectAttributes.addFlashAttribute("error", "Invalid action");
+                return "redirect:"+backUrl;
+            }
+        }
+
+        service.saveTruck(truck);
+        
+        return "redirect:"+backUrl;
+    }
+
+
+    // user requested deduction only and approved
+
+    @PostMapping("/approve/{id}")
+    public String approve(@PathVariable Long id, @RequestParam("status") RequestStatus status, RedirectAttributes redirectAttributes,
+    @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        CompanyTruck companyTruck = service.findById(id).orElse(null);
+        if (companyTruck == null) {
+            redirectAttributes.addFlashAttribute("error", "CompanyTruck not found!");
+            return "redirect:/company-trucks/trucks-requested-for-deduction";
+        }
+
+        User currentUser = userDetails.getUser();
+        if(status.equals(RequestStatus.APPROVED)) {
+            companyTruck.setRequestStatus(status);
+            companyTruck.setApprovedAt(LocalDateTime.now());
+            companyTruck.setApprovedBy(currentUser);
+        }
+
+        else if(status.equals(RequestStatus.REJECTED)) {
+            companyTruck.setRequestStatus(status);
+            companyTruck.setRejectedAt(LocalDateTime.now());
+            companyTruck.setRejectedBy(currentUser);
+        }
+        else if(status.equals(status)) {
+            companyTruck.setRequestStatus(RequestStatus.REQUESTED);
+            companyTruck.setRejectedAt(LocalDateTime.now()); 
+            companyTruck.setRejectedBy(currentUser);
+        }
+        
+        service.saveTruck(companyTruck); 
+        redirectAttributes.addFlashAttribute("success", "Request has been "+ status);
+        return "redirect:/company-trucks/trucks-requested-for-deduction";
+    }
+
+    @GetMapping("/trucks-requested-for-deduction")
+    public Object userRequestTruckForChangeToDeduction(Model model,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+        @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response
+    ) throws IOException {
+
+        List<CompanyTruck> trucks;
+        int totalPages = 1;
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+
+        // Get all data for export or filtered data for display
+        List<CompanyTruck> allTrucks;
+        if (licensePlate != null && !licensePlate.isEmpty()) {
+            allTrucks = service.findByLicensePlateContaining(licensePlate);
+        } else {
+            allTrucks = service.getAll();
+        }
+
+        if (showAll) {
+            trucks = allTrucks;
+        } else {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<CompanyTruck> truckPage;
+            if (licensePlate != null && !licensePlate.isEmpty()) {
+                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+            } else {
+                truckPage = service.getAllWithPageable(pageable);
+            }
+            trucks = truckPage.getContent();
+            totalPages = truckPage.getTotalPages();
+        }
+
+        model.addAttribute("trucks", trucks);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+        model.addAttribute("licensePlate", licensePlate);  
+        return "company-trucks/trucks_request_for_deduction";
+    }
+
+
+    // for user's records
+    @GetMapping("/user-record")
+    public Object companyTrucksForUser(Model model,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+        @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response
+    ) throws IOException {
+
+        List<CompanyTruck> trucks;
+        int totalPages = 1;
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+
+        // Get all data for export or filtered data for display
+        List<CompanyTruck> allTrucks;
+        if (licensePlate != null && !licensePlate.isEmpty()) {
+            allTrucks = service.findByLicensePlateContaining(licensePlate);
+        } else {
+            allTrucks = service.getAll();
+        }
+
+        if (showAll) {
+            trucks = allTrucks;
+        } else {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<CompanyTruck> truckPage;
+            if (licensePlate != null && !licensePlate.isEmpty()) {
+                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+            } else {
+                truckPage = service.getAllWithPageable(pageable);
+            }
+            trucks = truckPage.getContent();
+            totalPages = truckPage.getTotalPages();
+        }
+
+        model.addAttribute("trucks", trucks);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+        model.addAttribute("licensePlate", licensePlate);  
+        return "company-trucks/trucks_for_users_mark";
+    }
+
 
 }

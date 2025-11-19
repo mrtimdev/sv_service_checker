@@ -23,6 +23,28 @@ public class GlobalControllerAdvice {
         return request.getRequestURI();
     }
 
+    @ModelAttribute("fullRequestURI")
+    public String addFullRequestURI(HttpServletRequest request) {
+        StringBuilder fullURL = new StringBuilder(request.getRequestURL().toString());
+
+        String query = request.getQueryString();
+        if (query != null) {
+            fullURL.append("?").append(query);
+        }
+
+        return fullURL.toString();
+    }
+
+    @ModelAttribute("requestPathWithParams")
+    public String addRequestPathWithParams(HttpServletRequest request) {
+        String uri = request.getRequestURI();       // e.g., /company-trucks/oils-change
+        String query = request.getQueryString();    // e.g., page=10&size=20
+
+        return (query != null) ? uri + "?" + query : uri;
+    }
+
+
+
     @ModelAttribute("currentLang")
     public String addCurrentLang(Locale locale) {
         String localeString = locale.getLanguage();

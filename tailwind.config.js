@@ -11,6 +11,11 @@ export default {
         "./src/main/resources/tailwind/**/*.css" 
     ],
 
+    corePlugins: {
+        // Make sure this is NOT set:
+        cursor: true,
+    },
+
     darkMode: 'class',
     theme: {
         fontFamily: {

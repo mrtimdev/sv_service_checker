@@ -22,6 +22,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -36,9 +37,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import timdev.timdev.dto.ApproveStatus;
+import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.FuelRequestRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.FuelRequest;
+import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.entity.User;
@@ -611,5 +614,103 @@ public class FuelRequestController {
         style.setBorderRight(BorderStyle.THIN);
         
         return style;
+    }
+
+
+
+    // for user update fuel quantity
+    @GetMapping({"/user-record"})
+    public Object listApprovedForUser(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "requester", required = false) String requester,
+            @RequestParam(value = "purpose", required = false) String purpose,
+            @RequestParam(value = "position", required = false) String position,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        status = ApproveStatus.APPROVED;
+
+        // Fetch filtered list
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("fuelRequests", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("requester", requester);
+        model.addAttribute("position", position);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "fuel-requests/index_for_user";
+    }
+
+    @GetMapping("/update-fuel-quantity")
+    public String changeOilStatus(
+            @RequestParam("id") Long id,
+            @RequestParam("backUrl") String backUrl,
+            @RequestParam(required = true) Double oilsQuantity,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+            ) {
+
+        FuelRequest fuelRequest = service.findById(id);
+        if (fuelRequest == null) {
+            redirectAttributes.addFlashAttribute("error", "Request not found");
+            return "redirect:"+backUrl;
+        }
+        User user = userDetails.getUser();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String dateString = fuelRequest.getDate().format(formatter);
+
+        fuelRequest.setOilsQuantity(oilsQuantity);
+        fuelRequest.setChangedAt(LocalDateTime.now());
+        fuelRequest.setChangedBy(user);
+
+        service.save(fuelRequest);
+
+        redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + fuelRequest.getRequester() + " fuel quantity updated to "+ oilsQuantity);
+        
+        return "redirect:"+backUrl;
     }
 }

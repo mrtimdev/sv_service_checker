@@ -37,6 +37,11 @@ public class SubTruck {
     private String rejectedNote;
     
     private LocalDateTime approvedAt;
+    private LocalDateTime changedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "changed_by", nullable = true)
+    private User changedBy;
 
     @Enumerated(EnumType.STRING)
     private ApproveStatus status = ApproveStatus.PENDING;
@@ -185,5 +190,21 @@ public class SubTruck {
 
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public LocalDateTime getChangedAt() {
+        return changedAt;
+    }
+
+    public void setChangedAt(LocalDateTime changedAt) {
+        this.changedAt = changedAt;
+    }
+
+    public User getChangedBy() {
+        return changedBy;
+    }
+
+    public void setChangedBy(User changedBy) {
+        this.changedBy = changedBy;
     }
 }

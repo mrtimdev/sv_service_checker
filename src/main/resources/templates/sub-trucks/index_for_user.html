@@ -27,11 +27,8 @@
                     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Sub Trucks</h1>
 
                     <div class="flex gap-2 items-center mb-6">
-                        <a th:href="@{/sub-trucks/form}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
-                            <i class="fa fa-plus-circle"></i>  <span th:text="#{add_new_entry}"></span>
-                        </a>
 
-                        <a th:href="@{/sub-trucks(
+                        <a th:href="@{/sub-trucks/user-record(
                                     page=${currentPage},
                                     size=${pageSize},
                                     all=${showAll},
@@ -55,7 +52,7 @@
                     
                 </div>
 
-                <form th:action="@{/sub-trucks}" method="get" 
+                <form th:action="@{/sub-trucks/user-record}" method="get" 
                     th:class="${startDate != null or endDate != null or truckId != null or licensePlate != null or truckOwner != null} ? '' : 'hidden'" 
                     class="mb-4 flex flex-col space-y-4" 
                     id="filterContent">
@@ -132,7 +129,7 @@
                                 class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
                                 Apply Filters
                             </button>
-                            <a href="/sub-trucks"
+                            <a href="/sub-trucks/user-record"
                                 th:text="#{reset}"
                                 class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
                                 Reset
@@ -160,17 +157,7 @@
                                 </div>
                             </form>
 
-                            <form th:action="@{/sub-trucks}" method="get" class="mb-4 flex space-x-2">
-                                <div>
-                                    <select name="status" style="width: 150px;" class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 focus:outline-none focus:ring focus:ring-blue-500">
-                                        <option th:each="s : ${statuses}" 
-                                                th:value="${s}" 
-                                                th:text="${s}" 
-                                                th:selected="${s == status}">
-                                        </option>
-                                    </select>
-
-                                </div>
+                            <form th:action="@{/sub-trucks/user-record}" method="get" class="mb-4 flex space-x-2">
                                 <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
                                     class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                                 <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
@@ -210,7 +197,9 @@
                                         th:text="${st.truckOwner}"></td>
 
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
-                                        th:text="${st.oilsQuantity}"></td>
+                                        th:text="${st.oilsQuantity}"
+                                        th:data-quantity="${st.oilsQuantity}"
+                                        ></td>
 
                                     <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                         <span th:class="${st.status.toString() == 'PENDING' ? 
@@ -223,84 +212,18 @@
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
                                         th:text="${st.note}"></td>
 
-                                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.changedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.changedAt, 'MMM dd, yyyy HH:mm a')}"></td>
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${st.changedBy?.fullName}"></td>
 
                                     <td class="p-3 text-center border border-gray-300 dark:border-gray-700">
-                                        <div x-data="{ open: false }" class="relative inline-block text-left">
+                                        <div>
+                                            <a 
+                                                th:href="@{/sub-trucks/update-fuel-quantity(id=${st.id}, backUrl=${requestPathWithParams})}"
 
-                                            <button @click="open = !open" 
-                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md shadow transition duration-300 flex items-center gap-2">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                                <span>Actions</span>
-                                                <i class="fas fa-chevron-down text-xs" :class="{ 'rotate-180': open }"></i>
-                                            </button>
-
-                                            <div x-show="open" @click.away="open = false"
-                                                x-transition:enter="transition ease-out duration-100"
-                                                x-transition:enter-start="transform opacity-0 scale-95"
-                                                x-transition:enter-end="transform opacity-100 scale-100"
-                                                x-transition:leave="transition ease-in duration-75"
-                                                x-transition:leave-start="transform opacity-100 scale-100"
-                                                x-transition:leave-end="transform opacity-0 scale-95"
-                                                class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-
-                                                <div class="py-1">
-
-                                                    <!-- Edit -->
-                                                    <a th:href="@{'/sub-trucks/edit/' + ${st.id}}" 
-                                                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                                        <i class="fas fa-edit w-5 text-blue-600"></i>
-                                                        <span th:text="#{edit}"></span>
-                                                    </a>
-
-                                                    <a target="_blank" th:href="@{'/sub-trucks/clone/' + ${st.id}}" 
-                                                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                                        <i class="fas fa-plus-circle w-5 text-blue-600"></i>
-                                                        <span th:text="#{clone}"></span>
-                                                    </a>
-
-                                                    <!-- Approve -->
-                                                    <div th:if="${st.status.toString() == 'PENDING'}">
-                                                        <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
-                                                            onsubmit="return confirm('Are you sure you want to approve this truck?')">
-                                                            <input type="hidden" name="status" value="APPROVED" />
-                                                            <button type="submit"
-                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                                                <i class="fas fa-check-circle w-5 text-green-600"></i>
-                                                                <span th:text="#{approve}"></span>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-
-                                                    <!-- Unapprove -->
-                                                    <div th:if="${st.status.toString() == 'APPROVED'}">
-                                                        <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
-                                                            onsubmit="return confirm('Are you sure you want to unapprove this truck?')">
-                                                            <input type="hidden" name="status" value="PENDING" />
-                                                            <button type="submit"
-                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                                                <i class="fas fa-times-circle w-5 text-red-600"></i>
-                                                                <span th:text="#{unapprove}"></span>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-
-                                                    <!-- Delete -->
-                                                    <div th:if="${st.status.toString() == 'PENDING'}">
-                                                        <form th:action="@{'/sub-trucks/delete/' + ${st.id}}" method="get"
-                                                            onsubmit="return confirm('Are you sure you want to delete this truck?')">
-                                                            <button type="submit"
-                                                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-100 hover:text-red-700">
-                                                                <i class="fas fa-trash-alt w-5"></i>
-                                                                <span th:text="#{delete}"></span>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-
-                                                </div>
-                                            </div>
-
+                                                th:data-report-id="${st.id}"
+                                                class="btn-update-fuel-quantity cursor-pointer bg-blue-600 text-white px-3 py-1 rounded-lg shadow hover:bg-blue-700 transition-colors">
+                                                <i class="fa fa-exchange"></i> Update Fuel Quantity
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -313,7 +236,7 @@
                             <ul class="inline-flex -space-x-px mr-4" 
                                 th:if="${totalPages > 1}">
                                 <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                                    <a th:href="@{/sub-trucks(page=${i}, size=${pageSize})}"
+                                    <a th:href="@{/sub-trucks/user-record(page=${i}, size=${pageSize})}"
                                     th:text="${i + 1}"
                                     class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
                                     th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
@@ -321,7 +244,7 @@
                                 </li>
                             </ul>
 
-                            <a th:href="@{/sub-trucks(all=true)}"
+                            <a th:href="@{/sub-trucks/user-record(all=true)}"
                                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
                                 th:text="#{show_all}"
                                 >
@@ -343,7 +266,35 @@
 
     
     <script>
+        
         $(function() {
+
+            $(document).on('click', '.btn-update-fuel-quantity', function (e) {
+                e.preventDefault();
+
+                let href = $(this).attr('href');                 // The link URL
+                let reportId = $(this).data('report-id');        // id
+
+                // Find the quantity from the same row <td>
+                let quantity = $(this)
+                    .closest('tr')
+                    .find('td[data-quantity]')
+                    .data('quantity');
+
+                // Ask user for new quantity, pre-filled with old quantity
+                let note = prompt("Enter the correct quantity of truck's fuel:", quantity);
+
+                if (note === null || note.trim() === "") {
+                    alert("Truck's fuel quantity is required.");
+                    return;
+                }
+
+                note = encodeURIComponent(note);
+
+                // Append oilsQuantity param
+                let url = href + "&oilsQuantity=" + note;
+                window.location.href = url;
+            });
             $('#truck').select2({
                 placeholder: "Select Truck",
                 allowClear: true
@@ -381,3 +332,4 @@
     </script>
         
 </th:block>
+

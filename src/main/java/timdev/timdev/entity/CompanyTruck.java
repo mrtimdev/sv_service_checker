@@ -3,8 +3,8 @@ package timdev.timdev.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
@@ -26,7 +26,10 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
+import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.dto.Measurement;
+import timdev.timdev.dto.RequestStatus;
+import timdev.timdev.dto.Status;
 import timdev.timdev.listener.AuditListener;
 
 @Entity
@@ -62,6 +65,30 @@ public class CompanyTruck {
     @Column(nullable = false)
     private Measurement measurement;
 
+    @Enumerated(EnumType.STRING)
+    private RequestStatus requestStatus = RequestStatus.NONE;
+
+    @Column(columnDefinition = "TEXT")
+    private String requestNote;
+
+    private boolean isRequested = false;
+
+    private LocalDateTime approvedAt;
+    private LocalDateTime rejectedAt;
+    private LocalDateTime requestedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by", nullable = true)
+    private User approvedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rejected_by", nullable = true)
+    private User rejectedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_by", nullable = true)
+    private User requestedBy;
+
     @Column(name = "litre_quantity")
     private Double litreQuantity;
 
@@ -82,6 +109,28 @@ public class CompanyTruck {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by")
     private User updatedBy; 
+
+
+    // -----------------------
+    // New fields for status
+    // -----------------------
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.PENDING;  // default to PENDING
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deducted_by")
+    private User deductedBy;
+
+    @Column(name = "deducted_at")
+    private LocalDateTime deductedAt;
+
+    // when user back to pending after admin approved to pending
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pending_by")
+    private User pendingBy;
+
+    @Column(name = "pending_at")
+    private LocalDateTime pendingAt;
 
     @Column(name = "created_at", updatable = false, nullable = false)
     @CreatedDate
@@ -236,6 +285,118 @@ public class CompanyTruck {
 
     public void setOtherOils(String otherOils) {
         this.otherOils = otherOils;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public User getDeductedBy() {
+        return deductedBy;
+    }
+
+    public void setDeductedBy(User deductedBy) {
+        this.deductedBy = deductedBy;
+    }
+
+    public LocalDateTime getDeductedAt() {
+        return deductedAt;
+    }
+
+    public void setDeductedAt(LocalDateTime deductedAt) {
+        this.deductedAt = deductedAt;
+    }
+
+    public User getPendingBy() {
+        return pendingBy;
+    }
+
+    public void setPendingBy(User pendingBy) {
+        this.pendingBy = pendingBy;
+    }
+
+    public LocalDateTime getPendingAt() {
+        return pendingAt;
+    }
+
+    public void setPendingAt(LocalDateTime pendingAt) {
+        this.pendingAt = pendingAt;
+    }
+
+    public RequestStatus getRequestStatus() {
+        return requestStatus;
+    }
+
+    public void setRequestStatus(RequestStatus requestStatus) {
+        this.requestStatus = requestStatus;
+    }
+
+    public String getRequestNote() {
+        return requestNote;
+    }
+
+    public void setRequestNote(String requestNote) {
+        this.requestNote = requestNote;
+    }
+
+    public boolean isRequested() {
+        return isRequested;
+    }
+
+    public void setRequested(boolean isRequested) {
+        this.isRequested = isRequested;
+    }
+
+    public LocalDateTime getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(LocalDateTime approvedAt) {
+        this.approvedAt = approvedAt;
+    }
+
+    public LocalDateTime getRejectedAt() {
+        return rejectedAt;
+    }
+
+    public void setRejectedAt(LocalDateTime rejectedAt) {
+        this.rejectedAt = rejectedAt;
+    }
+
+    public User getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(User approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public User getRejectedBy() {
+        return rejectedBy;
+    }
+
+    public void setRejectedBy(User rejectedBy) {
+        this.rejectedBy = rejectedBy;
+    }
+
+    public LocalDateTime getRequestedAt() {
+        return requestedAt;
+    }
+
+    public void setRequestedAt(LocalDateTime requestedAt) {
+        this.requestedAt = requestedAt;
+    }
+
+    public User getRequestedBy() {
+        return requestedBy;
+    }
+
+    public void setRequestedBy(User requestedBy) {
+        this.requestedBy = requestedBy;
     }
 
 }
