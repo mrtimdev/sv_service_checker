@@ -70,7 +70,7 @@
                             </select>
                         </div>
                     </form>
-                    <form th:action="@{/company-trucks/trucks-requested-for-deduction}" method="get" class="mb-4 flex space-x-2">
+                    <form th:action="@{/company-trucks/deduction/status}" method="get" class="mb-4 flex space-x-2">
                         <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
                             class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                         <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
@@ -96,10 +96,10 @@
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចាក់នៅម៉ោង</th>
                             
-                            <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពស្នើសុំ</th>
+                            <!-- <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពស្នើសុំ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកស្នើរ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើរនៅម៉ោង</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើសុំចំណាំ</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើសុំចំណាំ</th> -->
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
                         </tr>
                     </thead>
@@ -114,7 +114,7 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.litreQuantity}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalOilsChange}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 font-extrabold" th:text="${data.totalOilsChange}"></td>
 
                             <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:class="${data.status.name == 'PENDING' ? 
@@ -129,7 +129,7 @@
                             
                             
 
-                            <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                            <!-- <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:if="${data.requestStatus.name != 'NONE'}" th:switch="${data.requestStatus.name}">
                                     <span th:case="'REQUESTED'" 
                                         class="px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
@@ -145,7 +145,7 @@
 
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.requestedBy?.fullName}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.requestedAt, 'MMM dd, yyyy HH:mm a')}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.requestNote != null and data.requestNote != '' ? data.requestNote : ''}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.requestNote != null and data.requestNote != '' ? data.requestNote : ''}"></td> -->
 
                             
                             
@@ -153,8 +153,8 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 
                                 <div class="flex gap-2 items-center justify-center">
-                                    <!-- data.requestStatus?.name == 'NONE' -->
-                                    <div th:if="${data.requestStatus.toString() == 'REQUESTED'}">
+
+                                    <!-- <div th:if="${data.requestStatus.toString() == 'REQUESTED'}">
                                         <form th:action="@{'/company-trucks/approve/' + ${data.id}}" method="post"
                                             onsubmit="return confirm('Are you sure you want to approve this truck?')">
                                             <input type="hidden" name="status" value="APPROVED" />
@@ -166,7 +166,6 @@
                                         </form>
                                     </div>
 
-                                    <!-- Unapprove -->
                                     <div th:if="${data.requestStatus.toString() == 'APPROVED'}">
                                         <form th:action="@{'/company-trucks/approve/' + ${data.id}}" method="post"
                                             onsubmit="return confirm('Are you sure you want to unapprove this truck?')">
@@ -189,7 +188,23 @@
                                                 <span th:text="#{reject}"></span>
                                             </button>
                                         </form>
-                                    </div>
+                                    </div> -->
+
+                                    <a 
+                                        th:if="${data.status.name == 'PENDING'}"
+                                        th:href="@{/company-trucks/status/update(id=${data.id}, action='DEDUCTED', isByAdmin=true, backUrl=${requestPathWithParams})}"
+                                        class="cursor-pointer bg-green-600 text-white px-3 py-1 rounded-lg shadow">
+                                        <i class="fa fa-arrow-alt-circle-right"></i> Mark as Deducted
+                                    </a>
+
+                                    <a 
+                                        th:if="${
+                                            data.status.name == 'DEDUCTED'
+                                        }"
+                                        th:href="@{/company-trucks/status/update(id=${data.id}, action='PENDING', isByAdmin=true, backUrl=${requestPathWithParams})}"
+                                        class="!cursor-pointer bg-red-600 text-white px-3 py-1 rounded-lg shadow">
+                                        <i class="fa fa-arrow-alt-circle-left"></i> Change to Pending
+                                    </a>
 
                                 </div>
 
@@ -209,7 +224,7 @@
             <div class="flex justify-center mt-4 items-center">
                 <ul class="inline-flex -space-x-px mr-4">
                     <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/company-trucks/trucks-requested-for-deduction(page=${i}, size=${pageSize})}"
+                        <a th:href="@{/company-trucks/deduction/status(page=${i}, size=${pageSize})}"
                         th:text="${i + 1}"
                         class="px-3 py-1 border rounded-md mr-1 
                                 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
@@ -219,7 +234,7 @@
                 </ul>
 
                 <!-- Show All button -->
-                <a th:href="@{/company-trucks/trucks-requested-for-deduction(all=true)}"
+                <a th:href="@{/company-trucks/deduction/status(all=true)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>

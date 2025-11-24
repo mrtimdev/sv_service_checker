@@ -50,6 +50,9 @@ public class SecurityConfig {
                     "/webjars/**",
                     "/error"
                 ).permitAll()
+
+                // .requestMatchers("/ws/**").permitAll() 
+                // .anyRequest().authenticated()
                 
                 // API endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
@@ -71,8 +74,13 @@ public class SecurityConfig {
                     
                 )
 
+                .requestMatchers("/ws/**").permitAll()
+                // .anyRequest().authenticated()
+
                 .anyRequest().authenticated()
             )
+
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))
             
             // Form login configuration for Thymeleaf
             .formLogin(form -> form
@@ -109,7 +117,9 @@ public class SecurityConfig {
             // API specific configurations
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/v1/**") // Disable CSRF for API
+                
             )
+            // .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))
             
             // Add JWT filter for API requests
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

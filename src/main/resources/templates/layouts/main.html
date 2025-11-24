@@ -88,6 +88,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
+
+    <script src="https://js.pusher.com/beams/2.1.0/push-notifications-cdn.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
     <script>
         dayjs.extend(dayjs_plugin_relativeTime);
     </script>
@@ -163,7 +169,48 @@
             });
 
         });
-    </script>
+
+
+        const beamsClient = new PusherPushNotifications.Client({
+            instanceId: 'c56fbb99-bd0b-4b6e-8a3c-70cf1492d8cf',
+        });
+
+        
+        // Start the Beams client once
+        beamsClient
+            .start()
+            .then(() => {
+                return beamsClient.getDeviceId();
+            })
+            .then((deviceId) => {
+                console.log("Successfully registered with Beams. Device ID:", deviceId);
+                // return beamsClient.setUserId('10', tokenProvider);
+            })
+            .then(() => {
+                console.log('User ID has been set');
+            })
+            .catch((e) => console.error('Could not initialize Beams:', e));
+
+
+            const socket = new SockJS("/ws");
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function () {
+                console.log("Connected to WebSocket");
+
+                stompClient.subscribe("/topic/notifications", function (msg) {
+                   console.log({msg})
+                });
+
+                stompClient.subscribe("/user/queue/reply", function (msg) {
+                    console.log("Private message:", msg.body);
+                });
+
+                // stompClient.send("/app/sendMessage", {}, "Hi Server sendMessage");
+                // stompClient.send("/app/hello", {}, "Hi Server");
+
+            });
+        </script>
 
 
     </body>

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.Truck;
 
@@ -33,5 +34,37 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
     boolean existsByTruckAndDate(Truck truck, LocalDate date);
 
     Optional<CompanyTruck> findByTruckAndDate(Truck truck, LocalDate date);
+
+
+    List<CompanyTruck> findByStatus(Status status);
+
+   
+
+    Page<CompanyTruck> findByStatus(Status status, Pageable pageable);
+
+    @Query("""
+        SELECT c 
+        FROM CompanyTruck c 
+        JOIN FETCH c.truck t 
+        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+        AND c.status = :status
+    """)
+    List<CompanyTruck> findByLicensePlateContainingAndStatus(
+            @Param("licensePlate") String licensePlate,
+            @Param("status") Status status);
+
+    @Query("""
+        SELECT c 
+        FROM CompanyTruck c 
+        JOIN c.truck t 
+        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+        AND c.status = :status
+    """)
+    Page<CompanyTruck> findByLicensePlateContainingAndStatus(
+            @Param("licensePlate") String licensePlate,
+            @Param("status") Status status,
+            Pageable pageable);
+
+
 
 }

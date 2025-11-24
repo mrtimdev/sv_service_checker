@@ -93,7 +93,7 @@
                             </select>
                         </div>
                     </form>
-                    <form th:action="@{/admin/trucks}" method="get" class="mb-4 flex space-x-2">
+                    <form th:action="@{/company-trucks}" method="get" class="mb-4 flex space-x-2">
                         <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
                             class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                         <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
@@ -114,8 +114,10 @@
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ប្រេងផ្សេងៗ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សរុបប្រេងចាក់អោយឡាន</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">បង្កើតនៅ</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កែប្រែចុងក្រោយ</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកបង្កើត</th>
+                            <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពចាក់ប្រេង</th>
+                            
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចាក់នៅម៉ោង</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
                         </tr>
                     </thead>
@@ -132,8 +134,18 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalOilsChange}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.updatedAt, 'MMM dd, yyyy HH:mm a')}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.createdBy?.fullName}"></td>
+                            
+
+                            <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                                <span th:class="${data.status.name == 'PENDING' ? 
+                                    'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                    'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                    th:text="${data.status}">
+                                </span>
+                            </td>
+
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.deductedBy?.fullName}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.deductedAt, 'MMM dd, yyyy HH:mm a')}"></td>
 
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 <div x-data="{ open: false }" class="relative">
@@ -181,8 +193,8 @@
 
             <div class="flex justify-center mt-4 items-center">
                 <ul class="inline-flex -space-x-px mr-4">
-                    <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/admin/trucks(page=${i}, size=${pageSize})}"
+                    <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                        <a th:href="@{/company-trucks(page=${i}, size=${pageSize})}"
                         th:text="${i + 1}"
                         class="px-3 py-1 border rounded-md mr-1 
                                 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
@@ -192,7 +204,7 @@
                 </ul>
 
                 <!-- Show All button -->
-                <a th:href="@{/admin/trucks(all=true)}"
+                <a th:href="@{/company-trucks(all=true)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>

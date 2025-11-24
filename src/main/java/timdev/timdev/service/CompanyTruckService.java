@@ -28,9 +28,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.Measurement;
+import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
+import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.repository.CompanyTruckRepository;
 import timdev.timdev.repository.TruckRepository;
 import timdev.timdev.repository.UserRepository;
@@ -164,6 +166,34 @@ public class CompanyTruckService {
     public List<CompanyTruck> findByLicensePlateContaining(String licensePlate) {
         return repository.findByTruck_LicensePlateContainingIgnoreCase(licensePlate);
     }
+
+    
+    public List<CompanyTruck> findByStatus(Status status) {
+        return repository.findByStatus(status);
+    }
+
+    
+    public List<CompanyTruck> findByLicensePlateAndStatus(String licensePlate, Status status) {
+        return repository
+                .findByLicensePlateContainingAndStatus(licensePlate, status);
+    }
+
+    
+    public Page<CompanyTruck> findByStatusWithPageable(Status status, Pageable pageable) {
+        return repository.findByStatus(status, pageable);
+    }
+
+    
+    public Page<CompanyTruck> findByLicensePlateAndStatusWithPageable(
+            String licensePlate, Status status, Pageable pageable) {
+
+        return repository
+                .findByLicensePlateContainingAndStatus(licensePlate, status, pageable);
+    }
+
+    
+
+
 
     // Filter by license plate (paginated)
     public Page<CompanyTruck> findByLicensePlateContainingWithPageable(String licensePlate, Pageable pageable) {

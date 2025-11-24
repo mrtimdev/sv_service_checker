@@ -108,13 +108,13 @@
                             
                             <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពចាក់ប្រេង</th>
                             
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
+                            <!-- <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចាក់នៅម៉ោង</th>
                             
                             <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពស្នើសុំ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកស្នើរ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើរនៅម៉ោង</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើសុំចំណាំ</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើសុំចំណាំ</th> -->
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
                         </tr>
                     </thead>
@@ -126,19 +126,21 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                th:text="#{${#strings.capitalize(data.measurement.name.toLowerCase())}}"
+                            ></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.litreQuantity}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalOilsChange}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 font-extrabold" th:text="${data.totalOilsChange}"></td>
 
                             <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:class="${data.status.name == 'PENDING' ? 
                                     'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
                                     'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
-                                    th:text="${data.status}">
+                                    th:text="#{${#strings.capitalize(data.status.name.toLowerCase())}}">
                                 </span>
                             </td>
-
+                            <!-- 
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.deductedBy?.fullName}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.deductedAt, 'MMM dd, yyyy HH:mm a')}"></td>
                             
@@ -161,7 +163,7 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.requestedBy?.fullName}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.requestedAt, 'MMM dd, yyyy HH:mm a')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.requestNote != null and data.requestNote != '' ? data.requestNote : ''}"></td>
-                            
+                             -->
 
                             
                             
@@ -173,10 +175,14 @@
                                         th:if="${data.status.name == 'PENDING'}"
                                         th:href="@{/company-trucks/status/update(id=${data.id}, action='DEDUCTED', backUrl=${requestPathWithParams})}"
                                         class="cursor-pointer bg-green-600 text-white px-3 py-1 rounded-lg shadow">
-                                        Mark as Deducted
+                                        <i class="fa fa-check-double"></i> <span th:text="#{mark_as_deducted}"></span>
                                     </a>
 
-                                    <a 
+                                    <i class="fa fa-check-double text-green-500"
+                                        th:if="${data.status.name == 'DEDUCTED'}"
+                                        ></i>
+
+                                    <!-- <a 
                                         th:if="${
                                             data.status.name == 'DEDUCTED' and
                                             data.requestStatus.name == 'APPROVED'
@@ -184,10 +190,10 @@
                                         th:href="@{/company-trucks/status/update(id=${data.id}, action='PENDING', backUrl=${requestPathWithParams})}"
                                         class="!cursor-pointer bg-red-600 text-white px-3 py-1 rounded-lg shadow">
                                         Mark as Pending
-                                    </a>
+                                    </a> -->
 
                                 
-                                    <a 
+                                    <!-- <a 
                                         th:if="${data.status.name == 'DEDUCTED' 
                                             and data.requestStatus?.name == 'NONE'}"
                                             
@@ -207,7 +213,7 @@
                                         onclick="return alert('You have already request for undeduction, wait from admin approved your request!')"
                                         class="px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                         Requesting
-                                    </a>
+                                    </a> -->
 
 
                                 </div>

@@ -121,7 +121,7 @@
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">Status</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{note}"></th>
                             
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
+                            <th style="display: none;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -149,7 +149,7 @@
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 <span th:text="${truck.lastOilsChangeReport?.litreQuantity}"></span>
                             </td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
+                            <td class="font-extrabold text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 <span th:text="${truck.lastOilsChangeReport?.totalOilsChange}"></span>
                             </td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
@@ -166,7 +166,7 @@
                                 <span th:text="${truck.lastOilsChangeReport?.note}"></span>
                             </td>
                             
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
+                            <td style="display: none;" class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 
                                 <div class="flex gap-2 items-center justify-center">
                                     <a 

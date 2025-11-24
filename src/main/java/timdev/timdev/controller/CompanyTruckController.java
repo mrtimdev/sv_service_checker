@@ -717,6 +717,7 @@ public class CompanyTruckController {
             @RequestParam("action") String action,
             @RequestParam("backUrl") String backUrl,
             @RequestParam(required = false) String requestNote,
+            @RequestParam(required = false) Boolean isByAdmin,
             RedirectAttributes redirectAttributes,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
@@ -737,14 +738,23 @@ public class CompanyTruckController {
         switch (action.toUpperCase()) {
             case "DEDUCTED" -> {
                 truck.setStatus(Status.DEDUCTED);
-                truck.setDeductedAt(LocalDateTime.now());
-                truck.setDeductedBy(user);
+                
+                if (isByAdmin == null) {
+                    truck.setDeductedBy(user);
+                    truck.setDeductedAt(LocalDateTime.now());
+                }
+                
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
             }
             case "PENDING" -> {
                 truck.setStatus(Status.PENDING);
-                truck.setPendingAt(LocalDateTime.now());
-                truck.setPendingBy(user);
+                
+
+                if (isByAdmin != null) {
+                    truck.setPendingBy(user);
+                    truck.setPendingAt(LocalDateTime.now());
+                }
+                
 
                 truck.setRequestStatus(RequestStatus.REQUESTED);
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
@@ -778,7 +788,7 @@ public class CompanyTruckController {
         CompanyTruck companyTruck = service.findById(id).orElse(null);
         if (companyTruck == null) {
             redirectAttributes.addFlashAttribute("error", "CompanyTruck not found!");
-            return "redirect:/company-trucks/trucks-requested-for-deduction";
+            return "redirect:/company-trucks/deduction/status";
         }
 
         User currentUser = userDetails.getUser();
@@ -801,10 +811,10 @@ public class CompanyTruckController {
         
         service.saveTruck(companyTruck); 
         redirectAttributes.addFlashAttribute("success", "Request has been "+ status);
-        return "redirect:/company-trucks/trucks-requested-for-deduction";
+        return "redirect:/company-trucks/deduction/status";
     }
 
-    @GetMapping("/trucks-requested-for-deduction")
+    @GetMapping("/deduction/status")
     public Object userRequestTruckForChangeToDeduction(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
@@ -852,7 +862,7 @@ public class CompanyTruckController {
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);  
-        return "company-trucks/trucks_request_for_deduction";
+        return "company-trucks/deduction_status";
     }
 
 
@@ -880,9 +890,9 @@ public class CompanyTruckController {
         // Get all data for export or filtered data for display
         List<CompanyTruck> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateContaining(licensePlate);
+            allTrucks = service.findByLicensePlateAndStatus(licensePlate, Status.PENDING);
         } else {
-            allTrucks = service.getAll();
+            allTrucks = service.findByStatus(Status.PENDING);
         }
 
         if (showAll) {
@@ -891,9 +901,10 @@ public class CompanyTruckController {
             Pageable pageable = PageRequest.of(page, size);
             Page<CompanyTruck> truckPage;
             if (licensePlate != null && !licensePlate.isEmpty()) {
-                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+                // truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+                truckPage = service.findByLicensePlateAndStatusWithPageable(licensePlate, Status.PENDING , pageable);
             } else {
-                truckPage = service.getAllWithPageable(pageable);
+                truckPage = service.findByStatusWithPageable(Status.PENDING, pageable);
             }
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();

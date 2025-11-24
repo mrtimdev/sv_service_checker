@@ -267,8 +267,8 @@ public class CompanyTruck {
     @Transient
     public String getAverageFormat() {
         if (average != null)
-            return String.format("%,.2f km", average);
-        return "0 Km";
+            return String.format("%,.2f", average);
+        return "0";
     }
 
     public Double getTotalOilsChange() {

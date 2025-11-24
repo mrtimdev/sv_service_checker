@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -20,6 +21,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,6 +48,8 @@ import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.FuelRequestService;
+import timdev.timdev.service.NotificationService;
+import timdev.timdev.service.PusherBeamsService;
 import timdev.timdev.service.TruckService;
 import timdev.timdev.service.UserService;
 
@@ -57,6 +61,12 @@ public class FuelRequestController {
     private FuelRequestService service;
     private TruckService truckService;
     private UserService userService;
+
+    @Autowired
+    private PusherBeamsService beamsService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping({"", "/reports"})
     public Object list(
@@ -400,6 +410,14 @@ public class FuelRequestController {
         fuelRequest.setApprovedBy(currentUser);
         service.update(fuelRequest); 
         redirectAttributes.addFlashAttribute("success", "Status changed to "+ status);
+
+        // beamsService.sendToInterest(
+        //         "HELLO",
+        //         "🚀 Test Notification",
+        //         "Your Spring Boot + Pusher Beams setup works!");
+
+        // notificationService.sendNotification("Fuel updated for truck ID: " + id);
+
         return "redirect:/fuel-requests";
     }
 

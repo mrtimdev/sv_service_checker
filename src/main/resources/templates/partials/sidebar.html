@@ -31,19 +31,19 @@
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Transactions</h3>
                 <ul sec:authorize="!hasRole('USER')">
                     <li>
-                        <a href="/company-trucks/oils-change"
-                            th:classappend="${requestURI.startsWith('/company-trucks') and requestURI != '/company-trucks/trucks-requested-for-deduction'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/company-trucks"
+                            th:classappend="${requestURI.startsWith('/company-trucks') and requestURI != '/company-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks}"></span>
                         </a>
                     </li>
                     <li>
-                        <a href="/company-trucks/trucks-requested-for-deduction"
-                            th:classappend="${requestURI == '/company-trucks/trucks-requested-for-deduction'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/company-trucks/deduction/status"
+                            th:classappend="${requestURI == '/company-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
-                            <span th:text="#{company_trucks_requests}"></span>
+                            <span th:text="#{company_trucks_status}"></span>
                         </a>
                     </li>
                     <li>
@@ -99,14 +99,14 @@
             <div class="mb-4" sec:authorize="!hasRole('USER')">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
-                    <li>
+                    <!-- <li>
                         <a href="/company-trucks?reportPage=true"
                             th:classappend="${requestURI == '/company-trucks'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks_reports}"></span>
                         </a>
-                    </li>
+                    </li> -->
 
                     
 

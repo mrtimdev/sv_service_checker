@@ -24,7 +24,7 @@
 
 
                 <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Sub Trucks</h1>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{sub_trucks}"></h1>
 
                     <div class="flex gap-2 items-center mb-6">
                         <a th:href="@{/sub-trucks/form}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
@@ -163,6 +163,7 @@
                             <form th:action="@{/sub-trucks}" method="get" class="mb-4 flex space-x-2">
                                 <div>
                                     <select name="status" style="width: 150px;" class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 focus:outline-none focus:ring focus:ring-blue-500">
+                                        <option value="">All</option>
                                         <option th:each="s : ${statuses}" 
                                                 th:value="${s}" 
                                                 th:text="${s}" 
@@ -216,7 +217,7 @@
                                         <span th:class="${st.status.toString() == 'PENDING' ? 
                                             'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
                                             'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
-                                            th:text="${st.status}">
+                                            th:text="#{${#strings.capitalize(st.status.name.toLowerCase())}}">
                                         </span>
                                     </td>
 
