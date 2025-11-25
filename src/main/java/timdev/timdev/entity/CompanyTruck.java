@@ -25,19 +25,13 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.persistence.UniqueConstraint;
-import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
 import timdev.timdev.listener.AuditListener;
 
 @Entity
-@Table(name = "company_trucks", 
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"date", "truck_id"})
-    }
-)
+@Table(name = "company_trucks")
 @Audited
 @EntityListeners(AuditListener.class)
 public class CompanyTruck {

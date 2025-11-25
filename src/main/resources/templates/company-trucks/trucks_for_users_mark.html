@@ -96,8 +96,9 @@
                 <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
                     <thead>
                         <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កាលបរិច្ឆេទ</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">លេខឡាន</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                            <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កាលបរិច្ឆេទ</th>
+                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">លេខឡាន</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">គោលដៅសរុប</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចម្ងាយសរុប (គីឡូម៉ែត្រ)</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">មធ្យមភាគ (Average)</th>
@@ -120,7 +121,9 @@
                     </thead>
 
                     <tbody>
-                        <tr th:each="data : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                        <tr th:each="data, iterStat : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${iterStat.index + 1}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>

@@ -66,6 +66,7 @@
                                     <option th:each="t : ${trucks}" 
                                             th:value="${t.id}" 
                                             th:text="${t.licensePlate}"
+                                            th:attr="data-truck-group=${t.group}"
                                             th:selected="${selectedTruckId != null} ? ${t.id} == ${selectedTruckId} : false">
                                     </option>
                                 </select>
@@ -74,7 +75,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Truck Owner</label>
-                                <input type="text" th:field="*{truckOwner}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                                <input type="text" th:field="*{truckOwner}" id="truckOwner" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
                             </div>
 
                             <div>
@@ -132,15 +133,15 @@
     <script th:inline="javascript">
         const isClone = /*[[${isClone}]]*/ false;
         $(function () {
+            // Initialize Select2 first, then set up event handler
             $('#truck').select2({
                 placeholder: "Select Truck",
                 allowClear: true
+            }).on('change', function () {
+                const selectedOption = $('#truck option:selected');
+                const group = selectedOption.data('truck-group');
+                $('#truckOwner').val(group ?? '');
             });
-            // $("#date").flatpickr({
-            //     defaultDate: $("#date").val() || new Date(),
-            //     dateFormat: "M d, Y",
-            //     allowInput: true
-            // });
 
             let datePicker = flatpickr("#date", {
                 defaultDate: $("#date").val() || new Date(),

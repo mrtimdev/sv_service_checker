@@ -45,7 +45,6 @@ import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.FuelRequest;
 import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
-import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.FuelRequestService;
 import timdev.timdev.service.NotificationService;

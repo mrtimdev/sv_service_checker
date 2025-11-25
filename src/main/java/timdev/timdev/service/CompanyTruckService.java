@@ -23,6 +23,7 @@ import org.hibernate.annotations.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -156,6 +157,16 @@ public class CompanyTruckService {
         return repository.findAll();
     }
 
+    public List<CompanyTruck> getAllWIthSort(Sort sort) {
+        return repository.findAll(sort);
+    }
+
+
+    public List<CompanyTruck> findByLicensePlateContaining(String licensePlate, Sort sort) {
+        return repository.findByTruck_LicensePlateContaining(licensePlate, sort);
+    }
+
+
     // Fetch all with pagination
     public Page<CompanyTruck> getAllWithPageable(Pageable pageable) {
         return repository.findAll(pageable);
@@ -216,13 +227,6 @@ public class CompanyTruckService {
         return repository.findByTruckAndDate(truck, date).orElse(null);
     }
 
-
-    public int sortByLastOilChange(Truck truck) {
-        if (truck.getLastOilsChangeReport() != null) {
-            return 0; 
-        }
-        return 1; 
-    }
 
     public Optional<CompanyTruck> findById(Long id) {
         return repository.findById(id);
@@ -345,19 +349,13 @@ public class CompanyTruckService {
         if (kmString == null || kmString.trim().isEmpty()) {
             return null;
         }
-        
+
         try {
-            // Remove "km" prefix and any spaces
-            String cleaned = kmString.replace("km", "")
-                                .replace("KM", "")
-                                .replace(" ", "")
-                                .trim();
-            
-            if (cleaned.isEmpty()) {
-                return null;
-            }
-            
-            return Double.valueOf(cleaned);
+            String cleaned = cleanNumber(kmString);
+
+            if (cleaned.isEmpty()) return null;
+
+            return Double.parseDouble(cleaned);
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid KM format: '" + kmString + "'");
         }
@@ -367,32 +365,27 @@ public class CompanyTruckService {
         if (litreString == null || litreString.trim().isEmpty()) {
             return null;
         }
-        
+
         try {
-            // Remove "L" prefix and any spaces
-            String cleaned = litreString.replace("L", "")
-                                    .replace("l", "")
-                                    .replace(" ", "")
-                                    .trim();
-            
-            if (cleaned.isEmpty()) {
-                return null;
-            }
-            
-            return Double.valueOf(cleaned);
+            String cleaned = cleanNumber(litreString);
+
+            if (cleaned.isEmpty()) return null;
+
+            return Double.parseDouble(cleaned);
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid litre format: '" + litreString + "'");
         }
     }
 
+
     private String parseLitreString(String litreString) {
         if (litreString == null || litreString.trim().isEmpty()) {
             return null;
         }
-        
-        // Keep the original string with "L" for otherOils field
-        return litreString.trim();
+
+        return litreString.replaceAll("\\s+", " ").trim();
     }
+
 
     private Double parseDouble(String value) {
         if (value == null || value.trim().isEmpty()) {
@@ -413,50 +406,18 @@ public class CompanyTruckService {
             dto.getLitreQuantity() != null;
     }
 
-    private LocalDate getCellValueAsDate(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        
-        try {
-            switch (cell.getCellType()) {
-                case NUMERIC:
-                    if (DateUtil.isCellDateFormatted(cell)) {
-                        return cell.getDateCellValue().toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate();
-                    } else {
-                        // Convert numeric value to date (if Excel date serial number)
-                        return DateUtil.getJavaDate(cell.getNumericCellValue())
-                                .toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate();
-                    }
-                case STRING:
-                    String dateString = cell.getStringCellValue().trim();
-                    // Try different date formats
-                    DateTimeFormatter[] formatters = {
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                        DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-                        DateTimeFormatter.ofPattern("yyyy/MM/dd")
-                    };
-                    
-                    for (DateTimeFormatter formatter : formatters) {
-                        try {
-                            return LocalDate.parse(dateString, formatter);
-                        } catch (DateTimeParseException e) {
-                            // Try next format
-                        }
-                    }
-                    return null;
-                default:
-                    return null;
-            }
-        } catch (Exception e) {
-            return null;
-        }
+    
+
+
+    private String cleanNumber(String value) {
+        if (value == null) return null;
+
+        // Keep only digits, minus sign and dot
+        return value
+                .replaceAll("[^0-9.-]", "")  // removes km, L, commas, spaces, text
+                .trim();
     }
+
 
     private Measurement mapToMeasurement(String text) {
         if (text == null) return null;
@@ -498,11 +459,11 @@ public class CompanyTruckService {
         Truck truck = truckRepository.findByLicensePlate(dto.getLicensePlate().trim())
                 .orElseThrow(() -> new RuntimeException("Truck not found: " + dto.getLicensePlate()));
 
-        // Check if record already exists
-        boolean exists = repository.existsByTruckAndDate(truck, dto.getDate());
-        if (exists) {
-            throw new RuntimeException("Record already exists for this truck and date");
-        }
+        // Check if record already exists for this truck and date , but commented out to allow duplicates
+        // boolean exists = repository.existsByTruckAndDate(truck, dto.getDate());
+        // if (exists) {
+        //     throw new RuntimeException("Record already exists for this truck and date");
+        // }
 
         // Set additional data and save
         dto.setTruckId(truck.getId());

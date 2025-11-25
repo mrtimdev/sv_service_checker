@@ -5,8 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,15 +21,14 @@ import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,20 +39,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.CustomUserDetails;
-import timdev.timdev.dto.InspectionRequestDTO;
 import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
-import timdev.timdev.dto.TruckInspectionRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
-import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanyTruckService;
-import timdev.timdev.service.TruckInspectionService;
 import timdev.timdev.service.TruckService;
 
 
@@ -80,39 +72,43 @@ public class CompanyTruckController {
         List<CompanyTruck> trucks;
         int totalPages = 1;
         int size;
-        
+
         if ("all".equalsIgnoreCase(sizeParam)) {
             size = Integer.MAX_VALUE;
         } else {
-            size = Integer.parseInt(sizeParam); 
+            size = Integer.parseInt(sizeParam);
         }
 
-        // Get all data for export or filtered data for display
         List<CompanyTruck> allTrucks;
+
+        // ✅ Always sorted by ID DESC
+        Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateContaining(licensePlate);
+            allTrucks = service.findByLicensePlateContaining(licensePlate, sortByIdDesc);
         } else {
-            allTrucks = service.getAll();
+            allTrucks = service.getAllWIthSort(sortByIdDesc);
         }
 
         if (showAll) {
             trucks = allTrucks;
         } else {
-            Pageable pageable = PageRequest.of(page, size);
+            Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
             Page<CompanyTruck> truckPage;
+
             if (licensePlate != null && !licensePlate.isEmpty()) {
                 truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
             } else {
                 truckPage = service.getAllWithPageable(pageable);
             }
+
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }
 
-        // Excel Export
         if ("excel".equalsIgnoreCase(export)) {
             exportCompanyTrucksReportToExcel(allTrucks, response);
-            return null; 
+            return null;
         }
 
         model.addAttribute("trucks", trucks);
@@ -120,9 +116,11 @@ public class CompanyTruckController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
-        model.addAttribute("licensePlate", licensePlate);  
+        model.addAttribute("licensePlate", licensePlate);
+
         return "company-trucks/index";
     }
+
 
 
     // --- Create Form ---
@@ -165,21 +163,21 @@ public class CompanyTruckController {
             return "redirect:/company-trucks";
         }
 
-        // ✅ Only check for existing record if creating new OR editing to a different date
-        boolean exists = service.isExistsByTruckAndDate(truck, dto.getDate());
+        // // ✅ Only check for existing record if creating new OR editing to a different date
+        // boolean exists = service.isExistsByTruckAndDate(truck, dto.getDate());
 
-        if (exists) {
-            // ✅ Fetch existing record by truck and date
-            CompanyTruck existing = service.findByTruckAndDate(truck, dto.getDate());
-            // If it's not the same record being edited, block it
-            if (dto.getId() == null || !existing.getId().equals(dto.getId())) {
-                redirectAttributes.addFlashAttribute(
-                    "error",
-                    "ឡានលេខ " + truck.getLicensePlate() + " មានរបាយការណ៍សម្រាប់ថ្ងៃ " + dto.getDate() + " រួចហើយ!"
-                );
-                return "redirect:/company-trucks/create?truckId=" + truck.getId();
-            }
-        }
+        // if (exists) {
+        //     // ✅ Fetch existing record by truck and date
+        //     CompanyTruck existing = service.findByTruckAndDate(truck, dto.getDate());
+        //     // If it's not the same record being edited, block it
+        //     if (dto.getId() == null || !existing.getId().equals(dto.getId())) {
+        //         redirectAttributes.addFlashAttribute(
+        //             "error",
+        //             "ឡានលេខ " + truck.getLicensePlate() + " មានរបាយការណ៍សម្រាប់ថ្ងៃ " + dto.getDate() + " រួចហើយ!"
+        //         );
+        //         return "redirect:/company-trucks/create?truckId=" + truck.getId();
+        //     }
+        // }
         if (dto.getId() == null) {
             dto.setCreatedBy(user.getId());
             service.createTruck(dto);
@@ -192,77 +190,10 @@ public class CompanyTruckController {
             "✅ Report for truck " + truck.getLicensePlate() + " on " + dto.getDate() + " saved successfully!"
         );
 
-        return "redirect:/company-trucks/oils-change?licensePlate="+truck.getLicensePlate();
+        return "redirect:/company-trucks?licensePlate="+truck.getLicensePlate();
     }
 
 
-
-    // list trucks with last schedule 
-    @GetMapping("/oils-change")
-    public Object indexOilsChange(
-            Model model,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
-            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-            @RequestParam(value = "licensePlate", required = false) String licensePlate,
-            @RequestParam(value = "export", required = false) String export,
-            HttpServletResponse response
-    ) throws IOException 
-        {
-
-        List<Truck> allTrucks;
-        if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = truckService.findByLicensePlateContaining(licensePlate);
-        } else {
-            allTrucks = truckService.getAll();
-        }
-
-        allTrucks.sort(Comparator.comparingInt(this::sortByLastOilChange));
-
-        List<Truck> trucks;
-        int totalPages;
-        int size;
-        
-        if ("all".equalsIgnoreCase(sizeParam)) {
-            size = Integer.MAX_VALUE;
-        } else {
-            size = Integer.parseInt(sizeParam); 
-        }
-        if (showAll) {
-            trucks = allTrucks; 
-            totalPages = 1;
-        } else {
-            int fromIndex = page * size;
-            int toIndex = Math.min(fromIndex + size, allTrucks.size());
-            if (fromIndex >= allTrucks.size()) {
-                trucks = Collections.emptyList();
-            } else {
-                trucks = allTrucks.subList(fromIndex, toIndex);
-            }
-            totalPages = (int) Math.ceil(allTrucks.size() / (double) size);
-        }
-        if ("excel".equalsIgnoreCase(export)) {
-            exportToExcel(trucks, response);
-            return null; 
-        }
-
-        model.addAttribute("trucks", trucks);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageSize", sizeParam);
-        model.addAttribute("showAll", showAll);
-        model.addAttribute("licensePlate", licensePlate);
-
-        return "company-trucks/trucks";
-    }
-
-
-    private int sortByLastOilChange(Truck truck) {
-        if (truck.getLastOilsChangeReport() != null) {
-            return 1; 
-        }
-        return 0; 
-    }
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
@@ -276,6 +207,16 @@ public class CompanyTruckController {
                 CompanyTruck companyTruck = truckOpt.get();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
                 String dateString = companyTruck.getDate().format(formatter);
+
+                if (Status.DEDUCTED.equals(companyTruck.getStatus())) {
+                    redirectAttributes.addFlashAttribute(
+                    "error",
+                        "Oops, This truck transaction " + companyTruck.getTruck().getLicensePlate() + " on " + dateString + " fuel has been filled, can not deletable!"
+                    );
+
+                    return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
+                }
+
                 service.deleteById(id);
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + companyTruck.getTruck().getLicensePlate() + " deleted successfully!");
             }
@@ -509,170 +450,6 @@ public class CompanyTruckController {
         }
     }
 
-
-    private void exportToExcel(List<Truck> trucks, HttpServletResponse response) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=\"Company-Trucks-Fuel.xlsx\"");
-        
-        try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Company Trucks Fuel");
-            
-            // Create styles
-            CellStyle headerStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerFont.setFontHeightInPoints((short) 12);
-            headerFont.setColor(IndexedColors.WHITE.getIndex());
-            headerStyle.setFont(headerFont);
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setBorderTop(BorderStyle.THIN);
-            headerStyle.setBorderBottom(BorderStyle.THIN);
-            headerStyle.setBorderLeft(BorderStyle.THIN);
-            headerStyle.setBorderRight(BorderStyle.THIN);
-            
-            CellStyle titleStyle = workbook.createCellStyle();
-            Font titleFont = workbook.createFont();
-            titleFont.setBold(true);
-            titleFont.setFontHeightInPoints((short) 16);
-            titleFont.setColor(IndexedColors.DARK_BLUE.getIndex());
-            titleStyle.setFont(titleFont);
-            titleStyle.setAlignment(HorizontalAlignment.CENTER);
-            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            
-            CellStyle dataStyle = workbook.createCellStyle();
-            dataStyle.setAlignment(HorizontalAlignment.CENTER);
-            dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            dataStyle.setBorderTop(BorderStyle.THIN);
-            dataStyle.setBorderBottom(BorderStyle.THIN);
-            dataStyle.setBorderLeft(BorderStyle.THIN);
-            dataStyle.setBorderRight(BorderStyle.THIN);
-            
-            CellStyle numberStyle = workbook.createCellStyle();
-            numberStyle.setAlignment(HorizontalAlignment.CENTER);
-            numberStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            numberStyle.setBorderTop(BorderStyle.THIN);
-            numberStyle.setBorderBottom(BorderStyle.THIN);
-            numberStyle.setBorderLeft(BorderStyle.THIN);
-            numberStyle.setBorderRight(BorderStyle.THIN);
-            numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00"));
-            
-            // Create title row
-            Row titleRow = sheet.createRow(0);
-            titleRow.setHeightInPoints(30);
-            Cell titleCell = titleRow.createCell(0);
-            titleCell.setCellValue("Company Trucks Fuel");
-            titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
-            
-            // Create info row (date generated)
-            Row infoRow = sheet.createRow(1);
-            infoRow.setHeightInPoints(20);
-            Cell infoCell = infoRow.createCell(0);
-            infoCell.setCellValue("Generated on: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm a")));
-            CellStyle infoStyle = workbook.createCellStyle();
-            Font infoFont = workbook.createFont();
-            infoFont.setItalic(true);
-            infoFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            infoStyle.setFont(infoFont);
-            infoCell.setCellStyle(infoStyle);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 11));
-            
-            // Create header row
-            Row headerRow = sheet.createRow(2);
-            headerRow.setHeightInPoints(25);
-            
-            String[] headers = {
-                "កាលបរិច្ឆេទ", 
-                "លេខឡាន", 
-                "គោលដៅសរុប", 
-                "ចម្ងាយសរុប (គីឡូម៉ែត្រ)", 
-                "មធ្យមភាគ (Average)", 
-                "ប្រភេទវាស់វែង",
-                "ចំនួនប្រេង", 
-                "ប្រេងផ្សេងៗ", 
-                "សរុបប្រេងចាក់អោយឡាន",
-                "បង្កើតនៅ", 
-                "កែប្រែចុងក្រោយ", 
-                "អ្នកបង្កើត"
-            };
-            
-            for (int i = 0; i < headers.length; i++) {
-                createCell(headerRow, i, headers[i], headerStyle);
-            }
-            
-            // Create data rows
-            int rowNum = 3;
-            for (Truck truck : trucks) {
-                Row row = sheet.createRow(rowNum++);
-                row.setHeightInPoints(20);
-                
-                // Get the latest oil change report for this truck
-                CompanyTruck latestReport = truck.getLastOilsChangeReport();
-                
-                // Date
-                createCell(row, 0, latestReport != null ? 
-                    formatDate(latestReport.getDate()) : "", dataStyle);
-                
-                // License Plate
-                createCell(row, 1, truck.getLicensePlate() != null ? truck.getLicensePlate() : "", dataStyle);
-                
-                // Total Destination (String)
-                createCell(row, 2, latestReport != null && latestReport.getTotalDestination() != null ? 
-                    latestReport.getTotalDestination() : "0", dataStyle);
-                
-                // Total KM (Number with formatting)
-                createCell(row, 3, latestReport != null ? 
-                    latestReport.getTotalKmFormat() : 0.0, numberStyle);
-                
-                // Average (Number with formatting)
-                createCell(row, 4, latestReport != null ? 
-                    latestReport.getAverageFormat() : 0.0, numberStyle);
-                
-                // Measurement
-                createCell(row, 5, latestReport != null && latestReport.getMeasurement() != null ? 
-                    latestReport.getMeasurement().name() : "", dataStyle);
-                
-                // Litre Quantity (Number with formatting)
-                createCell(row, 6, latestReport != null ? 
-                    safeGetDouble(latestReport.getLitreQuantity()) : 0.0, numberStyle);
-                
-                // Other Oils
-                createCell(row, 7, latestReport != null && latestReport.getOtherOils() != null ? 
-                    latestReport.getOtherOils() : "", dataStyle);
-                
-                // Total Oils Change (Number with formatting)
-                createCell(row, 8, latestReport != null ? 
-                    safeGetDouble(latestReport.getTotalOilsChange()) : 0.0, numberStyle);
-                
-                // Created At
-                createCell(row, 9, latestReport != null ? 
-                    formatDateTime(latestReport.getCreatedAt()) : "", dataStyle);
-                
-                // Updated At
-                createCell(row, 10, latestReport != null ? 
-                    formatDateTime(latestReport.getUpdatedAt()) : "", dataStyle);
-                
-                // Created By
-                createCell(row, 11, latestReport != null && latestReport.getCreatedBy() != null ? 
-                    latestReport.getCreatedBy().fullName() : "", dataStyle);
-            }
-            
-            // Auto-size columns with some padding
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
-                sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 512); // Add padding
-            }
-            
-            // Freeze header row
-            sheet.createFreezePane(0, 3);
-            
-            workbook.write(response.getOutputStream());
-        }
-    }
-
     private void createCell(Row row, int column, Object value, CellStyle style) {
         Cell cell = row.createCell(column);
         
@@ -834,24 +611,33 @@ public class CompanyTruckController {
             size = Integer.parseInt(sizeParam); 
         }
 
-        // Get all data for export or filtered data for display
         List<CompanyTruck> allTrucks;
+
+        // ✅ Always sorted by ID DESC
+        // Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+        Sort sort = Sort.by(
+            Sort.Order.desc("deductedAt"),
+            Sort.Order.desc("id") // fallback if deductedAt is null
+        );
+
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateContaining(licensePlate);
+            allTrucks = service.findByLicensePlateContaining(licensePlate, sort);
         } else {
-            allTrucks = service.getAll();
+            allTrucks = service.getAllWIthSort(sort);
         }
 
         if (showAll) {
             trucks = allTrucks;
         } else {
-            Pageable pageable = PageRequest.of(page, size);
+            Pageable pageable = PageRequest.of(page, size, sort);
             Page<CompanyTruck> truckPage;
+
             if (licensePlate != null && !licensePlate.isEmpty()) {
                 truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
             } else {
                 truckPage = service.getAllWithPageable(pageable);
             }
+
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }

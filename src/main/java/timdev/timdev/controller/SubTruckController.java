@@ -46,7 +46,6 @@ import timdev.timdev.dto.SubTruckRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
-import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.SubTruckService;
 import timdev.timdev.service.TruckService;

@@ -368,9 +368,7 @@ private void optimizeColumnSizes(Sheet sheet, int numColumns) {
             
             truckDistanceService.save(distance);
 
-            double newKm = truck.getCurrentKm() + dto.getDistance();
-            truck.setCurrentKm(newKm);
-
+          
             truckRepo.save(truck);
         }
         
@@ -428,8 +426,7 @@ private void optimizeColumnSizes(Sheet sheet, int numColumns) {
             
             truckDistanceService.save(distance);
 
-            double newKm = truck.getCurrentKm() + dto.getDistance();
-            truck.setCurrentKm(newKm);
+            
 
             truckRepo.save(truck);
             
@@ -495,8 +492,7 @@ private void optimizeColumnSizes(Sheet sheet, int numColumns) {
                     truckDistanceService.save(distance);
 
 
-                    double newKm = truck.getCurrentKm() + dto.getDistance();
-                    truck.setCurrentKm(newKm);
+                  
 
                     truckRepo.save(truck);
                     updatedCount++;
@@ -522,10 +518,7 @@ private void optimizeColumnSizes(Sheet sheet, int numColumns) {
                 truckDistanceService.delete(id);
                 Truck truck = distance.getTruck(); 
                 if (truck != null) {
-                    double newKm = truck.getCurrentKm() - distance.getDistance();
-                    truck.setCurrentKm(newKm);
-                    truck.setUpdatedAt(LocalDateTime.now());
-                    truckService.save(truck);
+                    
                 }
                 redirectAttributes.addFlashAttribute("success", "Distance record deleted successfully");
             } catch (Exception e) {
@@ -552,10 +545,7 @@ private void optimizeColumnSizes(Sheet sheet, int numColumns) {
                 for (TruckDistance td : distances) {
                     Truck truck = td.getTruck();          
                     if (truck != null) {
-                        double newKm = truck.getCurrentKm() + td.getDistance();
-                        truck.setCurrentKm(newKm);
-                        truck.setUpdatedAt(LocalDateTime.now());
-                        truckService.save(truck);             
+                        
                     }
                 }
                 redirectAttributes.addFlashAttribute("success", "File imported successfully!");

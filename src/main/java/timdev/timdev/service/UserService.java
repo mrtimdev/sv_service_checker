@@ -9,19 +9,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import timdev.timdev.entity.Request;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalLevel;
 import timdev.timdev.enums.RoleType;
 import timdev.timdev.enums.UserType;
-import timdev.timdev.repository.RequestRepository;
 import timdev.timdev.repository.UserRepository;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private RequestRepository requestRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -37,19 +33,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public List<Request> findRequestsByUserAndLevel(User user) {
-        if (user.getRole().equals(RoleType.ADMIN)) {
-            return findAllRequests(); // Admins see all requests
-        }
-        
-        // For non-admin users, filter by their approval level
-        return requestRepository.findByApprovalLevel(user.getApprovalLevel());
-    }
-
-
-    public List<Request> findAllRequests() {
-        return requestRepository.findAll();
-    }
 
   
     public User saveUser(User user) {

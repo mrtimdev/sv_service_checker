@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,8 @@ import timdev.timdev.entity.Truck;
 
 @Repository
 public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long> {
+
+    List<CompanyTruck> findByTruck_LicensePlateContaining(String licensePlate, Sort sort);
 
     // Non-paginated search by Truck License Plate
     List<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate);

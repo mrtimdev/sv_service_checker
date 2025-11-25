@@ -16,32 +16,15 @@ import timdev.timdev.entity.Truck;
 @Repository
 public interface TruckRepository extends JpaRepository<Truck, Long> {
 
-    // Check by both together
-    boolean existsByLicensePlateAndCode(String licensePlate, String code);
-    // (Optional) Check by either one
-    boolean existsByLicensePlateOrCode(String licensePlate, String code);
-
+  
     Optional<Truck> findByLicensePlate(String licensePlate);
     boolean existsByLicensePlate(String licensePlate);
-    boolean existsByCode(String code);
 
 
     List<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate);
 
     Page<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 
-    // Find all trucks that require fat and oil
-    List<Truck> findByRequiredFatOilTrue();
-    
-    List<Truck> findByRequiredFatOilFalse();
-    
-    List<Truck> findByRequiredFatOil(Boolean requiredFatOil);
-
-
-    // Inspection methods
-    List<Truck> findByRequiredInspectionTrue();
-    List<Truck> findByRequiredInspectionFalse();
-    List<Truck> findByRequiredInspection(Boolean requiredInspection);
 
 
     

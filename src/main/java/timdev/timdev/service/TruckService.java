@@ -64,21 +64,6 @@ public class TruckService {
     }
 
 
-    public List<Truck> getTrucksRequiringFatAndOil() {
-        return truckRepo.findByRequiredFatOilTrue();
-    }
-    
-    public List<Truck> getTrucksNotRequiringFatAndOil() {
-        return truckRepo.findByRequiredFatOilFalse();
-    }
-    
-    public List<Truck> getAllTrucksByFatAndOilRequirement(Boolean required) {
-        if (required == null) {
-            return truckRepo.findAll();
-        }
-        return truckRepo.findByRequiredFatOil(required);
-    }
-
 
 
 }
