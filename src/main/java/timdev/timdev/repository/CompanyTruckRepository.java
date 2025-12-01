@@ -69,5 +69,17 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
             Pageable pageable);
 
 
+    @Query("""
+        SELECT c 
+        FROM CompanyTruck c 
+        JOIN c.truck t 
+        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+        AND c.status IN :statuses
+    """)
+    Page<CompanyTruck> findByLicensePlateContainingAndStatusIn(
+            @Param("licensePlate") String licensePlate,
+            @Param("statuses") List<Status> statuses,
+            Pageable pageable);
+
 
 }

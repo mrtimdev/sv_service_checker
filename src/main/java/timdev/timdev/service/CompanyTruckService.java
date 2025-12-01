@@ -202,6 +202,15 @@ public class CompanyTruckService {
                 .findByLicensePlateContainingAndStatus(licensePlate, status, pageable);
     }
 
+    public Page<CompanyTruck> findByLicensePlateAndStatusInWithPageable(
+            String licensePlate, List<Status> statuses, Pageable pageable) {
+
+        return repository.findByLicensePlateContainingAndStatusIn(
+                licensePlate, statuses, pageable
+        );
+    }
+
+
     
 
 

@@ -115,6 +115,7 @@ public class CompanyTruckController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);
 
@@ -646,6 +647,7 @@ public class CompanyTruckController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);  
         return "company-trucks/deduction_status";
@@ -676,9 +678,9 @@ public class CompanyTruckController {
         // Get all data for export or filtered data for display
         List<CompanyTruck> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateAndStatus(licensePlate, Status.PENDING);
+            allTrucks = service.findByLicensePlateContaining(licensePlate);
         } else {
-            allTrucks = service.findByStatus(Status.PENDING);
+            allTrucks = service.getAll();
         }
 
         if (showAll) {
@@ -687,10 +689,10 @@ public class CompanyTruckController {
             Pageable pageable = PageRequest.of(page, size);
             Page<CompanyTruck> truckPage;
             if (licensePlate != null && !licensePlate.isEmpty()) {
-                // truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
-                truckPage = service.findByLicensePlateAndStatusWithPageable(licensePlate, Status.PENDING , pageable);
+                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+                // truckPage = service.findByLicensePlateAndStatusWithPageable(licensePlate, Status.PENDING , pageable);
             } else {
-                truckPage = service.findByStatusWithPageable(Status.PENDING, pageable);
+                truckPage = service.getAllWithPageable(pageable);
             }
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
@@ -700,6 +702,7 @@ public class CompanyTruckController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);  
         return "company-trucks/trucks_for_users_mark";

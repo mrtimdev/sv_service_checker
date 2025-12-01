@@ -18,58 +18,66 @@ import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.FuelRequest;
 import timdev.timdev.entity.Truck;
+import timdev.timdev.entity.User;
 
 @Repository
 public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>, JpaSpecificationExecutor<FuelRequest> {
 
     default Page<FuelRequest> findFiltered(
-            String licensePlate,
-            String truckOwner,
+            String requester,
+            String position,
+            String purpose,
             Long truckId,
             ApproveStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            Pageable pageable
+            Pageable pageable,
+            Long createdById
     ) {
         return findAll(
-                createFilterSpecification(licensePlate, truckOwner, truckId, status, startDate, endDate),
+                createFilterSpecification(requester, position, purpose ,truckId, status, startDate, endDate, createdById),
                 pageable
         );
     }
 
     private Specification<FuelRequest> createFilterSpecification(
-            String licensePlate,
-            String truckOwner,
+            String requester,
+            String position,
+            String purpose,
             Long truckId,
             ApproveStatus status,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Long createdById
     ) {
         return (root, query, criteriaBuilder) -> {
 
             List<Predicate> predicates = new ArrayList<>();
 
-            // License plate filter
-            if (licensePlate != null && !licensePlate.trim().isEmpty()) {
-                Join<FuelRequest, Truck> truckJoin = root.join("truck");
-                predicates.add(
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(truckJoin.get("licensePlate")),
-                                "%" + licensePlate.toLowerCase() + "%"
-                        )
-                );
-            }
-
+        
             // Truck ID filter
             if (truckId != null) {
                 Join<FuelRequest, Truck> truckJoin = root.join("truck");
                 predicates.add(criteriaBuilder.equal(truckJoin.get("id"), truckId));
             }
 
-            if (truckOwner != null && !truckOwner.isEmpty()) {
+            if (requester != null && !requester.isEmpty()) {
                 predicates.add(criteriaBuilder.like(
-                        root.get("truckOwner"),
-                        "%" + truckOwner + "%"
+                        root.get("requester"),
+                        "%" + requester + "%"
+                ));
+            }
+
+            if (position != null && !position.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        root.get("position"),
+                        "%" + position + "%"
+                ));
+            }
+            if (purpose != null && !purpose.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        root.get("purpose"),
+                        "%" + purpose + "%"
                 ));
             }
 
@@ -87,6 +95,16 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("date"), endDate));
             }
 
+            if (createdById != null) {
+                Join<FuelRequest, User> userJoin = root.join("createdBy");
+                predicates.add(criteriaBuilder.equal(userJoin.get("id"), createdById));
+            }
+
+            if (createdById != null) {
+                Join<FuelRequest, User> userJoin = root.join("createdBy");
+                predicates.add(criteriaBuilder.equal(userJoin.get("id"), createdById));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -94,4 +112,8 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
     boolean existsByTruckAndDate(Truck truck, LocalDate date);
 
     Optional<FuelRequest> findByTruckAndDate(Truck truck, LocalDate date);
+
+
+    
+
 }

@@ -90,18 +90,21 @@ public class FuelRequestService {
     }
 
 
-    public Page<FuelRequest> findFiltered(int page, int size, String licensePlate, String truckOwner, Long truckId, 
-                                      ApproveStatus status, LocalDate startDate, LocalDate endDate) {
+    public Page<FuelRequest> findFiltered(int page, int size, String requester, String position, String purpose, Long truckId, 
+                                      ApproveStatus status, LocalDate startDate, LocalDate endDate, Long createdById) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
         
         // If all filters are null, return all records
-        if (licensePlate == null && truckOwner == null && truckId == null && status == null && startDate == null && endDate == null) {
-            return repository.findAll(pageable);
-        }
+        // if (requester == null && position == null && truckId == null && status == null && startDate == null && endDate == null) {
+        //     return repository.findAll(pageable);
+        // }
         
-        return repository.findFiltered(licensePlate, truckOwner, truckId, status, startDate, endDate, pageable);
+        return repository.findFiltered(requester, position, purpose, truckId, status, startDate, endDate, pageable, createdById);
     }
+
+    
+
 
     public boolean isExistsByTruckAndDate(Truck companyTruck, LocalDate date) {
         boolean exists = repository.existsByTruckAndDate(companyTruck, date);

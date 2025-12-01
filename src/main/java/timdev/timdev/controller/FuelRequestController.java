@@ -100,7 +100,7 @@ public class FuelRequestController {
         }
 
         // Fetch filtered list
-        Page<FuelRequest> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {
@@ -191,93 +191,7 @@ public class FuelRequestController {
         return "fuel-requests/form";
     }
 
-    // --- Save / Update ---
-    // @PostMapping("/save")
-    // public String save(@ModelAttribute FuelRequestRequestDTO fuelRequest, 
-    //     BindingResult result, Model model, 
-    //     RedirectAttributes redirectAttributes,
-    //     @RequestParam(value = "action", required = false) String action
-    // ) {
-    //     if (result.hasErrors()) {
-    //         model.addAttribute("truckDto", fuelRequest);
-    //         model.addAttribute("selectedTruckId", fuelRequest.getTruckId());
-    //         model.addAttribute("trucks", truckService.getAll());
-    //         model.addAttribute("currentDate", LocalDate.now());
-    //         model.addAttribute("fuelRequest", fuelRequest);
-    //         model.addAttribute("statuses", ApproveStatus.values());
-    //         return "fuel-requests/form";
-    //     }
-    //     Truck truck = null;
-        
-    //     if(fuelRequest.getTruckId() != null) {
-    //         truck = truckService.findById(fuelRequest.getTruckId()).orElse(null);
-    //     }
-        
-
-    //     boolean exists = service.isExistsByTruckAndDate(truck, fuelRequest.getDate());
-
-    //     if (exists) {
-    //         FuelRequest existing = service.findByTruckAndDate(truck, fuelRequest.getDate());
-
-    //         boolean isNew = fuelRequest.getId() == null;
-    //         if (isNew || !existing.getId().equals(fuelRequest.getId())) {
-
-    //             redirectAttributes.addFlashAttribute(
-    //                 "error",
-    //                 "ឡានលេខ " + truck.getLicensePlate() + 
-    //                 " មានរបាយការណ៍សម្រាប់ថ្ងៃ " +
-    //                 fuelRequest.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) +
-    //                 " រួចហើយ!"
-    //             );
-
-    //             if (isNew) {
-    //                 return "redirect:/fuel-requests/form?truckId=" + truck.getId();
-    //             } else {
-    //                 return "redirect:/fuel-requests/edit/" + fuelRequest.getId() +
-    //                     "?truckId=" + truck.getId();
-    //             }
-    //         }
-    //     }
-
-    //     try {
-    //         boolean isNew = fuelRequest.getId() == null; 
-    //         service.saveFromDto(fuelRequest);
-
-    //         if (isNew) {
-    //             redirectAttributes.addFlashAttribute("success", "Fuel Request successfully created!");
-    //         } else {
-    //             redirectAttributes.addFlashAttribute("success", "Fuel Request successfully updated!");
-    //         }
-
-    //         String act = (action != null) ? action : "default";
-
-    //         switch (act) {
-    //             case "submit" -> {
-    //                 redirectAttributes.addFlashAttribute("success",
-    //                         truck.getLicensePlate() + " Fuel Request submitted successfully.");
-    //                 return "redirect:/fuel-requests";
-    //             }
-    //             case "save_continue" -> {
-    //                 redirectAttributes.addFlashAttribute("success",
-    //                         truck.getLicensePlate() + " Fuel Request saved. Continue more entry.");
-    //                 return "redirect:/fuel-requests/form";
-    //             }
-    //             case "clone" -> {
-    //                 redirectAttributes.addFlashAttribute("success",
-    //                         truck.getLicensePlate() + " cloned successfully.");
-    //                 return "redirect:/fuel-requests";
-    //             }
-    //             default -> {
-    //                 redirectAttributes.addFlashAttribute("success",
-    //                         truck.getLicensePlate() + " Fuel Request saved successfully.");
-    //                 return "redirect:/fuel-requests";
-    //             }
-    //         }
-    //     } catch (Exception e) {
-    //         redirectAttributes.addFlashAttribute("error", "Error saving FuelRequest: " + e.getMessage());
-    //         return "redirect:/fuel-requests";
-    //     }
-    // }
+    
 
     @PostMapping("/save")
     public String save(
@@ -373,6 +287,235 @@ public class FuelRequestController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error saving FuelRequest: " + e.getMessage());
             return "redirect:/fuel-requests";
+        }
+    }
+
+
+
+    // user owner record view
+    @GetMapping("/own-record")
+    public Object listByUser(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "requester", required = false) String requester,
+            @RequestParam(value = "purpose", required = false) String purpose,
+            @RequestParam(value = "position", required = false) String position,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        User user = currentUser.getUser();
+
+        // Fetch filtered list
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, user.getId());
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("fuelRequests", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("requester", requester);
+        model.addAttribute("position", position);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "fuel-requests/index_by_user";
+    }
+
+    
+
+    // --- Create Form ---
+    @GetMapping("/own-record/form")
+    public String createFormByUser(@RequestParam(name = "truck_id", required = false) Long truckId, Model model) {
+        FuelRequestRequestDTO fuelRequest = new FuelRequestRequestDTO();
+        if (truckId != null) {
+            fuelRequest.setTruckId(truckId);
+        }
+
+        model.addAttribute("truckDto", fuelRequest);
+        model.addAttribute("selectedTruckId", truckId);
+        model.addAttribute("trucks", truckService.getAll());
+        model.addAttribute("currentDate", LocalDate.now());
+        model.addAttribute("fuelRequest", fuelRequest);
+        model.addAttribute("statuses", ApproveStatus.values());
+        return "fuel-requests/form_by_user";
+    }
+
+    // --- Edit Form ---
+    @GetMapping("/own-record/edit/{id}")
+    public String editFormByUser(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        FuelRequest fuelRequest = service.findById(id);
+        if (fuelRequest == null) {
+            redirectAttributes.addFlashAttribute("error", "FuelRequest not found!");
+            return "redirect:/fuel-requests/own-record";
+        }
+
+        FuelRequestRequestDTO dto = service.convertToDto(fuelRequest);
+
+        model.addAttribute("truckDto", dto);
+        model.addAttribute("selectedTruckId", dto.getTruckId());
+        model.addAttribute("trucks", truckService.getAll());
+        model.addAttribute("currentDate", fuelRequest.getDate());
+        model.addAttribute("fuelRequest", dto);
+        model.addAttribute("statuses", ApproveStatus.values());
+        return "fuel-requests/form_by_user";
+    }
+
+    @GetMapping("/own-record/clone/{id}")
+    public String cloneFormByUser(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        FuelRequest fuelRequest = service.findById(id);
+        if (fuelRequest == null) {
+            redirectAttributes.addFlashAttribute("error", "FuelRequest not found!");
+            return "redirect:/fuel-requests/own-record";
+        }
+
+        FuelRequestRequestDTO dto = service.convertToDto(fuelRequest);
+
+        dto.setId(null);
+
+        model.addAttribute("truckDto", dto);
+        model.addAttribute("selectedTruckId", null);
+        model.addAttribute("trucks", truckService.getAll());
+        model.addAttribute("currentDate", fuelRequest.getDate());
+        model.addAttribute("fuelRequest", dto);
+        model.addAttribute("isClone", true);
+        model.addAttribute("statuses", ApproveStatus.values());
+        return "fuel-requests/form_by_user";
+    }
+
+    
+
+    @PostMapping("/own-record/save")
+    public String saveByUser(
+            @ModelAttribute FuelRequestRequestDTO fuelRequest,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes,
+            @RequestParam(value = "action", required = false) String action
+    ) {
+        if (result.hasErrors()) {
+            model.addAttribute("truckDto", fuelRequest);
+            model.addAttribute("selectedTruckId", fuelRequest.getTruckId());
+            model.addAttribute("trucks", truckService.getAll());
+            model.addAttribute("currentDate", LocalDate.now());
+            model.addAttribute("fuelRequest", fuelRequest);
+            model.addAttribute("statuses", ApproveStatus.values());
+            return "fuel-requests/form_by_user";
+        }
+
+        Truck truck = null;
+
+        if (fuelRequest.getTruckId() != null) {
+            truck = truckService.findById(fuelRequest.getTruckId()).orElse(null);
+        }
+
+        // ------------------------------
+        //   EXIST CHECK ONLY WHEN TRUCK EXISTS
+        // ------------------------------
+        if (truck != null) {
+            boolean exists = service.isExistsByTruckAndDate(truck, fuelRequest.getDate());
+
+            if (exists) {
+                FuelRequest existing = service.findByTruckAndDate(truck, fuelRequest.getDate());
+
+                boolean isNew = fuelRequest.getId() == null;
+                if (isNew || !existing.getId().equals(fuelRequest.getId())) {
+
+                    redirectAttributes.addFlashAttribute(
+                            "error",
+                            "ឡានលេខ " + truck.getLicensePlate() +
+                            " មានរបាយការណ៍សម្រាប់ថ្ងៃ " +
+                            fuelRequest.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) +
+                            " រួចហើយ!"
+                    );
+
+                    if (isNew) {
+                        return "redirect:/fuel-requests/own-record/form?truckId=" + truck.getId();
+                    } else {
+                        return "redirect:/fuel-requests/own-record/edit/" + fuelRequest.getId() +
+                                "?truckId=" + truck.getId();
+                    }
+                }
+            }
+        }
+
+        try {
+            boolean isNew = fuelRequest.getId() == null;
+            service.saveFromDto(fuelRequest);
+
+            String plate = (truck != null) ? truck.getLicensePlate() : "No Truck";
+
+            if (isNew) {
+                redirectAttributes.addFlashAttribute("success", "Fuel Request successfully created!");
+            } else {
+                redirectAttributes.addFlashAttribute("success", "Fuel Request successfully updated!");
+            }
+
+            String act = (action != null) ? action : "default";
+
+            switch (act) {
+                case "submit" -> {
+                    redirectAttributes.addFlashAttribute("success",
+                            " Fuel Request submitted successfully.");
+                    return "redirect:/fuel-requests/own-record";
+                }
+                case "save_continue" -> {
+                    redirectAttributes.addFlashAttribute("success",
+                            " Fuel Request saved. Continue more entry.");
+                    return "redirect:/fuel-requests/own-record/form";
+                }
+                case "clone" -> {
+                    redirectAttributes.addFlashAttribute("success",
+                            " cloned successfully.");
+                    return "redirect:/fuel-requests/own-record";
+                }
+                default -> {
+                    redirectAttributes.addFlashAttribute("success",
+                            " Fuel Request saved successfully.");
+                    return "redirect:/fuel-requests/own-record";
+                }
+            }
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error saving FuelRequest: " + e.getMessage());
+            return "redirect:/fuel-requests/own-record";
         }
     }
 
@@ -671,7 +814,7 @@ public class FuelRequestController {
         status = ApproveStatus.APPROVED;
 
         // Fetch filtered list
-        Page<FuelRequest> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {

@@ -1,5 +1,7 @@
 package timdev.timdev.controller;
 
+import java.security.Permission;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalLevel;
 import timdev.timdev.enums.RoleType;
+import timdev.timdev.service.PermissionService;
 import timdev.timdev.service.UserService;
 
 @Controller
@@ -30,6 +33,8 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+
+    @Autowired private PermissionService permissionService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -47,27 +52,38 @@ public class UserController {
     public String showCreateForm(Model model) {
         model.addAttribute("user", new User());
         model.addAttribute("roleTypes", RoleType.values());
+        model.addAttribute("permissions", permissionService.findAll());
         return "admin/users/form";
     }
     
     @PostMapping("/create")
     public String createUser(@Valid @ModelAttribute("user") User user, 
+        @RequestParam(required = false) List<Long> permissionIds,
                            BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
         }
     
         if (userService.existsByUsername(user.getUsername())) {
             model.addAttribute("usernameError", "Username already exists");
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
         }
         
         if (userService.existsByEmail(user.getEmail())) {
             model.addAttribute("emailError", "Email already exists");
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
+        }
+
+        if (permissionIds != null) {
+            user.setPermissions(permissionService.findByIds(permissionIds));
+        } else {
+            user.setPermissions(new HashSet<>());
         }
         
         userService.saveUser(user);
@@ -89,6 +105,7 @@ public class UserController {
         
         model.addAttribute("user", user);
         model.addAttribute("roleTypes", RoleType.values());
+        model.addAttribute("permissions", permissionService.findAll());
         return "admin/users/form";
     }
 
@@ -136,9 +153,11 @@ public class UserController {
     @PostMapping("/edit/{id}")
     public String updateUser(@PathVariable Long id, 
                            @Valid @ModelAttribute("user") User userDetails,
+                        @RequestParam(required = false) List<Long> permissionIds,
                            BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
         }
         
@@ -150,6 +169,7 @@ public class UserController {
             userService.existsByUsername(userDetails.getUsername())) {
             model.addAttribute("usernameError", "Username already exists");
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
         }
         
@@ -158,6 +178,7 @@ public class UserController {
             userService.existsByEmail(userDetails.getEmail())) {
             model.addAttribute("emailError", "Email already exists");
             model.addAttribute("roleTypes", RoleType.values());
+            model.addAttribute("permissions", permissionService.findAll());
             return "admin/users/form";
         }
         
@@ -168,13 +189,21 @@ public class UserController {
         existingUser.setUsername(userDetails.getUsername());
         existingUser.setPhoneNumber(userDetails.getPhoneNumber());
         existingUser.setActive(userDetails.isActive());
-        
-        // Update role based on user type
+
+        // Update role
         existingUser.setRole(userDetails.getRole());
         
         // Only update password if it's not empty
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             existingUser.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
+
+        // ⭐ NEW: Update permissions
+        if (permissionIds != null && !permissionIds.isEmpty()) {
+            existingUser.setPermissions(permissionService.findByIds(permissionIds));
+        } else {
+            // If user unselects everything
+            existingUser.setPermissions(new HashSet<>());
         }
         
         userService.updateUser(existingUser);

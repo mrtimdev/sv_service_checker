@@ -1,14 +1,20 @@
 package timdev.timdev.entity;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hibernate.envers.Audited;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import timdev.timdev.enums.ApprovalLevel;
@@ -43,6 +49,14 @@ public class User {
     private String lastName;
     private String phoneNumber;
     private boolean active = true;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_permissions",
+        joinColumns = @jakarta.persistence.JoinColumn(name = "user_id"),
+        inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> permissions = new HashSet<>();
 
     // Constructors
     public User() {}
@@ -145,6 +159,14 @@ public class User {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Set<Permission> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Set<Permission> permissions) {
+        this.permissions = permissions;
     }
 
     // Getters and Setters

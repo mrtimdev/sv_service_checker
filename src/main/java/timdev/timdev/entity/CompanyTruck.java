@@ -393,4 +393,14 @@ public class CompanyTruck {
         this.requestedBy = requestedBy;
     }
 
+
+    @Transient
+    public String getLitreQuantityFormat() {
+        return String.format("%,.2f L", litreQuantity); 
+    }
+    @Transient
+    public String getTotalOilsChangeFormat() {
+        return String.format("%,.2f L", totalOilsChange); 
+    }
+
 }

@@ -85,14 +85,14 @@
                             <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កាលបរិច្ឆេទ</th>
                             <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">លេខឡាន</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">គោលដៅសរុប</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចម្ងាយសរុប (គីឡូម៉ែត្រ)</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">មធ្យមភាគ (Average)</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ប្រភេទវាស់វែង</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចំនួនប្រេង</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_distance}">ចម្ងាយសរុប</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{average}">មធ្យមភាគ</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}"></th>
+                            <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_quantity}">ចំនួនប្រេង</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ប្រេងផ្សេងៗ</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សរុបប្រេងចាក់អោយឡាន</th>
+                            <th  style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សរុបប្រេងចាក់អោយឡាន</th>
                             
-                            <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពចាក់ប្រេង</th>
+                            <th class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500" th:text="#{status}">ស្ថានភាពចាក់ប្រេង</th>
                             
                             <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
                             <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចាក់នៅម៉ោង</th>
@@ -101,23 +101,25 @@
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកស្នើរ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើរនៅម៉ោង</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ស្នើសុំចំណាំ</th> -->
-                            <th style="width: 180px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
+                            <th style="width: 200px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr th:each="data, iterStat : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                            
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
-                                        th:text="${iterStat.index + 1}"></td>
+                                th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
+                            </td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
+                            <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
+                            <td style="width: 120px;"  class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.litreQuantity}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 font-extrabold" th:text="${data.totalOilsChange}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getLitreQuantityFormat()}"></td>
+                            <td style="width: 100px;" class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
+                            <td  style="width: 100px;" class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 font-extrabold" th:text="${data.getTotalOilsChangeFormat()}"></td>
 
                             <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:class="${data.status.name == 'PENDING' ? 

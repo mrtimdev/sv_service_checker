@@ -27,6 +27,10 @@ scp ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_vehicle_maintenac
 scp ./messages_km.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
 scp ./messages.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
 
+scp ./vehicle_fuel_maintenace.sql deverloper@154.26.134.117:~/sv_vehicle_maintenace/
+#import
+mysql -u root -p sv_vehicle_maintenace < ~/sv_vehicle_maintenace/vehicle_fuel_maintenace.sql
+
 sudo nano /etc/systemd/system/sv_vehicle_maintenace.service
 
 sudo systemctl daemon-reload
