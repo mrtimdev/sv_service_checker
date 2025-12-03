@@ -79,7 +79,7 @@ public class DestinationSetting {
 
     @Transient
     public String getDistanceFormat() {
-        return String.format("%,.2f km", distance); 
+        return String.format("%,.0f km", distance); 
     }
 
     public List<Destination> getDestinations() {

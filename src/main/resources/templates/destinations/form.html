@@ -42,10 +42,11 @@
                         
                         <div class="grid gap-5 grid-cols-2">
 
-
                             <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{code}"></label>
-                                <input type="text" th:field="*{code}" id="code" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{date}"></label>
+                                <input type="text" id="date" th:field="*{date}" th:value="${currentDate}"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></p>
                             </div>
 
                             <div>
@@ -65,14 +66,17 @@
                             </div>
 
                             <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{code}"></label>
+                                <input type="text" th:field="*{code}" id="code" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                            </div>
+
+                            
+
+                            <div>
                                 <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{destination}"></label>
                                 <input type="text" th:field="*{name}" readonly class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{distance_header}"></label>
-                                <input type="text" th:field="*{distance}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
-                            </div>
                         </div>
 
 
@@ -106,15 +110,6 @@
     <script th:inline="javascript">
         const isClone = /*[[${isClone}]]*/ false;
         $(function () {
-            // Initialize Select2 first, then set up event handler
-            $('#truck').select2({
-                placeholder: "Select Truck",
-                allowClear: true
-            }).on('change', function () {
-                const selectedOption = $('#truck option:selected');
-                const group = selectedOption.data('truck-group');
-                $('#code').val(group ?? '');
-            });
 
             let datePicker = flatpickr("#date", {
                 defaultDate: $("#date").val() || new Date(),

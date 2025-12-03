@@ -51,19 +51,27 @@ public class DestinationController {
 
     @GetMapping
     public Object index(
-        @RequestParam(value = "search", defaultValue = "") String search,
+        @RequestParam(value = "query", defaultValue = "") String query,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "200") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
         @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
         @RequestParam(value = "order", defaultValue = "desc") String order,
         @RequestParam(value = "export", required = false) String export,
         HttpServletResponse response,
+        RedirectAttributes redirectAttributes,
         Model model) throws IOException 
     {
         List<Destination> destinationPage;
         int totalPages = 1;
-        // int size = "all".equalsIgnoreCase(sizeParam) ? Integer.MAX_VALUE : Integer.parseInt(sizeParam);
+        
+        
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/company-trucks";
+        }
 
         int size;
         
@@ -97,19 +105,24 @@ public class DestinationController {
         }
 
         Sort sort = Sort.by(direction, sortField);
+        destinationPage = service.findByFilterQueriesWithList(query, startDate, endDate, sort);
         
         if (showAll) {
             // fetch all reports with filter
-            destinationPage = service.getAllFiltered(search, sort);
+            destinationPage = service.getAllFiltered(query, sort);
         } else {
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Destination> withPage = service.getAllWithPageable(search, pageable, sort);
+            Page<Destination> withPage = service.findByFilterQueriesWithPage(query, startDate, endDate, pageable);
             destinationPage = withPage.getContent();
             totalPages = withPage.getTotalPages();
         }
 
         if ("excel".equalsIgnoreCase(export)) {
             service.exportExcel(destinationPage, response);
+            return null;
+        }
+        if ("excel-for-company-truck".equalsIgnoreCase(export)) {
+            service.exportExcelForImportCompanyTruck(destinationPage, response);
             return null;
         }
 
@@ -119,12 +132,15 @@ public class DestinationController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("pageSizeNumber", size);
-        model.addAttribute("search", search);
+        model.addAttribute("query", query);
 
         model.addAttribute("showAll", showAll);
 
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("order", order);
+
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
 
         return "destinations/index";
     }
@@ -139,10 +155,11 @@ public class DestinationController {
     }
 
     @GetMapping("/edit/{id}")
-    public String edit(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Model model) {
         Destination destination = service.findById(id);
         model.addAttribute("trucks", truckService.getAll());
         model.addAttribute("destination", destination);
+        model.addAttribute("currentDate", destination.getDate());
         return "destinations/form";
     }
 
@@ -180,27 +197,13 @@ public class DestinationController {
             return "redirect:/destinations/form";
         }
 
-        // // ✅ Check duplicate code
-        // Destination byCode = service.findByCode(destination.getCode());
-        // if (byCode != null && (existingData == null || !byCode.getId().equals(existingData.getId()))) {
-        //     redirectAttributes.addFlashAttribute("error", "Destination code already exists!");
-        //     redirectAttributes.addFlashAttribute("destination", destination);
-        //     return "redirect:/destinations/form";
-        // }
-
-        // // ✅ Check duplicate name
-        // Destination byName = service.findByName(destination.getName());
-        // if (byName != null && (existingData == null || !byName.getId().equals(existingData.getId()))) {
-        //     redirectAttributes.addFlashAttribute("error", "Destination name already exists!");
-        //     redirectAttributes.addFlashAttribute("destination", destination);
-        //     return "redirect:/destinations/form";
-        // }
-
         Destination ds = (existingData != null) ? existingData : new Destination();
 
+        ds.setDate(destination.getDate());
         ds.setCode(destination.getCode());
         ds.setName(destination.getName());
         ds.setDistance(destination.getDistance());
+        ds.setTruck(destination.getTruck());
 
         service.save(ds);
 

@@ -12,7 +12,9 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,6 +27,9 @@ public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @DateTimeFormat(pattern = "MMM dd, yyyy")
+    private LocalDate date;
 
     // ==========================
     //   BASIC FIELDS
@@ -152,7 +157,7 @@ public class Destination {
 
     @Transient
     public String getDistanceFormat() {
-        return String.format("%,.2f km", distance); 
+        return String.format("%,.0f km", distance); 
     }
 
     public DestinationSetting getSetting() {
@@ -161,6 +166,14 @@ public class Destination {
 
     public void setSetting(DestinationSetting setting) {
         this.setting = setting;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
 

@@ -254,7 +254,7 @@ public class CompanyTruck {
     @Transient
     public String getTotalKmFormat() {
         if (totalKm != null)
-            return String.format("%,.2f km", totalKm);
+            return String.format("%,.0f km", totalKm);
         return "0 Km";
     }
 
@@ -396,11 +396,11 @@ public class CompanyTruck {
 
     @Transient
     public String getLitreQuantityFormat() {
-        return String.format("%,.2f L", litreQuantity); 
+        return String.format("%,.0f L", litreQuantity); 
     }
     @Transient
     public String getTotalOilsChangeFormat() {
-        return String.format("%,.2f L", totalOilsChange); 
+        return String.format("%,.0f L", totalOilsChange); 
     }
 
 }

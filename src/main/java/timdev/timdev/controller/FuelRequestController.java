@@ -126,6 +126,7 @@ public class FuelRequestController {
         model.addAttribute("endDate", endDate);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
+        model.addAttribute("pageSizeNumber", size);
 
         return "fuel-requests/index";
     }

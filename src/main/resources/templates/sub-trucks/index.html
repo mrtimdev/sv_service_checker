@@ -199,7 +199,8 @@
                                     class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
 
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
-                                        th:text="${iterStat.index + 1}"></td>
+                                        th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
+                                    </td>
 
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
                                         th:text="${#temporals.format(st.date, 'MMM dd, yyyy')}"></td>
@@ -314,7 +315,16 @@
                             <ul class="inline-flex -space-x-px mr-4" 
                                 th:if="${totalPages > 1}">
                                 <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                                    <a th:href="@{/sub-trucks(page=${i}, size=${pageSize})}"
+                                    <a th:href="@{/sub-trucks(
+                                        page=${i},
+                                        size=${pageSize},
+                                        all=${showAll},
+                                        licensePlate=${licensePlate != null ? licensePlate : ''},
+                                        truckOwner=${truckOwner != null ? truckOwner : ''},
+                                        status=${status != null ? status : ''},
+                                        startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                                        endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                                    )}"
                                     th:text="${i + 1}"
                                     class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
                                     th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">

@@ -82,4 +82,60 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
             Pageable pageable);
 
 
+    @Query("""
+        SELECT c
+        FROM CompanyTruck c
+        WHERE (:startDate IS NULL OR c.date >= :startDate)
+        AND (:endDate IS NULL OR c.date <= :endDate)
+        AND (
+                :query IS NULL
+                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+            )
+    """)
+    Page<CompanyTruck> findByFilterQueriesPage(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT c
+        FROM CompanyTruck c
+        WHERE (:startDate IS NULL OR c.date >= :startDate)
+        AND (:endDate IS NULL OR c.date <= :endDate)
+        AND (
+                :query IS NULL
+                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+            )
+    """)
+    List<CompanyTruck> findByFilterQueriesList(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT c
+        FROM CompanyTruck c
+        WHERE (:startDate IS NULL OR c.date >= :startDate)
+        AND (:endDate IS NULL OR c.date <= :endDate)
+        AND (
+                :query IS NULL
+                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+            )
+    """)
+    List<CompanyTruck> findByFilterQueriesListAndSort(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            Sort sort
+    );
+
+
+
 }

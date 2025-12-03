@@ -166,6 +166,21 @@ public class CompanyTruckService {
         return repository.findByTruck_LicensePlateContaining(licensePlate, sort);
     }
 
+    public Page<CompanyTruck> findByFilterQueriesPage(LocalDate startDate, LocalDate endDate, String query, Pageable pageable) {
+
+        return repository.findByFilterQueriesPage(startDate, endDate, query, pageable);
+    }
+
+    public List<CompanyTruck> findByFilterQueriesList(LocalDate startDate, LocalDate endDate, String query, Pageable pageable) {
+
+        return repository.findByFilterQueriesList(startDate, endDate, query, pageable);
+    }
+
+    public List<CompanyTruck> findByFilterQueriesListAndSort(LocalDate startDate, LocalDate endDate, String query, Sort sort) {
+
+        return repository.findByFilterQueriesListAndSort(startDate, endDate, query, sort);
+    }
+
 
     // Fetch all with pagination
     public Page<CompanyTruck> getAllWithPageable(Pageable pageable) {
@@ -252,8 +267,8 @@ public class CompanyTruckService {
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             
-            // Start from row 5 (0-based index, so row 5 = Excel row 6)
-            for (int rowNum = 5; rowNum <= sheet.getLastRowNum(); rowNum++) {
+            // Start from row 3 (0-based index, so row 5 = Excel row 6)
+            for (int rowNum = 3; rowNum <= sheet.getLastRowNum(); rowNum++) {
                 Row row = sheet.getRow(rowNum);
                 if (row == null) continue; // Skip empty rows
                 

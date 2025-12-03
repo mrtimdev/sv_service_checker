@@ -77,6 +77,60 @@
                 
             </div>
 
+            <div class="mb-2">
+                <form method="get">
+                    <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                        <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Filters</legend>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
+                                    </label>
+                                    <input type="text"
+                                        name="startDate"
+                                        th:value="${startDate != null} ? ${#temporals.format(startDate, 'MMM dd, yyyy')} : ''"
+                                        class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                        placeholder="Select start date"/>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
+                                    </label>
+                                    <input type="text"
+                                        name="endDate"
+                                        th:value="${endDate != null} ? ${#temporals.format(endDate, 'MMM dd, yyyy')} : ''"
+                                        class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                        placeholder="Select end date"/>
+                                </div>
+
+                                <div>
+                                    <label for="searchInput" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                        <i class="fa fa-search mr-2 text-primary-600"></i>Search by truck or destination
+                                    </label>
+                                    <input id="searchInput" type="text" name="query" th:value="${query}" placeholder="Search by truck or destination"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                </div>
+                            </div>
+                    </fieldset>
+
+                    <div class="mt-4 mb-4 flex justify-end">
+                        <div class="flex gap-2">
+                            <button type="submit"
+                                th:text="#{apply_filters}"
+                                class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+                                Apply Filters
+                            </button>
+                            <a href="/company-trucks"
+                                th:text="#{reset}"
+                                class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="">
                 <div class="flex justify-between items-center">
                     <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
@@ -92,11 +146,6 @@
                                 <option th:value="all" th:selected="${pageSize.toString() == 'all'}">All</option>
                             </select>
                         </div>
-                    </form>
-                    <form th:action="@{/company-trucks}" method="get" class="mb-4 flex space-x-2">
-                        <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
-                            class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                        <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
                     </form>
                 </div>
                 
@@ -126,8 +175,8 @@
                     <tbody>
                         <tr th:each="data, iterStat : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
-                                        th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
-                                    </td>
+                                th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
+                            </td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
                             <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
@@ -198,7 +247,14 @@
             <div class="flex justify-center mt-4 items-center">
                 <ul class="inline-flex -space-x-px mr-4">
                     <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/company-trucks(page=${i}, size=${pageSize})}"
+                        <a th:href="@{/company-trucks(
+                            page=${i},
+                            size=${pageSize},
+                            all=${showAll},
+                            query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                        )}"
                         th:text="${i + 1}"
                         class="px-3 py-1 border rounded-md mr-1 
                                 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
@@ -221,3 +277,34 @@
     </th:block>
 </th:block>
 </html>
+
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    
+    <script>
+        $(function() {
+            $('#truck').select2({
+                placeholder: "Select Truck",
+                allowClear: true
+            });
+            $('#truck').on('change', function () {
+                $('#licensePlate').val('');
+            });
+
+            $("#toggleFilter").click(function(e) {
+                e.preventDefault();
+                $("#filterContent").slideToggle();
+            })
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: true
+            });
+        })
+    </script>
+        
+</th:block>

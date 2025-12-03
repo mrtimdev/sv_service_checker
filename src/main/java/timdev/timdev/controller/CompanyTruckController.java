@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -64,14 +65,22 @@ public class CompanyTruckController {
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-        @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "query", required = false) String query,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
         @RequestParam(value = "export", required = false) String export,
-        HttpServletResponse response
+        HttpServletResponse response,
+        RedirectAttributes redirectAttributes
     ) throws IOException {
 
         List<CompanyTruck> trucks;
         int totalPages = 1;
         int size;
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/company-trucks";
+        }
 
         if ("all".equalsIgnoreCase(sizeParam)) {
             size = Integer.MAX_VALUE;
@@ -80,34 +89,22 @@ public class CompanyTruckController {
         }
 
         List<CompanyTruck> allTrucks;
-
-        // ✅ Always sorted by ID DESC
         Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
 
-        if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateContaining(licensePlate, sortByIdDesc);
-        } else {
-            allTrucks = service.getAllWIthSort(sortByIdDesc);
-        }
+        allTrucks = service.findByFilterQueriesListAndSort(startDate, endDate, query, sortByIdDesc);
 
         if (showAll) {
             trucks = allTrucks;
         } else {
             Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            Page<CompanyTruck> truckPage;
-
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
-            } else {
-                truckPage = service.getAllWithPageable(pageable);
-            }
+            Page<CompanyTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
 
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }
 
         if ("excel".equalsIgnoreCase(export)) {
-            exportCompanyTrucksReportToExcel(allTrucks, response);
+            exportCompanyTrucksReportToExcel(trucks, response);
             return null;
         }
 
@@ -117,7 +114,9 @@ public class CompanyTruckController {
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
-        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("query", query);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
 
         return "company-trucks/index";
     }
@@ -411,7 +410,7 @@ public class CompanyTruckController {
                 
                 // Litre Quantity
                 createCell(row, 6, truck.getLitreQuantity() != null ? 
-                    truck.getLitreQuantity() : 0.0, numberStyle);
+                    truck.getLitreQuantityFormat() : 0.0, numberStyle);
                 
                 // Other Oils
                 createCell(row, 7, truck.getOtherOils() != null ? 
@@ -419,7 +418,7 @@ public class CompanyTruckController {
                 
                 // Total Oils Change
                 createCell(row, 8, truck.getTotalOilsChange() != null ? 
-                    truck.getTotalOilsChange() : 0.0, numberStyle);
+                    truck.getTotalOilsChangeFormat() : 0.0, numberStyle);
                 
                 // Created At
                 createCell(row, 9, truck.getCreatedAt() != null ? 

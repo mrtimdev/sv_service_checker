@@ -27,23 +27,94 @@
                     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{destinations}"></h1>
 
                     <div class="flex gap-2 items-center mb-6">
-                        <a th:href="@{/destinations(
-                            page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'},
-                            export='excel'
-                        )}" 
-                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
-                            <i class="fas fa-file-export"></i>
-                            <span>Export to Excel</span>
-                        </a>
                         <a th:href="@{/destinations/import}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
                             <i class="fa fa-file-import mr-1"></i>
                             Import Entries
                         </a>
+                        <a th:href="@{/destinations(
+                            page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'},
+                            all=${showAll},
+                            query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                            export='excel-for-company-truck'
+                        )}" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                            <i class="fas fa-file-export"></i>
+                            <span>Export Excel For Company Truck</span>
+                        </a>
+                        <a th:href="@{/destinations(
+                            page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'},
+                            all=${showAll},
+                            query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                            export='excel'
+                        )}" 
+                            class="bg-gray-500 hover:bg-gray-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                            <i class="fas fa-file-export"></i>
+                            <span>Export Excel Reports Only</span>
+                        </a>
+                        
                     </div>
                     
                 </div>
 
                 
+                <div class="mb-2">
+                    <form method="get">
+                        <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                            <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Filters</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
+                                        </label>
+                                        <input type="text"
+                                            name="startDate"
+                                            th:value="${startDate != null} ? ${#temporals.format(startDate, 'MMM dd, yyyy')} : ''"
+                                            class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                            placeholder="Select start date"/>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
+                                        </label>
+                                        <input type="text"
+                                            name="endDate"
+                                            th:value="${endDate != null} ? ${#temporals.format(endDate, 'MMM dd, yyyy')} : ''"
+                                            class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                            placeholder="Select end date"/>
+                                    </div>
+
+                                    <div>
+                                        <label for="searchInput" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            <i class="fa fa-search mr-2 text-primary-600"></i>Search by truck or destination
+                                        </label>
+                                        <input id="searchInput" type="text" name="query" th:value="${query}" placeholder="Search by truck or destination"
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                    </div>
+                                </div>
+                        </fieldset>
+
+                        <div class="mt-4 mb-4 flex justify-end">
+                            <div class="flex gap-2">
+                                <button type="submit"
+                                    th:text="#{apply_filters}"
+                                    class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+                                    Apply Filters
+                                </button>
+                                <a href="/destinations"
+                                    th:text="#{reset}"
+                                    class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
+                                    Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
 
                 
 
@@ -66,16 +137,12 @@
                                     </select>
                                 </div>
                             </form>
-                            <form th:action="@{/destinations(size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}" method="get" class="mb-4 flex space-x-2">
-                                <input type="text" name="search" th:value="${search}" placeholder="Search code or destination"
-                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
-                            </form>
                         </div>
                         <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
                             <thead>
                                 <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                                    <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{date}">Date</th>
                                     <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{truck}">License Plate</th>
                                     <th class="text-center p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
                                         <a th:href="@{/destinations(sortBy='code', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{code}">
@@ -107,6 +174,8 @@
                                         th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
                                     </td>
 
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(item.date, 'MMM dd, yyyy')}"></td>
+
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.truck.licensePlate}"></td>
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.setting?.code}"></td>
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.setting?.name}"></td>
@@ -136,7 +205,12 @@
                             <ul class="inline-flex -space-x-px mr-4" 
                                 th:if="${totalPages > 1}">
                                 <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                                    <a th:href="@{/destinations(page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}"
+                                    <a th:href="@{/destinations(page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'},
+                                        all=${showAll},
+                                        query=${query != null ? query : ''},
+                                        startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                                        endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                                    )}"
                                     th:text="${i + 1}"
                                     class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
                                     th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">

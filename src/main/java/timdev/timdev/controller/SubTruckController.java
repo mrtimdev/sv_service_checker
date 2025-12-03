@@ -103,6 +103,8 @@ public class SubTruckController {
         model.addAttribute("totalPages", pageResult.getTotalPages());
         model.addAttribute("totalItems", pageResult.getTotalElements());
         model.addAttribute("trucks", truckService.getAll());
+
+        model.addAttribute("pageSizeNumber", size);
         
         model.addAttribute("licensePlate", licensePlate);
         model.addAttribute("truckOwner", truckOwner);
