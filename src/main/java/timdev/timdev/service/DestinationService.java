@@ -889,7 +889,7 @@ public class DestinationService {
                 CellStyle dateTimeStyle = sheet.getWorkbook().createCellStyle();
                 dateTimeStyle.cloneStyleFrom(dataStyle);
                 CreationHelper createHelper = sheet.getWorkbook().getCreationHelper();
-                dateTimeStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MMM-yyyy HH:mm a"));
+                dateTimeStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MMM-yyyy HH:mm"));
                 createdAtCell.setCellStyle(dateTimeStyle);
             } else {
                 createdAtCell.setCellValue("N/A");
@@ -909,7 +909,7 @@ public class DestinationService {
                 CellStyle dateTimeStyle = sheet.getWorkbook().createCellStyle();
                 dateTimeStyle.cloneStyleFrom(dataStyle);
                 CreationHelper createHelper = sheet.getWorkbook().getCreationHelper();
-                dateTimeStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MMM-yyyy HH:mm a"));
+                dateTimeStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MMM-yyyy HH:mm"));
                 updatedAtCell.setCellStyle(dateTimeStyle);
             } else {
                 updatedAtCell.setCellValue("N/A");

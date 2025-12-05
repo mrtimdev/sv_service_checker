@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -49,6 +50,42 @@ public class GlobalControllerAdvice {
     public String addCurrentLang(Locale locale) {
         String localeString = locale.getLanguage();
         return localeString;
+    }
+
+    @ModelAttribute
+    public void detectDevice(Model model, HttpServletRequest request) {
+
+        String ua = "";
+        if (request.getHeader("User-Agent") != null) {
+            ua = request.getHeader("User-Agent").toLowerCase();
+        }
+
+        boolean isMobile = false;
+        boolean isTablet = false;
+        boolean isDesktop = false;
+
+        // Detect Tablet (iPad / Android Tablet)
+        if (ua.contains("ipad") ||
+            (ua.contains("android") && !ua.contains("mobile"))) {
+            isTablet = true;
+        }
+        // Detect Mobile phones
+        else if (ua.contains("iphone") ||
+                 ua.contains("android") ||
+                 ua.contains("mobile") ||
+                 ua.contains("opera mini") ||
+                 ua.contains("iemobile") ||
+                 ua.contains("blackberry")) {
+            isMobile = true;
+        }
+        // Otherwise Desktop
+        else {
+            isDesktop = true;
+        }
+
+        model.addAttribute("isMobile", isMobile);
+        model.addAttribute("isTablet", isTablet);
+        model.addAttribute("isDesktop", isDesktop);
     }
 
 }
