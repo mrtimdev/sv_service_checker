@@ -372,7 +372,7 @@ public class DestinationService {
                 DestinationSetting setting =
                         destinationSettingService.findByCode(destination.getCode());
 
-                if (setting == null) {
+                if (setting != null) {
                     setting = destinationSettingService.findByName(destination.getName());
                 }
 

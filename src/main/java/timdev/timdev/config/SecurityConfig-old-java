@@ -3,7 +3,6 @@ package timdev.timdev.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -12,21 +11,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import timdev.timdev.enums.RoleType;
-import timdev.timdev.listener.SessionTracker;
 import timdev.timdev.service.CustomUserDetailsService;
 
 @Configuration
@@ -36,32 +27,29 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
+
+
     private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
-    private final CustomSessionInformationExpiredStrategy customSessionInformationExpiredStrategy;
-    private final SessionTracker sessionTracker;
-    
-    @Lazy
-    @Autowired
-    private SessionValidationFilter sessionValidationFilter;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter, 
         CustomUserDetailsService customUserDetailsService,
-        CustomAuthenticationFailureHandler customAuthFailureHandler,
-        CustomSessionInformationExpiredStrategy customSessionInformationExpiredStrategy,
-        SessionTracker sessionTracker
+        CustomAuthenticationFailureHandler customAuthFailureHandler
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customUserDetailsService = customUserDetailsService;
         this.customAuthenticationFailureHandler = customAuthFailureHandler;
-        this.customSessionInformationExpiredStrategy = customSessionInformationExpiredStrategy;
-        this.sessionTracker = sessionTracker;
+
     }
 
+    @SuppressWarnings({ "removal", "deprecation" })
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Split configuration for API and Web
+            .securityMatcher("/api/v1/**", "/**")
             .authorizeHttpRequests(auth -> auth
+                // Public endpoints
                 .requestMatchers(
                     "/",
                     "/auth/login",
@@ -73,6 +61,8 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
+                // .requestMatchers("/ws/**").permitAll() 
+                // .anyRequest().authenticated()
                 
                 // API endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
@@ -93,44 +83,30 @@ public class SecurityConfig {
                     RoleType.USER.toString()
                     
                 )
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/**").authenticated()
-                
+
                 .requestMatchers("/ws/**").permitAll()
-                
-                // Admin endpoints
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                
+                // .anyRequest().authenticated()
+
                 .anyRequest().authenticated()
             )
+
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))
             
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/v1/**", "/ws/**")
-            )
-            
-            // Form login
+            // Form login configuration for Thymeleaf
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/auth/login")
                 .defaultSuccessUrl("/admin/dashboard", true)
                 .failureHandler(customAuthenticationFailureHandler)
-                .successHandler((request, response, authentication) -> {
-                    HttpSession session = request.getSession();
-                    String sessionId = session.getId();
-                    String username = authentication.getName();
-                    sessionTracker.trackLogin(username, sessionId);
-                    response.sendRedirect("/admin/dashboard");
-                })
                 .permitAll()
             )
             
-            // Logout
+            // Logout configuration
             .logout(logout -> logout
                 .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
                 .logoutSuccessUrl("/auth/login?logout=true")
                 .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .deleteCookies("JSESSIONID", "remember-me")
+                .deleteCookies( "remember-me") 
                 .permitAll()
             )
             
@@ -139,44 +115,29 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
-                .expiredSessionStrategy(customSessionInformationExpiredStrategy)
-                .sessionRegistry(sessionRegistry())
             )
-            
-            // Remember me
+
             .rememberMe(rememberMe -> rememberMe
-                .key("uniqueAndSecretKey")
+                .key("uniqueAndSecretKey")   // use a strong secret key
                 .tokenValiditySeconds(Integer.MAX_VALUE) 
-                .rememberMeParameter("remember-me")
+                .rememberMeParameter("remember-me") // name of checkbox in login form
                 .userDetailsService(customUserDetailsService)
             )
             
-            // Add filters
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // API specific configurations
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/v1/**") // Disable CSRF for API
+                
+            )
+            // .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))
             
-            .addFilterAfter((request, response, chain) -> {
-                HttpSession session = ((HttpServletRequest) request).getSession(false);
-                if (session != null && sessionTracker != null) {
-                    sessionTracker.updateActivity(session.getId());
-                }
-                chain.doFilter(request, response);
-            }, UsernamePasswordAuthenticationFilter.class);
-
-
+            // Add JWT filter for API requests
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }
-
-    @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
-    }
-
+    @SuppressWarnings("deprecation")
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

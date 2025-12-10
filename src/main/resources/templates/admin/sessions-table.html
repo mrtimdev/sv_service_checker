@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+
+        <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Management | Admin Panel</title>
+    <style>
+        .device-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .device-desktop { background-color: #EFF6FF; color: #1D4ED8; }
+        .device-mobile { background-color: #FEF3C7; color: #D97706; }
+        .device-tablet { background-color: #F3F4F6; color: #4B5563; }
+        .device-unknown { background-color: #F3F4F6; color: #6B7280; }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .status-active { background-color: #DCFCE7; color: #166534; }
+        .status-inactive { background-color: #FEE2E2; color: #991B1B; }
+        
+        .ip-address {
+            font-family: monospace;
+            background-color: #F3F4F6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .user-agent {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</th:block>
+
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+    <th:block th:fragment="content">
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="p-4 md:p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+                            <i class="fas fa-user-clock mr-2 text-blue-600"></i>Session Management
+                        </h1>
+                        <p class="text-gray-600 mt-1">Monitor and manage all active user sessions</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <div class="bg-white px-4 py-3 rounded-lg shadow-sm border">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                                <span class="text-sm text-gray-600">Active:</span>
+                                <span class="ml-2 font-bold text-xl" th:text="${stats.totalActiveSessions}">0</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="window.location.reload()" class="bg-white px-4 py-3 rounded-lg shadow-sm border hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-sync-alt text-gray-600"></i>
+                            <span class="ml-2 text-sm font-medium">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Active Users</p>
+                            <p class="text-2xl font-bold text-gray-800" th:text="${stats.totalActiveUsers}">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-desktop text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Desktop</p>
+                            <p class="text-2xl font-bold text-gray-800" th:text="${deviceStats.get('Desktop')}">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-mobile-alt text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Mobile</p>
+                            <p class="text-2xl font-bold text-gray-800" th:text="${deviceStats.get('Mobile')}">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-database text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total</p>
+                            <p class="text-2xl font-bold text-gray-800" th:text="${stats.totalSessions}">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mb-6 flex flex-wrap gap-3">
+                <form th:action="@{/admin/sessions/expire-old}" method="post" class="inline">
+                    <button type="submit" 
+                            onclick="return confirm('Expire all sessions older than 30 minutes?')"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-clock mr-2"></i>Expire Old Sessions (30min+)
+                    </button>
+                </form>
+                
+                <form th:action="@{/admin/sessions/expire-all}" method="post" class="inline">
+                    <button type="submit" 
+                            onclick="return confirm('Are you sure you want to expire ALL active sessions?')"
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-ban mr-2"></i>Expire All Sessions
+                    </button>
+                </form>
+                
+                <form method="get" class="relative flex-1 max-w-md">
+                    <input type="text" name="filter" th:value="${param.filter}" 
+                           placeholder="Search by username, IP, device..." 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </form>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${param.terminated}" class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-green-800">Session terminated successfully</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${param.terminatedAll}" class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-green-800">All user sessions terminated successfully</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${param.oldExpired}" class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-blue-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-blue-800">Old sessions have been expired</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${param.allExpired}" class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-red-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-red-800">All sessions have been expired</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Table -->
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-table mr-2"></i>Active Sessions
+                    </h2>
+                    <div class="text-sm text-gray-600">
+                        Showing [[${currentPage * 20 + 1}]]-[[${(currentPage + 1) * 20 > totalItems ? totalItems : (currentPage + 1) * 20}]] of [[${totalItems}]]
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    User
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Device & Browser
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    IP Address
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Login Time
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Last Activity
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Duration
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr th:each="session_ : ${sessions}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-blue-600"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900" th:text="${session_.user.username}"></div>
+                                            <div class="text-xs text-gray-500" th:text="${session_.user.email}"></div>
+                                            <div class="text-xs">
+                                                <span th:classappend="${session_.user.role == 'ADMIN' ? 'bg-purple-100 text-purple-800' : 
+                                                                      session_.user.role == 'MANAGER' ? 'bg-blue-100 text-blue-800' : 
+                                                                      'bg-gray-100 text-gray-800'}"
+                                                      class="px-2 py-1 rounded">
+                                                    [[${session_.user.role}]]
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span th:classappend="'device-badge ' + 
+                                                              ${session_.deviceType == 'Desktop' ? 'device-desktop' : 
+                                                               session_.deviceType == 'Mobile' ? 'device-mobile' : 
+                                                               session_.deviceType == 'Tablet' ? 'device-tablet' : 'device-unknown'}">
+                                            <i th:class="${session_.deviceType == 'Desktop' ? 'fas fa-desktop' : 
+                                                          session_.deviceType == 'Mobile' ? 'fas fa-mobile-alt' : 
+                                                          session_.deviceType == 'Tablet' ? 'fas fa-tablet-alt' : 'fas fa-question'}" 
+                                               class="mr-1"></i>
+                                            [[${session_.deviceType != null ? session_.deviceType : 'Unknown'}]]
+                                        </span>
+                                    </div>
+                                    <div class="text-xs">
+                                        <i class="fas fa-globe mr-1"></i>
+                                        <span th:text="${session_.browser != null ? session_.browser : 'Unknown'}"></span>
+                                        <span th:if="${session_.operatingSystem != null}">
+                                            / [[${session_.operatingSystem}]]
+                                        </span>
+                                    </div>
+                                    <div class="user-agent mt-1" th:title="${session_.userAgent}">
+                                        [[${session_.userAgent}]]
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="ip-address" th:text="${session_.ipAddress}"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    [[${#temporals.format(session_.loginTime, 'MMM dd, HH:mm')}]]
+                                    <div class="text-xs text-gray-500">
+                                        [[${#temporals.format(session_.loginTime, 'yyyy')}]]
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    [[${#temporals.format(session_.lastActivity, 'MMM dd, HH:mm')}]]
+                                    <div class="text-xs text-gray-500">
+                                        [[${#dates.format(#dates.createNow(), 'mm')}]] min ago
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                   
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex flex-col space-y-2">
+                                        <form th:action="@{/admin/sessions/expire/{sessionId}(sessionId=${session_.sessionId})}" 
+                                              method="post" 
+                                              class="inline"
+                                              onsubmit="return confirm('Terminate this session?')">
+                                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                                <i class="fas fa-sign-out-alt mr-1"></i>Terminate
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/sessions/expire-user/{userId}(userId=${session_.user.id})}" 
+                                              method="post" 
+                                              class="inline"
+                                              onsubmit="return confirm('Terminate ALL sessions?')">
+                                            <button type="submit" class="text-orange-600 hover:text-orange-900">
+                                                <i class="fas fa-users mr-1"></i>Terminate All User
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="px-6 py-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Page [[${currentPage + 1}]] of [[${totalPages}]]
+                        </div>
+                        <div class="flex space-x-2">
+                            <a th:href="@{/admin/sessions(page=${currentPage > 0 ? currentPage - 1 : 0}, filter=${param.filter})}" 
+                               th:classappend="${currentPage == 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                               class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Previous
+                            </a>
+                            
+                            <!-- Page numbers -->
+                            <div class="flex space-x-1">
+                                <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                   th:href="@{/admin/sessions(page=${i}, filter=${param.filter})}"
+                                   th:classappend="${i == currentPage ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+                                   class="px-3 py-2 rounded-md text-sm font-medium">
+                                    [[${i + 1}]]
+                                </a>
+                            </div>
+                            
+                            <a th:href="@{/admin/sessions(page=${currentPage < totalPages - 1 ? currentPage + 1 : currentPage}, filter=${param.filter})}" 
+                               th:classappend="${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}"
+                               class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Next
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div th:if="${sessions == null or sessions.empty}" class="text-center py-16">
+                    <div class="max-w-md mx-auto">
+                        <div class="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                            <i class="fas fa-user-slash text-gray-400 text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">No Active Sessions</h3>
+                        <p class="text-gray-500 mb-6">There are currently no active user sessions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content max-w-3xl mx-auto mt-10 bg-white rounded-lg shadow-xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-info-circle mr-2"></i>Session Details
+                    </h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div id="sessionDetails" class="space-y-4">
+                    <!-- Details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+</body>
+</html>
+
+    </th:block>
+</th:block>
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+
+    <script>
+        // Auto-refresh every 30 seconds if there are active sessions
+        setInterval(() => {
+            const activeSessions = parseInt(document.querySelector('[th\\:text*="stats.totalActiveSessions"]')?.textContent || '0');
+            if (activeSessions > 0) {
+                window.location.reload();
+            }
+        }, 30000);
+        
+        function showDetails(sessionId) {
+            fetch('/admin/sessions/details/' + sessionId)
+                .then(response => response.json())
+                .then(data => {
+                    const detailsDiv = document.getElementById('sessionDetails');
+                    detailsDiv.innerHTML = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Username</p>
+                                <p class="text-lg">${data.username}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Email</p>
+                                <p class="text-lg">${data.email}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Role</p>
+                                <p class="text-lg">${data.role}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">IP Address</p>
+                                <p class="text-lg font-mono">${data.ipAddress}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Device Type</p>
+                                <p class="text-lg">${data.deviceType}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Browser</p>
+                                <p class="text-lg">${data.browser}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Operating System</p>
+                                <p class="text-lg">${data.os}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Login Time</p>
+                                <p class="text-lg">${data.loginTime}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Last Activity</p>
+                                <p class="text-lg">${data.lastActivity}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Duration</p>
+                                <p class="text-lg">${data.duration}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Status</p>
+                                <p class="text-lg ${data.active ? 'text-green-600' : 'text-red-600'}">
+                                    ${data.active ? 'Active' : 'Inactive'}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <p class="text-sm font-medium text-gray-500 mb-2">User Agent</p>
+                            <div class="bg-gray-100 p-3 rounded text-sm font-mono">
+                                ${data.userAgent}
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('detailsModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching session details:', error);
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+
+</th:block>

@@ -198,6 +198,16 @@
                             <span th:text="#{destination-settings}"></span>
                         </a>
                     </li>
+
+                    <li>
+                        <a href="/admin/sessions"
+                            th:classappend="${requestURI.startsWith('/admin/sessions')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-user-clock"></i>
+                            <span >Session Management</span>
+                        </a>
+                    </li>
+                    
                 </ul>
             </div>
         </nav>
