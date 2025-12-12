@@ -2,140 +2,77 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <th:block th:fragment="~{layouts/main :: head}">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
     <style>
+        .checkbox-cell {
+            width: 40px;
+        }
+        .select2-container {
+            min-width: 200px;
+        }
     </style>
 </th:block>
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Sub Trucks')}">
+
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Destination Settings')}">
     <th:block th:fragment="content">
-        <div class="">
-            <div class="mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto sm:px-6 lg:px-8">
+            <!-- Success Message -->
+            <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline" th:text="${success}"></span>
+            </div>
 
-                <!-- Success Message -->
-                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline" th:text="${success}"></span>
-                </div>
+            <!-- Error Message -->
+            <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline" th:text="${error}"></span>
+            </div>
 
-                <!-- Error Message -->
-                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline" th:text="${error}"></span>
-                </div>
+            <!-- Page Header -->
+            <div th:class="${isDesktop} ? 'flex justify-between items-center mb-6' : 'grid grid-rows-2 justify-between items-center mb-6'">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{destination-settings}"></h1>
 
-
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{destination-settings}"></h1>
-
-                    <div class="flex gap-2 items-center mb-6">
-                        <a th:href="@{/destination-settings/form}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
-                            <i class="fa fa-plus-circle"></i>  <span th:text="#{add_new_entry}"></span>
-                        </a>
-                    </div>
+                <div class="flex gap-2 items-center">
+                    <!-- Export Selected Form -->
+                    <form th:action="@{/destination-settings/export-selected}" method="post" id="exportForm" class="inline">
+                        <input type="hidden" name="selectedIds" id="selectedIds" />
+                        <button type="button" onclick="exportSelected()" 
+                                id="exportBtn"
+                                disabled
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa fa-file-excel"></i> Export Selected
+                        </button>
+                    </form>
                     
+                    <!-- Export All -->
+                    <a th:href="@{/destination-settings/export-all}" 
+                       class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                        <i class="fa fa-download"></i> Export All
+                    </a>
+                    
+                    <!-- Add New -->
+                    <a th:href="@{/destination-settings/form}" 
+                       class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-200">
+                        <i class="fa fa-plus-circle"></i> 
+                        <span th:text="#{add_new_entry}" th:if="${isDesktop}"></span>
+                        <span th:text="#{new}" th:if="${!isDesktop}"></span>
+                    </a>
                 </div>
+            </div>
 
+            <!-- Main Content Container -->
+            <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                <!-- Mobile View -->
+                <div th:if="${!isDesktop}">  
+                    <div 
+                        th:replace="~{destination-settings/mobile-component :: mobile-view}">
+                    </div>
+
+                 </div>
                 
 
-                
-
-                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
-                    <div>
-                        <div class="flex justify-between items-center">
-                            <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
-                                <div class="flex items-center">
-                                    <label for="size">Size:</label>
-                                    <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
-                                        <option th:value="5" th:selected="${pageSize == '5'}">5</option>
-                                        <option th:value="10" th:selected="${pageSize == '10'}">10</option>
-                                        <option th:value="20" th:selected="${pageSize == '20'}">20</option>
-                                        <option th:value="50" th:selected="${pageSize == '50'}">50</option>
-                                        <option th:value="100" th:selected="${pageSize == '100'}">100</option>
-                                        <option th:value="200" th:selected="${pageSize == '200'}">200</option>
-                                        <option th:value="500" th:selected="${pageSize == '500'}">500</option>
-                                        <option th:value="1000" th:selected="${pageSize == '1000'}">1000</option>
-                                        <option th:value="all" th:selected="${pageSize.toString() == 'all'}">All</option>
-                                    </select>
-                                </div>
-                            </form>
-                            <form th:action="@{/destination-settings(size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}" method="get" class="mb-4 flex space-x-2">
-                                <input type="text" name="search" th:value="${search}" placeholder="Search code or destination"
-                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
-                            </form>
-                        </div>
-                        <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
-                            <thead>
-                                <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
-                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
-                                    <th class="text-center p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
-                                        <a th:href="@{/destination-settings(sortBy='code', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{code}">
-                                            Code
-                                        </a>
-                                    </th>
-                                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
-                                        <a th:href="@{/destination-settings(sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{destination}">
-                                            destination
-                                        </a>
-                                    </th>
-                                    <th class="text-center p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" >
-                                        <a th:href="@{/destination-settings(sortBy='distance', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{distance_header}">
-                                            Distance
-                                        </a>
-                                    </th>
-
-                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
-                                    
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <tr th:each="item,iterStat : ${data}" 
-                                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
-
-                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
-                                        th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
-                                    </td>
-
-                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.code}"></td>
-                                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.name}"></td>
-                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.getDistanceFormat()}"></td>
-
-                                    <td class="p-3 text-center border">
-                                        <a th:href="@{'/destination-settings/edit/' + ${item.id}}" 
-                                        class="text-blue-600 hover:underline">
-                                            Edit
-                                        </a>
-                                        |
-                                        <a th:href="@{'/destination-settings/delete/' + ${item.id}}" 
-                                        onclick="return confirm('Are you sure?')"
-                                        class="text-red-600 hover:underline">
-                                            Delete
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-
-                        <div class="flex justify-start mt-4 items-center">
-
-                            <ul class="inline-flex -space-x-px mr-4" 
-                                th:if="${totalPages > 1}">
-                                <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                                    <a th:href="@{/destination-settings(page=${i}, size=${pageSize}, sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}"
-                                    th:text="${i + 1}"
-                                    class="px-3 py-1 border rounded-md mr-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
-                                    th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
-                                    </a>
-                                </li>
-                            </ul>
-
-                            <a th:href="@{/destination-settings(all=true)}"
-                                class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                th:text="#{show_all}"
-                                >
-                            </a>
-                        </div>
+                <!-- Desktop View -->
+                <div th:if="${isDesktop}">
+                    <div 
+                        th:replace="~{destination-settings/desktop-view :: desktop-view}">
                     </div>
                 </div>
             </div>
@@ -143,50 +80,55 @@
     </th:block>
 </th:block>
 
-
-
 <th:block th:fragment="~{layouts/main :: body-scripts}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     
     <script>
         $(function() {
-            $('#truck').select2({
-                placeholder: "Select Truck",
-                allowClear: true
+            // Select all functionality (will be used by both desktop and mobile)
+            $('#selectAll, #selectAllHeader, #mobileSelectAll').on('change', function() {
+                const isChecked = $(this).prop('checked');
+                $('.item-checkbox, .mobile-item-checkbox').prop('checked', isChecked);
+                updateSelectedCount();
             });
-            $('#truck').on('change', function () {
-                $('#licensePlate').val('');
+            
+            // Individual checkbox change
+            $(document).on('change', '.item-checkbox, .mobile-item-checkbox', function() {
+                updateSelectedCount();
+                updateSelectAllCheckbox();
             });
-
-            $("#toggleFilter").click(function(e) {
-                e.preventDefault();
-                $("#filterContent").slideToggle();
-            })
-            $(".datepicker").flatpickr({
-                dateFormat: "M d, Y",
-                allowInput: true
-            });
-            $(document).on('click', '.btnChangeOils', function (e) {
-                const url = $(this).attr('href');
-                const tr = $(this).closest('tr');
-
-                if (tr.hasClass("insufficient")) {
-                    e.preventDefault(); 
-
-                    if (confirm("រថយន្តនេះមិនទាន់គ្រប់គីឡូប្ដូរប្រេងទេ។ តើអ្នកចង់បន្តទៀតឬទេ?")) {
-                        window.location.href = url;
-                    } else {
-                        return false;
-                    }
-                }
-
-                console.log({ tr });
-            });
-
-        })
-    </script>
+            
+            function updateSelectedCount() {
+                const selectedCount = $('.item-checkbox:checked, .mobile-item-checkbox:checked').length;
+                $('#selectedCount, #mobileSelectedCount').text(selectedCount + ' selected');
+                $('#exportBtn, #mobileExportBtn').prop('disabled', selectedCount === 0);
+            }
+            
+            function updateSelectAllCheckbox() {
+                const totalCheckboxes = $('.item-checkbox, .mobile-item-checkbox').length;
+                const checkedCheckboxes = $('.item-checkbox:checked, .mobile-item-checkbox:checked').length;
+                const isAllChecked = totalCheckboxes > 0 && checkedCheckboxes === totalCheckboxes;
+                $('#selectAll, #selectAllHeader, #mobileSelectAll').prop('checked', isAllChecked);
+            }
+            
+            // Initialize count on page load
+            updateSelectedCount();
+            updateSelectAllCheckbox();
+        });
         
+        function exportSelected() {
+            const selectedIds = [];
+            $('.item-checkbox:checked, .mobile-item-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one item to export.');
+                return;
+            }
+            
+            $('#selectedIds').val(selectedIds.join(','));
+            $('#exportForm').submit();
+        }
+    </script>
 </th:block>

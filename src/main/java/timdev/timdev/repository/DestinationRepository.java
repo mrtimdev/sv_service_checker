@@ -2,6 +2,7 @@ package timdev.timdev.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.boot.actuate.autoconfigure.metrics.MetricsProperties.Distribution;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import timdev.timdev.dto.Status;
 import timdev.timdev.entity.Destination;
 
 @Repository
@@ -78,6 +80,72 @@ public interface DestinationRepository extends JpaRepository<Destination, Long>,
             @Param("endDate") LocalDate endDate,
             @Param("query") String query,
             Sort sort);
+
+    @Query("""
+        SELECT d FROM Destination d
+        WHERE (:startDate IS NULL OR d.date >= :startDate)
+          AND (:endDate IS NULL OR d.date <= :endDate)
+          AND (:query IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :query, '%')))
+          AND d.status IN :statuses
+    """)
+    List<Destination> findByFilterQueriesAndSortWithStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            @Param("statuses") List<Status> statuses,
+            Sort sort
+    );
+
+
+    boolean existsByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
+    
+    // Optional<Destination> findByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
+
+
+    // Multiple results
+    List<Destination> findByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
+
+    // Single result (optional)
+    Optional<Destination> findFirstByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
+    
+    // Optional: Find by date and truck only
+    List<Destination> findByDateAndTruckId(LocalDate date, Long truckId);
+    
+    // Optional: Find by status
+    List<Destination> findByStatus(Status status);
+
+
+
+
+    @Query("""
+        SELECT d FROM Destination d
+        WHERE (:startDate IS NULL OR d.date >= :startDate)
+          AND (:endDate IS NULL OR d.date <= :endDate)
+          AND (:query IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :query, '%')))
+          AND d.status IN :statuses
+    """)
+    List<Destination> findByFilterQueriesAndStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            @Param("statuses") List<Status> statuses,
+            Sort sort
+    );
+
+    @Query("""
+        SELECT d FROM Destination d
+        WHERE (:startDate IS NULL OR d.date >= :startDate)
+          AND (:endDate IS NULL OR d.date <= :endDate)
+          AND (:query IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :query, '%')))
+          AND d.status IN :statuses
+    """)
+    Page<Destination> findByFilterQueriesWithStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("query") String query,
+            @Param("statuses") List<Status> statuses,
+            Pageable pageable
+    );
 
     
 }

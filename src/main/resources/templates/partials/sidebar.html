@@ -32,7 +32,7 @@
                 <ul sec:authorize="!hasRole('USER') and hasRole('ADMIN')">
                     <li >
                         <a href="/destinations"
-                            th:classappend="${requestURI.startsWith('/destinations') and requestURI != '/destinations/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/destinations' || requestURI == '/destinations/import' } ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-exchange"></i>
                             <span th:text="#{destinations}"></span>
@@ -65,7 +65,11 @@
                     </li>
                     <li>
                         <a href="/fuel-requests"
-                            th:classappend="${requestURI.startsWith('/fuel-requests')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${
+                                    #strings.startsWith(requestURI, '/fuel-requests') 
+                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
+                                } ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-random"></i>
                             <span th:text="#{fuel_requests}">Fuel Requests</span>
@@ -76,8 +80,8 @@
             <!-- Group: User Dashboard -->
                 <ul sec:authorize="hasRole('USER')">
                     <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
-                        <a href="/destinations"
-                            th:classappend="${requestURI.startsWith('/destinations') and requestURI != '/destinations/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                        <a href="/destinations/u"
+                            th:classappend="${requestURI == '/destinations/u' || requestURI == '/destinations/u/import'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-exchange"></i>
                             <span th:text="#{destinations}"></span>
@@ -87,7 +91,7 @@
                         <a href="/fuel-requests/own-record"
                             th:classappend="${requestURI.startsWith('/fuel-requests/own-record')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
+                            <i class="menu-icon fas fa-share"></i>
                             <span th:text="#{fuel_requests}">Fuel Requests</span>
                         </a>
                     </li>
@@ -102,7 +106,7 @@
                     </li>
                     <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
                         <a href="/sub-trucks/user-record"
-                            th:classappend="${requestURI.startsWith('/sub-trucks/user-record')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/sub-trucks/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-sitemap"></i>
                             <span th:text="#{sub_trucks}">Sub Trucks</span>
@@ -110,7 +114,7 @@
                     </li>
                     <li sec:authorize="hasAuthority('FUEL_REQUEST_VIEW')">
                         <a href="/fuel-requests/user-record"
-                            th:classappend="${requestURI.startsWith('/fuel-requests')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/fuel-requests/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-random"></i>
                             <span th:text="#{fuel_requests}">Fuel Requests</span>
@@ -121,20 +125,65 @@
 
             </div>
 
-            <!-- Group: Reports -->
-            <div class="mb-4" sec:authorize="!hasRole('USER')">
+            <!-- Destinations Group -->
+            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_VIEW') || hasAuthority('FUEL_REQUEST_USER_RECORD'))">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
-                    <!-- <li>
-                        <a href="/company-trucks?reportPage=true"
-                            th:classappend="${requestURI == '/company-trucks'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                    <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
+                        <a href="/destinations/u/report"
+                            th:classappend="${requestURI == '/destinations/u/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-exchange"></i>
+                            <span th:text="#{destinations_report}"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Fuel Group -->
+            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('COMPANY_TRUCK_VIEW') || hasAuthority('SUB_TRUCK_VIEW') || hasAuthority('FUEL_REQUEST_VIEW'))">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
+                <ul>
+                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
+                        <a href="/company-trucks/user-record/report"
+                            th:classappend="${requestURI == '/company-trucks/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks_reports}"></span>
                         </a>
-                    </li> -->
+                    </li>
+                    <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
+                        <a href="/sub-trucks/user-record/report"
+                            th:classappend="${requestURI == '/sub-trucks/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sitemap"></i>
+                            <span th:text="#{sub_trucks_reports}">Sub Trucks</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAuthority('FUEL_REQUEST_VIEW')">
+                        <a href="/fuel-requests/user-record/report"
+                            th:classappend="${requestURI == '/fuel-requests/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-random"></i>
+                            <span th:text="#{fuel_requests_reports}">Fuel Requests</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-                    
+            <!-- Group: Reports -->
+            <div class="mb-4" sec:authorize="hasRole('ADMIN')">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
+                <ul>
+
+                    <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
+                        <a href="/destinations/u/report"
+                            th:classappend="${requestURI == '/destinations/u/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-exchange"></i>
+                            <span th:text="#{destinations_report}"></span>
+                        </a>
+                    </li>
 
                     <li>
                         <a href="/sub-trucks/reports?reportPage=true"
@@ -146,7 +195,7 @@
                     </li>
                     <li>
                         <a href="/fuel-requests/reports?reportPage=true"
-                            th:classappend="${requestURI == '/fuel-requests/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/fuel-requests/reports' && requestURI != '/fuel-requests'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-random"></i>
                             <span th:text="#{fuel_requests_reports}"></span>
@@ -155,31 +204,25 @@
                 </ul>
             </div>
 
-            <!-- Group: Users & Drivers -->
-            <div class="mb-4" sec:authorize="!hasRole('USER')">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{users}">Users</h3>
+            
+
+            <!-- Destinations settings Group -->
+            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_SETTINGS'))">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{settings}">Settings</h3>
                 <ul>
-                    <!-- <li>
-                        <a href="/admin/drivers"
-                            th:classappend="${requestURI.startsWith('/admin/drivers')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                    <li sec:authorize="hasAuthority('DESTINATION_SETTINGS')">
+                        <a href="/destination-settings"
+                            th:classappend="${requestURI.startsWith('/destination-settings')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-users"></i>
-                            <span>Drivers</span>
-                        </a>
-                    </li> -->
-                    <li sec:authorize="!hasRole('USER')">
-                        <a href="/admin/users"
-                            th:classappend="${requestURI.startsWith('/admin/users')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-users"></i>
-                            <span th:text="#{users}">Users</span>
+                            <i class="menu-icon fas fa-road"></i>
+                            <span th:text="#{destination-settings}"></span>
                         </a>
                     </li>
                 </ul>
             </div>
 
             <!-- Group: Settings -->
-            <div class="mb-4" sec:authorize="!hasRole('USER')">
+            <div class="mb-4" sec:authorize="hasRole('ADMIN')">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{settings}">Settings</h3>
                 <ul>
                     <li>
@@ -200,6 +243,15 @@
                     </li>
 
                     <li>
+                        <a href="/averages"
+                            th:classappend="${requestURI.startsWith('/averages')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-key"></i>
+                            <span th:text="#{averages}"></span>
+                        </a>
+                    </li>
+
+                    <li>
                         <a href="/admin/sessions"
                             th:classappend="${requestURI.startsWith('/admin/sessions')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
@@ -210,10 +262,28 @@
                     
                 </ul>
             </div>
+
+
+            <!-- Group: Users & Drivers -->
+            <div class="mb-4" sec:authorize="!hasRole('USER')">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{users}">Users</h3>
+                <ul>
+                    <li sec:authorize="!hasRole('USER')">
+                        <a href="/admin/users"
+                            th:classappend="${requestURI.startsWith('/admin/users')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-users"></i>
+                            <span th:text="#{users}">Users</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+
         </nav>
 
         <!-- Theme Toggle -->
-        <div th:if="${isDesktop}" class="mt-auto pt-4 border-t border-gray-500 dark:border-gray-700 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+        <div th:if="${isDesktop}" class="mt-auto pt-4 border-t border-gray-500 dark:border-gray-700">
             <button id="theme-toggle" class="flex items-center space-x-2 w-full p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
                 <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>

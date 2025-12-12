@@ -1,0 +1,95 @@
+<th:block th:fragment="mobile-view">
+    <div>
+
+        <div th:each="st, iterStat : ${fuelRequests}" 
+             class="p-4 mb-4 rounded-xl shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">No.</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200"
+                          th:text="${iterStat.index + 1}"></span>
+                </div>
+
+                <div th:class="${st.status.toString() == 'PENDING' ? 
+                                'px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}">
+                    <i th:class="${st.status.toString() == 'PENDING' ? 'fa fa-hourglass-half mr-1' : 'fa fa-check-circle mr-1'}"></i>
+                    <span th:text="#{${#strings.capitalize(st.status.name.toLowerCase())}}"></span>
+                </div>
+            </div>
+
+            <!-- Information Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+
+                <!-- Date -->
+                <div>
+                    <p class="text-gray-400 dark:text-gray-400" th:text="#{date}">Date</p>
+                    <p class="font-medium text-gray-700 dark:text-gray-200"
+                       th:text="${#temporals.format(st.date, 'MMM dd, yyyy')}"></p>
+                </div>
+
+                <!-- Requester -->
+                <div class="text-right">
+                    <p class="text-gray-400 dark:text-gray-400" th:text="#{requester}">Requester</p>
+                    <p class="font-medium text-gray-700 dark:text-gray-200"
+                       th:text="${st.requester}"></p>
+                </div>
+
+                <!-- Position -->
+                <div>
+                    <p class="text-gray-400 dark:text-gray-400" th:text="#{position}">Position</p>
+                    <p class="font-medium text-gray-700 dark:text-gray-200"
+                       th:text="${st.position}"></p>
+                </div>
+
+                <!-- Oil Quantity -->
+                <div class="text-right">
+                    <p class="text-gray-400 dark:text-gray-400" th:text="#{fuel_quantity}">Oil Qty</p>
+                    <p class="font-bold text-blue-600 dark:text-blue-400"
+                       th:text="${st.oilsQuantity}"
+                       th:data-quantity="${st.oilsQuantity}"></p>
+                </div>
+
+                <!-- Purpose -->
+                <div class="col-span-2">
+                    <p class="text-gray-400 dark:text-gray-400" th:text="#{purpose}">Purpose</p>
+                    <p class="font-medium text-gray-700 dark:text-gray-200"
+                       th:text="${st.purpose}"></p>
+                </div>
+
+            </div>
+
+            <!-- Note -->
+            <div class="mb-4" th:if="${st.note != '' && st.note != null}">
+                <p class="text-gray-400 dark:text-gray-400 text-sm" th:text="#{note}">Note</p>
+                <p class="font-medium text-gray-700 dark:text-gray-200"
+                   th:text="${st.note}"></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div>
+                <div th:if="${st.changedBy == null}">
+                    <a 
+                        th:href="@{/fuel-requests/update-fuel-quantity(id=${st.id}, backUrl=${requestPathWithParams})}"
+
+                        th:data-report-id="${st.id}"
+                        class="btn-update-fuel-quantity block cursor-pointer bg-blue-600 text-white px-3 py-2 text-center rounded-lg shadow hover:bg-blue-700 transition-colors">
+                        <i class="fa fa-exchange"></i> <span th:text="#{update_fuel_quantity}"></span>
+                    </a>
+                </div>
+                <div th:if="${st.changedBy != null}">
+                    <a 
+                        
+                        th:data-report-id="${st.id}"
+                        class="btn-changed cursor-pointer block bg-green-500 hover:bg-green-700 text-white font-bold px-3 py-2 text-center rounded">
+                        <i class="fa fa-check-double"></i> <span th:text="#{fuel_filled}"></span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</th:block>

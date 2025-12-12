@@ -31,10 +31,14 @@ import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanyTruck;
+import timdev.timdev.entity.Destination;
+import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.repository.CompanyTruckRepository;
+import timdev.timdev.repository.DestinationRepository;
+import timdev.timdev.repository.DestinationSettingRepository;
 import timdev.timdev.repository.TruckRepository;
 import timdev.timdev.repository.UserRepository;
 
@@ -48,6 +52,12 @@ public class CompanyTruckService {
     private TruckRepository truckRepository;
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DestinationRepository destinationRepository;
+    
+    @Autowired
+    private DestinationSettingRepository destinationSettingRepository;
 
     public List<CompanyTruck> getAllTrucks() {
         return repository.findAll();
@@ -171,6 +181,11 @@ public class CompanyTruckService {
         return repository.findByFilterQueriesPage(startDate, endDate, query, pageable);
     }
 
+     public Page<CompanyTruck> findByFilterQueriesPageAndStatus(LocalDate startDate, LocalDate endDate, String query, Pageable pageable, Status status) {
+
+        return repository.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+    }
+
     public List<CompanyTruck> findByFilterQueriesList(LocalDate startDate, LocalDate endDate, String query, Pageable pageable) {
 
         return repository.findByFilterQueriesList(startDate, endDate, query, pageable);
@@ -179,6 +194,11 @@ public class CompanyTruckService {
     public List<CompanyTruck> findByFilterQueriesListAndSort(LocalDate startDate, LocalDate endDate, String query, Sort sort) {
 
         return repository.findByFilterQueriesListAndSort(startDate, endDate, query, sort);
+    }
+
+    public List<CompanyTruck> findByFilterQueriesListAndSortAndStatus(LocalDate startDate, LocalDate endDate, String query, Sort sort, Status status) {
+
+        return repository.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sort, status);
     }
 
 
@@ -349,8 +369,11 @@ public class CompanyTruckService {
             // Try different date formats including your format "01-Oct-2025"
             DateTimeFormatter[] formatters = {
                 DateTimeFormatter.ofPattern("dd-MMM-yyyy", new Locale("en")),
+                DateTimeFormatter.ofPattern("dd-MMM-yy", new Locale("en")),   // 🔥 This fixes "21-Oct-25"
+                DateTimeFormatter.ofPattern("d-MMM-yy", new Locale("en")),   // 🔥 This fixes "4-Sep-25"
                 DateTimeFormatter.ofPattern("dd-MM-yyyy"),
                 DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("dd/MM/yy"),
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
                 DateTimeFormatter.ofPattern("MM/dd/yyyy")
             };
@@ -488,6 +511,46 @@ public class CompanyTruckService {
         // if (exists) {
         //     throw new RuntimeException("Record already exists for this truck and date");
         // }
+
+
+        String destinationCode = dto.getTotalDestination().trim();
+        
+        DestinationSetting destinationSetting = destinationSettingRepository.findByName(destinationCode);
+
+        Optional<Destination> optionalDest = destinationRepository.findFirstByDateAndTruckIdAndSettingId(
+            dto.getDate(),
+            truck.getId(),
+            destinationSetting.getId()
+        );
+
+        if (optionalDest.isPresent()) {
+            Destination destination = optionalDest.get();
+
+            // 🔥 NEW: Check if already completed → throw error
+            if (destination.getStatus() == Status.COMPLETED) {
+                throw new RuntimeException(
+                    "Destination already COMPLETED for date: " + 
+                    dto.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
+                    ", truck: " + truck.getLicensePlate() +
+                    ", destination: " + destinationCode
+                );
+            }
+
+            // 🔥 Update status (only if not completed)
+            destination.setStatus(Status.COMPLETED);
+            destinationRepository.save(destination);
+
+        } else {
+            // 🔥 No destination found → throw error
+            throw new RuntimeException(
+                "No destination found for date: " + 
+                dto.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
+                ", truck: " + truck.getLicensePlate() +
+                ", destination: " + destinationCode
+            );
+        }
+
+
 
         // Set additional data and save
         dto.setTruckId(truck.getId());

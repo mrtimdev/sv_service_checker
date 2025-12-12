@@ -251,9 +251,11 @@ public class CompanyTruckController {
                     errorMessages.add("Row " + (i + 1) + " (" + dto.getLicensePlate() + "): " + e.getMessage());
                 }
             }
-
-            redirectAttributes.addFlashAttribute("success",
+            if(successCount > 0) {
+                redirectAttributes.addFlashAttribute("success",
                     "Imported successfully: " + successCount + " rows");
+            }
+            
             
             if (!errorMessages.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorCount", errorMessages.size());
@@ -660,43 +662,44 @@ public class CompanyTruckController {
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "query", required = false) String query,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
         @RequestParam(value = "export", required = false) String export,
-        HttpServletResponse response
+        HttpServletResponse response,
+        RedirectAttributes redirectAttributes
     ) throws IOException {
 
         List<CompanyTruck> trucks;
         int totalPages = 1;
         int size;
-        
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/company-trucks/user-record";
+        }
+
         if ("all".equalsIgnoreCase(sizeParam)) {
             size = Integer.MAX_VALUE;
         } else {
-            size = Integer.parseInt(sizeParam); 
+            size = Integer.parseInt(sizeParam);
         }
 
-        // Get all data for export or filtered data for display
         List<CompanyTruck> allTrucks;
-        if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = service.findByLicensePlateContaining(licensePlate);
-        } else {
-            allTrucks = service.getAll();
-        }
+        Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+
+        allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, Status.PENDING);
 
         if (showAll) {
             trucks = allTrucks;
         } else {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<CompanyTruck> truckPage;
-            if (licensePlate != null && !licensePlate.isEmpty()) {
-                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
-                // truckPage = service.findByLicensePlateAndStatusWithPageable(licensePlate, Status.PENDING , pageable);
-            } else {
-                truckPage = service.getAllWithPageable(pageable);
-            }
+            Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
+            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.PENDING);
+
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }
-
+        
         model.addAttribute("trucks", trucks);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
@@ -704,7 +707,67 @@ public class CompanyTruckController {
         model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);  
+        model.addAttribute("query", query);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
         return "company-trucks/trucks_for_users_mark";
+    }
+
+    @GetMapping("/user-record/report")
+    public Object companyTrucksForUserReport(Model model,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+        @RequestParam(value = "licensePlate", required = false) String licensePlate,
+        @RequestParam(value = "query", required = false) String query,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response,
+        RedirectAttributes redirectAttributes
+    ) throws IOException {
+
+        List<CompanyTruck> trucks;
+        int totalPages = 1;
+        int size;
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/company-trucks/user-record";
+        }
+
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam);
+        }
+
+        List<CompanyTruck> allTrucks;
+        Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+
+        allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, Status.DEDUCTED);
+
+        if (showAll) {
+            trucks = allTrucks;
+        } else {
+            Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
+            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.DEDUCTED);
+
+            trucks = truckPage.getContent();
+            totalPages = truckPage.getTotalPages();
+        }
+        
+        model.addAttribute("trucks", trucks);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
+        model.addAttribute("showAll", showAll);
+        model.addAttribute("licensePlate", licensePlate);  
+        model.addAttribute("query", query);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        return "company-trucks/trucks_for_users_mark_report";
     }
 
 

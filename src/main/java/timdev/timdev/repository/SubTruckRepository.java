@@ -29,10 +29,12 @@ public interface SubTruckRepository extends JpaRepository<SubTruck, Long>, JpaSp
             ApproveStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            Pageable pageable
+            Pageable pageable,
+            Boolean isFilled
+            
     ) {
         return findAll(
-                createFilterSpecification(licensePlate, truckOwner, truckId, status, startDate, endDate),
+                createFilterSpecification(licensePlate, truckOwner, truckId, status, startDate, endDate, isFilled),
                 pageable
         );
     }
@@ -43,7 +45,8 @@ public interface SubTruckRepository extends JpaRepository<SubTruck, Long>, JpaSp
             Long truckId,
             ApproveStatus status,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Boolean isFilled
     ) {
         return (root, query, criteriaBuilder) -> {
 
@@ -86,8 +89,17 @@ public interface SubTruckRepository extends JpaRepository<SubTruck, Long>, JpaSp
             if (endDate != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("date"), endDate));
             }
+            // isFilled filter (3 states)
+            if (isFilled != null) {
+                if (isFilled) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("changedBy")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("changedBy")));
+                }
+            }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
     }
 

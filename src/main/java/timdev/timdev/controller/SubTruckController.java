@@ -90,7 +90,7 @@ public class SubTruckController {
         }
 
         // Fetch filtered list
-        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate, null);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {
@@ -564,7 +564,7 @@ public class SubTruckController {
         }
 
         // Fetch filtered list
-        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate);
+        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate, false);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {
@@ -589,6 +589,68 @@ public class SubTruckController {
         model.addAttribute("showAll", showAll);
 
         return "sub-trucks/index_for_user";
+    }
+
+    // is filled fuel quantity
+    @GetMapping({"/user-record/report"})
+    public Object listApprovedForUserFilled(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        if (status == null) {
+            status = ApproveStatus.APPROVED;
+        }
+
+        // Fetch filtered list
+        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate, true);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("subTrucks", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "sub-trucks/index_for_user_filled";
     }
 
 

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <div th:fragment="desktop-view">
+        
+
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                <thead>
+                    <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                       
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{value}" style="width: 10px;">Value</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}" style="width: 100px;">Measurement</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="a : ${averages}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.id}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.value}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.measurement != null ? a.measurement.name + ' — ' + a.measurement.nativeName : '-'}"></td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+
+        
+    </div>
+</html>

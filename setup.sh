@@ -1,7 +1,7 @@
 
 #sv_vehicle_maintenace
 
-ssh -p 22 deverloper@154.26.134.117
+ssh -p 2236 deverloper@154.26.134.117
 D!$$&3949acq
 
 server.port=8085
@@ -23,17 +23,24 @@ WantedBy=multi-user.target
 
 Save and exit (Ctrl+O, Enter, Ctrl+X).
 
-scp ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_vehicle_maintenace/
-scp ./messages_km.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
-scp ./messages.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
+scp -P 2236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_vehicle_maintenace/
+scp -P 2236 ./messages_km.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
+scp -P 2236 ./messages.properties deverloper@154.26.134.117:~/sv_vehicle_maintenace/
 
-scp ./vehicle_fuel_maintenace.sql deverloper@154.26.134.117:~/sv_vehicle_maintenace/
+scp -P 2236 ./vehicle_fuel_maintenace.sql deverloper@154.26.134.117:~/sv_vehicle_maintenace/
 #import
 mysql -u root -p sv_vehicle_maintenace < ~/sv_vehicle_maintenace/vehicle_fuel_maintenace.sql
+
+#export
+mysqldump -u root -p sv_vehicle_maintenace > ~/backup/sv_vehicle_maintenace_backup_Dec_12_12.sql;
+
+#save to local
+scp -p 2236 deverloper@154.26.134.117:~/backup/sv_vehicle_maintenace_backup_Dec_12_12.sql
 
 sudo nano /etc/systemd/system/sv_vehicle_maintenace.service
 
 sudo systemctl daemon-reload
+sudo systemctl start sv_vehicle_maintenace
 sudo systemctl stop sv_vehicle_maintenace
 sudo systemctl enable sv_vehicle_maintenace
 sudo systemctl restart sv_vehicle_maintenace

@@ -9,6 +9,7 @@ import jakarta.persistence.EnumType;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
@@ -39,7 +40,7 @@ public class CompanyTruck {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @DateTimeFormat(pattern = "MMM dd, yyyy")
     private LocalDate date;
 
     @ManyToOne(fetch = FetchType.LAZY)

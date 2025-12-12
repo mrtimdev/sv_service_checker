@@ -91,7 +91,7 @@ public class FuelRequestService {
 
 
     public Page<FuelRequest> findFiltered(int page, int size, String requester, String position, String purpose, Long truckId, 
-                                      ApproveStatus status, LocalDate startDate, LocalDate endDate, Long createdById) {
+                                      ApproveStatus status, LocalDate startDate, LocalDate endDate, Long createdById, Boolean isFilled) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
         
@@ -100,7 +100,7 @@ public class FuelRequestService {
         //     return repository.findAll(pageable);
         // }
         
-        return repository.findFiltered(requester, position, purpose, truckId, status, startDate, endDate, pageable, createdById);
+        return repository.findFiltered(requester, position, purpose, truckId, status, startDate, endDate, pageable, createdById, isFilled);
     }
 
     

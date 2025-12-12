@@ -32,10 +32,11 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable,
-            Long createdById
+            Long createdById,
+            Boolean isFilled
     ) {
         return findAll(
-                createFilterSpecification(requester, position, purpose ,truckId, status, startDate, endDate, createdById),
+                createFilterSpecification(requester, position, purpose ,truckId, status, startDate, endDate, createdById, isFilled),
                 pageable
         );
     }
@@ -48,7 +49,8 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
             ApproveStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            Long createdById
+            Long createdById,
+            Boolean isFilled
     ) {
         return (root, query, criteriaBuilder) -> {
 
@@ -103,6 +105,14 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
             if (createdById != null) {
                 Join<FuelRequest, User> userJoin = root.join("createdBy");
                 predicates.add(criteriaBuilder.equal(userJoin.get("id"), createdById));
+            }
+            // isFilled filter (3 states)
+            if (isFilled != null) {
+                if (isFilled) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("changedBy")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("changedBy")));
+                }
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

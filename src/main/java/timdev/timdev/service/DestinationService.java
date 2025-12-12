@@ -8,10 +8,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -31,6 +33,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -41,6 +44,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.ExcelImportResult;
+import timdev.timdev.dto.Status;
 import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
@@ -391,54 +395,84 @@ public class DestinationService {
     }
 
     private LocalDate parseDate(String dateString) {
-    if (dateString == null || dateString.trim().isEmpty()) {
-        return null;
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return null;
+        }
+
+        // Java Date.toString() format: Fri Oct 03 00:00:00 ICT 2025
+        DateTimeFormatter javaDateFormatter =
+                DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+
+        DateTimeFormatter[] formatters = {
+            DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+            javaDateFormatter
+        };
+
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                // For Java date style, convert ZonedDateTime → LocalDate
+                if (formatter == javaDateFormatter) {
+                    ZonedDateTime zdt = ZonedDateTime.parse(dateString, formatter);
+                    return zdt.toLocalDate();
+                }
+
+                return LocalDate.parse(dateString, formatter);
+            } catch (Exception ignored) {}
+        }
+
+        throw new RuntimeException("Invalid date format: " + dateString);
     }
-
-    // Java Date.toString() format: Fri Oct 03 00:00:00 ICT 2025
-    DateTimeFormatter javaDateFormatter =
-            DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-
-    DateTimeFormatter[] formatters = {
-        DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH),
-        DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-        DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-        DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-        javaDateFormatter
-    };
-
-    for (DateTimeFormatter formatter : formatters) {
-        try {
-            // For Java date style, convert ZonedDateTime → LocalDate
-            if (formatter == javaDateFormatter) {
-                ZonedDateTime zdt = ZonedDateTime.parse(dateString, formatter);
-                return zdt.toLocalDate();
-            }
-
-            return LocalDate.parse(dateString, formatter);
-        } catch (Exception ignored) {}
-    }
-
-    throw new RuntimeException("Invalid date format: " + dateString);
-}
-
 
     public List<String> validateAndSaveDestinations(ExcelImportResult excelResult,
                                                 CustomUserDetails userDetails) {
 
         List<String> dbErrors = new ArrayList<>();
         List<Destination> validDestinations = new ArrayList<>();
-
+        
+        // Track unique combinations to avoid duplicates in the same batch
+        Set<String> uniqueKeys = new HashSet<>();
+        
         List<Destination> destinations = excelResult.getDestinations();
 
         for (int i = 0; i < destinations.size(); i++) {
             Destination destination = destinations.get(i);
             int rowNumber = i + 2;
+            
+            // Check for duplicates in the current batch
+            String uniqueKey = destination.getDate() + "-" + 
+                            destination.getTruck().getId() + "-" + 
+                            destination.getSetting().getId();
+            
+            if (uniqueKeys.contains(uniqueKey)) {
+                dbErrors.add("Row " + rowNumber + ": Duplicate entry for date " + 
+                            destination.getDate() + ", truck " + 
+                            destination.getTruck().getLicensePlate() + 
+                            " and setting " + destination.getSetting().getCode());
+                continue;
+            }
+            
+            // Check if combination already exists in database
+            boolean exists = repository.existsByDateAndTruckIdAndSettingId(
+                destination.getDate(),
+                destination.getTruck().getId(),
+                destination.getSetting().getId()
+            );
+            
+            if (exists) {
+                dbErrors.add("Row " + rowNumber + ": Destination already exists for date " + 
+                            destination.getDate() + ", truck " + 
+                            destination.getTruck().getLicensePlate() + 
+                            " and setting " + destination.getSetting().getCode());
+                continue;
+            }
 
             try {
                 destination.setCreatedBy(userDetails.getUser());
-
+                uniqueKeys.add(uniqueKey);
                 validDestinations.add(destination);
 
             } catch (Exception e) {
@@ -450,13 +484,50 @@ public class DestinationService {
         if (!validDestinations.isEmpty()) {
             try {
                 repository.saveAll(validDestinations);
+            } catch (DataIntegrityViolationException e) {
+                // Catch database constraint violation
+                dbErrors.add("Database constraint violation: Duplicate entries found");
             } catch (Exception e) {
                 dbErrors.add("Database error: " + e.getMessage());
             }
         }
 
-        return dbErrors; // ONLY DB validation errors
+        return dbErrors;
     }
+
+    // public List<String> validateAndSaveDestinations(ExcelImportResult excelResult,
+    //                                             CustomUserDetails userDetails) {
+
+    //     List<String> dbErrors = new ArrayList<>();
+    //     List<Destination> validDestinations = new ArrayList<>();
+
+    //     List<Destination> destinations = excelResult.getDestinations();
+
+    //     for (int i = 0; i < destinations.size(); i++) {
+    //         Destination destination = destinations.get(i);
+    //         int rowNumber = i + 2;
+
+    //         try {
+    //             destination.setCreatedBy(userDetails.getUser());
+
+    //             validDestinations.add(destination);
+
+    //         } catch (Exception e) {
+    //             dbErrors.add("Row " + rowNumber + ": Error - " + e.getMessage());
+    //         }
+    //     }
+
+    //     // Save valid rows
+    //     if (!validDestinations.isEmpty()) {
+    //         try {
+    //             repository.saveAll(validDestinations);
+    //         } catch (Exception e) {
+    //             dbErrors.add("Database error: " + e.getMessage());
+    //         }
+    //     }
+
+    //     return dbErrors; // ONLY DB validation errors
+    // }
 
     public void exportExcelForImportCompanyTruck(List<Destination> destinations, HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -977,5 +1048,39 @@ public class DestinationService {
                 pageable
         );
     }
+
+    // List version
+    public List<Destination> findByFilterQueriesWithStatus(
+            String query,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        List<Status> statuses = List.of(Status.PENDING, Status.COMPLETED);
+        return repository.findByFilterQueriesAndStatus(startDate, endDate, query, statuses, Sort.by("date").ascending());
+    }
+
+    // Page version
+    public Page<Destination> findByFilterQueriesWithStatusAndPage(
+            String query,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable,
+            List<Status> statuses
+    ) {
+        
+        return repository.findByFilterQueriesWithStatus(startDate, endDate, query, statuses, pageable);
+    }
+
+
+    public List<Destination> findByFilterQueriesAndSortWithStatus(
+        LocalDate startDate,
+        LocalDate endDate,
+        String query,
+        List<Status> statuses,
+        Sort sort
+    ) {
+        return repository.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
+    }
+
     
 }

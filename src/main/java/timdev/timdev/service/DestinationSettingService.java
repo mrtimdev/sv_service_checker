@@ -47,5 +47,9 @@ public class DestinationSettingService {
         return repository.findById(id).orElse(null);
     }
 
+    public List<DestinationSetting> findAllById(List<Long> ids) {
+        return repository.findAllById(ids);
+    }
+
     
 }

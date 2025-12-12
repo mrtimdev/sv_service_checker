@@ -19,122 +19,162 @@ import timdev.timdev.entity.Truck;
 @Repository
 public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long> {
 
-    List<CompanyTruck> findByTruck_LicensePlateContaining(String licensePlate, Sort sort);
+        List<CompanyTruck> findByTruck_LicensePlateContaining(String licensePlate, Sort sort);
 
-    // Non-paginated search by Truck License Plate
-    List<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate);
+        // Non-paginated search by Truck License Plate
+        List<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate);
 
-    // Paginated search by Truck License Plate
-    Page<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
+        // Paginated search by Truck License Plate
+        Page<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 
-    @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck")
-    List<CompanyTruck> findAllWithTruck();
-
-
-    @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck WHERE LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))")
-    Page<CompanyTruck> findByTruckLicensePlateWithTruck(@Param("licensePlate") String licensePlate, Pageable pageable);
-
-    boolean existsByTruckAndDate(Truck truck, LocalDate date);
-
-    Optional<CompanyTruck> findByTruckAndDate(Truck truck, LocalDate date);
+        @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck")
+        List<CompanyTruck> findAllWithTruck();
 
 
-    List<CompanyTruck> findByStatus(Status status);
+        @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck WHERE LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))")
+        Page<CompanyTruck> findByTruckLicensePlateWithTruck(@Param("licensePlate") String licensePlate, Pageable pageable);
 
-   
+        boolean existsByTruckAndDate(Truck truck, LocalDate date);
 
-    Page<CompanyTruck> findByStatus(Status status, Pageable pageable);
-
-    @Query("""
-        SELECT c 
-        FROM CompanyTruck c 
-        JOIN FETCH c.truck t 
-        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
-        AND c.status = :status
-    """)
-    List<CompanyTruck> findByLicensePlateContainingAndStatus(
-            @Param("licensePlate") String licensePlate,
-            @Param("status") Status status);
-
-    @Query("""
-        SELECT c 
-        FROM CompanyTruck c 
-        JOIN c.truck t 
-        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
-        AND c.status = :status
-    """)
-    Page<CompanyTruck> findByLicensePlateContainingAndStatus(
-            @Param("licensePlate") String licensePlate,
-            @Param("status") Status status,
-            Pageable pageable);
+        Optional<CompanyTruck> findByTruckAndDate(Truck truck, LocalDate date);
 
 
-    @Query("""
-        SELECT c 
-        FROM CompanyTruck c 
-        JOIN c.truck t 
-        WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
-        AND c.status IN :statuses
-    """)
-    Page<CompanyTruck> findByLicensePlateContainingAndStatusIn(
-            @Param("licensePlate") String licensePlate,
-            @Param("statuses") List<Status> statuses,
-            Pageable pageable);
+        List<CompanyTruck> findByStatus(Status status);
+
+        
+
+        Page<CompanyTruck> findByStatus(Status status, Pageable pageable);
+
+        @Query("""
+                SELECT c 
+                FROM CompanyTruck c 
+                JOIN FETCH c.truck t 
+                WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+                AND c.status = :status
+        """)
+        List<CompanyTruck> findByLicensePlateContainingAndStatus(
+                @Param("licensePlate") String licensePlate,
+                @Param("status") Status status);
+
+        @Query("""
+                SELECT c 
+                FROM CompanyTruck c 
+                JOIN c.truck t 
+                WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+                AND c.status = :status
+        """)
+        Page<CompanyTruck> findByLicensePlateContainingAndStatus(
+                @Param("licensePlate") String licensePlate,
+                @Param("status") Status status,
+                Pageable pageable);
 
 
-    @Query("""
-        SELECT c
-        FROM CompanyTruck c
-        WHERE (:startDate IS NULL OR c.date >= :startDate)
-        AND (:endDate IS NULL OR c.date <= :endDate)
-        AND (
-                :query IS NULL
-                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
-                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
-            )
-    """)
-    Page<CompanyTruck> findByFilterQueriesPage(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("query") String query,
-            Pageable pageable
-    );
+        @Query("""
+                SELECT c 
+                FROM CompanyTruck c 
+                JOIN c.truck t 
+                WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
+                AND c.status IN :statuses
+        """)
+        Page<CompanyTruck> findByLicensePlateContainingAndStatusIn(
+                @Param("licensePlate") String licensePlate,
+                @Param("statuses") List<Status> statuses,
+                Pageable pageable);
 
-    @Query("""
-        SELECT c
-        FROM CompanyTruck c
-        WHERE (:startDate IS NULL OR c.date >= :startDate)
-        AND (:endDate IS NULL OR c.date <= :endDate)
-        AND (
-                :query IS NULL
-                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
-                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
-            )
-    """)
-    List<CompanyTruck> findByFilterQueriesList(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("query") String query,
-            Pageable pageable
-    );
 
-    @Query("""
-        SELECT c
-        FROM CompanyTruck c
-        WHERE (:startDate IS NULL OR c.date >= :startDate)
-        AND (:endDate IS NULL OR c.date <= :endDate)
-        AND (
-                :query IS NULL
-                OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
-                OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
-            )
-    """)
-    List<CompanyTruck> findByFilterQueriesListAndSort(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("query") String query,
-            Sort sort
-    );
+        @Query("""
+                SELECT c
+                FROM CompanyTruck c
+                WHERE (:startDate IS NULL OR c.date >= :startDate)
+                AND (:endDate IS NULL OR c.date <= :endDate)
+                AND (
+                        :query IS NULL
+                        OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+                )
+        """)
+        Page<CompanyTruck> findByFilterQueriesPage(
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("query") String query,
+                Pageable pageable
+        );
+
+        @Query("""
+                SELECT c
+                FROM CompanyTruck c
+                WHERE (:startDate IS NULL OR c.date >= :startDate)
+                AND (:endDate IS NULL OR c.date <= :endDate)
+                AND (
+                        :query IS NULL
+                        OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+                )
+                AND c.status = :status
+        """)
+        Page<CompanyTruck> findByFilterQueriesPageAndStatus(
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("query") String query,
+                Pageable pageable,
+                @Param("status") Status status
+        );
+
+        @Query("""
+                SELECT c
+                FROM CompanyTruck c
+                WHERE (:startDate IS NULL OR c.date >= :startDate)
+                AND (:endDate IS NULL OR c.date <= :endDate)
+                AND (
+                        :query IS NULL
+                        OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+                )
+        """)
+        List<CompanyTruck> findByFilterQueriesList(
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("query") String query,
+                Pageable pageable
+        );
+
+        @Query("""
+                SELECT c
+                FROM CompanyTruck c
+                WHERE (:startDate IS NULL OR c.date >= :startDate)
+                AND (:endDate IS NULL OR c.date <= :endDate)
+                AND (
+                        :query IS NULL
+                        OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+                )
+        """)
+        List<CompanyTruck> findByFilterQueriesListAndSort(
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("query") String query,
+                Sort sort
+        );
+
+        @Query("""
+                SELECT c
+                FROM CompanyTruck c
+                WHERE (:startDate IS NULL OR c.date >= :startDate)
+                AND (:endDate IS NULL OR c.date <= :endDate)
+                AND (
+                        :query IS NULL
+                        OR LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+                        OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
+                )
+                AND c.status = :status
+        """)
+        List<CompanyTruck> findByFilterQueriesListAndSortAndStatus(
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("query") String query,
+                Sort sort,
+                @Param("status") Status status
+        );
 
 
 

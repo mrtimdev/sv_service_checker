@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:insert="~{layouts/main :: head}"></th:block>
+</head>
+<body>
+    <th:block th:fragment="desktop-view">
+        <div>
+            <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                <thead>
+                    <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                        <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កាលបរិច្ឆេទ</th>
+                        <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">លេខឡាន</th>
+                        <th style="width: 250px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">គោលដៅសរុប</th>
+                        <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_distance}">ចម្ងាយសរុប</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{average}">មធ្យមភាគ</th>
+                        <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}"></th>
+                        <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_quantity}">ចំនួនប្រេង</th>
+                        <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ប្រេងផ្សេងៗ</th>
+                        <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សរុបប្រេងចាក់អោយឡាន</th>
+                        
+                        <th style="width: 120px;"  class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500" th:text="#{status}">ស្ថានភាពចាក់ប្រេង</th>
+                        
+                        <th  style="width: 200px;"  class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="data, iterStat : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                    th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
+                                </td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
+                        <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="#{${#strings.capitalize(data.measurement.name.toLowerCase())}}"
+                        ></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getLitreQuantityFormat()}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 font-extrabold" th:text="${data.getTotalOilsChangeFormat()}"></td>
+
+                        <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                            <span th:class="${data.status.name == 'PENDING' ? 
+                                'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                th:text="#{${#strings.capitalize(data.status.name.toLowerCase())}}">
+                            </span>
+                        </td>
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
+                            
+                            <div class="flex gap-2 items-center justify-center">
+                                <a 
+                                    th:if="${data.status.name == 'PENDING'}"
+                                    th:href="@{/company-trucks/status/update(id=${data.id}, action='DEDUCTED', backUrl=${requestPathWithParams})}"
+                                    class="cursor-pointer bg-blue-600 text-white px-3 py-1 rounded-lg shadow">
+                                    <i class="fa fa-check-double"></i> <span th:text="#{mark_as_deducted}"></span>
+                                </a>
+
+                                
+
+                                <a 
+                                    class="text-green-500"
+                                    th:if="${
+                                        data.status.name == 'DEDUCTED'
+                                    }">
+                                    <i class="fa fa-check-double"></i> <span th:text="#{Deducted}"></span>
+                                </a>
+                            </div>
+
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </th:block>
+</body>
+</html>

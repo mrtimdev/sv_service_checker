@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/auth/login",
+                    "/auth/logout",
                     "/auth/register",
                     "/css/**",
                     "/js/**",
@@ -105,7 +106,7 @@ public class SecurityConfig {
             )
             
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/v1/**", "/ws/**")
+                .ignoringRequestMatchers("/auth/logout","/api/v1/**", "/ws/**")
             )
             
             // Form login
@@ -126,7 +127,7 @@ public class SecurityConfig {
             
             // Logout
             .logout(logout -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
+                .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout", "POST"))
                 .logoutSuccessUrl("/auth/login?logout=true")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)

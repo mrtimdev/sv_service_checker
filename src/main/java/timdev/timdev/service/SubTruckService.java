@@ -89,16 +89,16 @@ public class SubTruckService {
 
 
     public Page<SubTruck> findFiltered(int page, int size, String licensePlate, String truckOwner, Long truckId, 
-                                      ApproveStatus status, LocalDate startDate, LocalDate endDate) {
+                                      ApproveStatus status, LocalDate startDate, LocalDate endDate, Boolean isFilled) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
         
         // If all filters are null, return all records
-        if (licensePlate == null && truckOwner == null && truckId == null && status == null && startDate == null && endDate == null) {
+        if (licensePlate == null && truckOwner == null && truckId == null && status == null && startDate == null && endDate == null && isFilled == null) {
             return repository.findAll(pageable);
         }
         
-        return repository.findFiltered(licensePlate, truckOwner, truckId, status, startDate, endDate, pageable);
+        return repository.findFiltered(licensePlate, truckOwner, truckId, status, startDate, endDate, pageable, isFilled);
     }
 
     public boolean isExistsByTruckAndDate(Truck companyTruck, LocalDate date) {

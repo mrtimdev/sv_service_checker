@@ -8,6 +8,7 @@ import timdev.timdev.listener.AuditListener;
 import java.time.LocalDateTime;
 
 import org.hibernate.envers.Audited;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
@@ -23,6 +24,7 @@ public class SubTruck {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @DateTimeFormat(pattern = "MMM dd, yyyy")
     private LocalDate date;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -207,4 +209,9 @@ public class SubTruck {
     public void setChangedBy(User changedBy) {
         this.changedBy = changedBy;
     }
+
+    public boolean isFilled() {
+        return this.changedBy != null && this.changedAt != null;
+    }
+
 }

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="desktop-view">
+    <!-- Filters and Selection -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <!-- Bulk Selection -->
+        <div class="flex items-center gap-2">
+            <input type="checkbox" id="selectAll" class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+            <label for="selectAll" class="text-gray-700 dark:text-gray-300">Select All</label>
+            <span id="selectedCount" class="ml-2 text-sm text-gray-500 dark:text-gray-400">0 selected</span>
+        </div>
+        
+        <!-- Filters -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+            <!-- Show Per Page -->
+            <form method="get" class="flex items-center">
+                <input type="hidden" name="search" th:value="${search}">
+                <input type="hidden" name="sortBy" th:value="${sortBy}">
+                <input type="hidden" name="order" th:value="${order}">
+                <label for="size" class="mr-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">Show:</label>
+                <select id="size" name="size" onchange="this.form.submit()" 
+                        class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
+                    <option th:value="5" th:selected="${pageSize == '5'}">5</option>
+                    <option th:value="10" th:selected="${pageSize == '10'}">10</option>
+                    <option th:value="20" th:selected="${pageSize == '20'}">20</option>
+                    <option th:value="50" th:selected="${pageSize == '50'}">50</option>
+                    <option th:value="100" th:selected="${pageSize == '100'}">100</option>
+                    <option th:value="200" th:selected="${pageSize == '200'}">200</option>
+                    <option th:value="500" th:selected="${pageSize == '500'}">500</option>
+                    <option th:value="1000" th:selected="${pageSize == '1000'}">1000</option>
+                    <option th:value="all" th:selected="${pageSize == 'all'}">All</option>
+                </select>
+            </form>
+            
+            <!-- Search -->
+            <form th:action="@{/destination-settings}" method="get" class="flex items-center w-full sm:w-auto">
+                <input type="hidden" name="size" th:value="${pageSize}">
+                <input type="hidden" name="sortBy" th:value="${sortBy}">
+                <input type="hidden" name="order" th:value="${order}">
+                <input type="text" name="search" th:value="${search}" placeholder="Search code or destination"
+                    class="flex-grow sm:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 transition duration-200 rounded-r-md">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+            <thead>
+                <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                    <th class="checkbox-cell p-3 text-center border border-gray-300 dark:border-gray-700">
+                        <input type="checkbox" id="selectAllHeader" class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    </th>
+                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                    <th class="text-center p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                        <a th:href="@{/destination-settings(sortBy='code', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{code}">
+                            Code
+                        </a>
+                    </th>
+                    <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                        <a th:href="@{/destination-settings(sortBy='name', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{destination}">
+                            Destination
+                        </a>
+                    </th>
+                    <th class="text-center p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                        <a th:href="@{/destination-settings(sortBy='distance', order=${order == 'asc' ? 'desc' : 'asc'})}" th:text="#{distance_header}">
+                            Distance
+                        </a>
+                    </th>
+                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr th:each="item,iterStat : ${data}" 
+                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                    
+                    <td class="checkbox-cell text-center p-3 border border-gray-300 dark:border-gray-700">
+                        <input type="checkbox" name="selectedItem" th:value="${item.id}" 
+                                class="item-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    </td>
+                    
+                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                        th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">
+                    </td>
+
+                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.code}"></td>
+                    <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.name}"></td>
+                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.getDistanceFormat()}"></td>
+
+                    <td class="p-3 text-center border">
+                        <a th:href="@{'/destination-settings/edit/' + ${item.id}}" 
+                        class="text-blue-600 hover:underline mr-2">
+                            Edit
+                        </a>
+                        |
+                        <a th:href="@{'/destination-settings/delete/' + ${item.id}}" 
+                        onclick="return confirm('Are you sure?')"
+                        class="text-red-600 hover:underline ml-2">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination and Info -->
+    <div class="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+        <!-- Info -->
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+            <span th:if="${totalElements > 0}">
+                Showing 
+                <span th:text="${startIndex}">1</span> to 
+                <span th:text="${endIndex}">10</span> of 
+                <span th:text="${totalElements}">100</span> entries
+            </span>
+            <span th:if="${totalElements == 0}">
+                No entries found
+            </span>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="flex items-center space-x-2" th:if="${totalPages > 1}">
+            <!-- First Page -->
+            <a th:href="@{/destination-settings(page=0, size=${pageSize}, sortBy=${sortBy}, order=${order}, search=${search})}"
+               th:if="${currentPage > 0}"
+               class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+               title="First Page">
+                <i class="fa fa-angle-double-left"></i>
+            </a>
+            
+            <!-- Previous Page -->
+            <a th:href="@{/destination-settings(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, search=${search})}"
+               th:if="${currentPage > 0}"
+               class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+               title="Previous Page">
+                <i class="fa fa-angle-left"></i>
+            </a>
+            
+            <!-- Page Numbers -->
+            <div class="flex items-center space-x-1">
+                <span th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                    <a th:href="@{/destination-settings(page=${i}, size=${pageSize}, sortBy=${sortBy}, order=${order}, search=${search})}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == currentPage} ? 
+                           'bg-blue-500 text-white border-blue-500' : 
+                           'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                       class="px-3 py-2 border rounded-md text-sm">
+                    </a>
+                </span>
+            </div>
+            
+            <!-- Next Page -->
+            <a th:href="@{/destination-settings(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, search=${search})}"
+               th:if="${currentPage < totalPages - 1}"
+               class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+               title="Next Page">
+                <i class="fa fa-angle-right"></i>
+            </a>
+            
+            <!-- Last Page -->
+            <a th:href="@{/destination-settings(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, search=${search})}"
+               th:if="${currentPage < totalPages - 1}"
+               class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+               title="Last Page">
+                <i class="fa fa-angle-double-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+</html>

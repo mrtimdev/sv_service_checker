@@ -2,6 +2,7 @@ package timdev.timdev.config;
 
 import org.springframework.stereotype.Component;
 
+import timdev.timdev.dto.Status;
 import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.enums.InspectionStatus;
 import timdev.timdev.enums.OilStatus;
@@ -144,6 +145,27 @@ public class SettingConfig {
                     
                 default -> {
                     break;
+                }
+            }
+        }
+
+        if (value instanceof Status status) {
+            switch (status) {
+                case COMPLETED -> {
+                    return """
+                                                   <span class="px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md">
+                                                       Completed
+                                                   </span>
+                                               """;
+                }
+                case PENDING -> {
+                    return """
+                                                   <span class="px-2 py-1 text-xs font-medium text-white bg-yellow-500 rounded-md">
+                                                       Pending
+                                                   </span>
+                                               """;
+                }
+                default -> {
                 }
             }
         }

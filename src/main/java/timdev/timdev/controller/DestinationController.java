@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +29,7 @@ import lombok.AllArgsConstructor;
 import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.ExcelImportResult;
+import timdev.timdev.dto.Status;
 import timdev.timdev.dto.SubTruckRequestDTO;
 import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.DestinationSetting;
@@ -48,7 +50,7 @@ public class DestinationController {
     private TruckService truckService;
 
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public Object index(
         @RequestParam(value = "query", defaultValue = "") String query,
@@ -70,7 +72,7 @@ public class DestinationController {
         
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
-            return "redirect:/company-trucks";
+            return "redirect:/destinations";
         }
 
         int size;
@@ -143,6 +145,195 @@ public class DestinationController {
         model.addAttribute("endDate", endDate);
 
         return "destinations/index";
+    }
+
+    // own record for user destinations
+    @PreAuthorize("hasAuthority('DESTINATION_VIEW')")
+    @GetMapping({"u", "/own-records"})
+    public Object indexOwnRecords(
+        @RequestParam(value = "query", defaultValue = "") String query,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "200") String sizeParam,
+        @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
+        @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "order", defaultValue = "desc") String order,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response,
+        RedirectAttributes redirectAttributes,
+        Model model) throws IOException 
+    {
+        List<Destination> destinationPage;
+        int totalPages = 1;
+        
+        
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/u";
+        }
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+
+        // build Sort dynamically
+        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        // map frontend sortBy values to entity fields
+        String sortField;
+        switch (sortBy) {
+            case "code":
+                sortField = "code"; 
+                break;
+            case "id":
+                sortField = "id";
+                break;
+            case "name":
+                sortField = "name";
+                break;
+            case "distance":
+                sortField = "distance";
+                break;
+            default:
+                sortField = "id";
+                break;
+        }
+
+        List<Status> statuses = List.of(Status.PENDING);
+        Sort sort = Sort.by(direction, sortField);
+        destinationPage = service.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
+        
+        if (showAll) {
+            // fetch all reports with filter
+            destinationPage = service.getAllFiltered(query, sort);
+        } else {
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<Destination> withPage = service.findByFilterQueriesWithStatusAndPage(query, startDate, endDate, pageable, statuses);
+            destinationPage = withPage.getContent();
+            totalPages = withPage.getTotalPages();
+        }
+
+        if ("excel".equalsIgnoreCase(export)) {
+            service.exportExcel(destinationPage, response);
+            return null;
+        }
+
+        // put everything into model
+        model.addAttribute("data", destinationPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
+        model.addAttribute("query", query);
+
+        model.addAttribute("showAll", showAll);
+
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("order", order);
+
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+
+        return "destinations/index_own_records";
+    }
+
+    @PreAuthorize("hasAuthority('DESTINATION_VIEW')")
+    @GetMapping({"u/report", "/own-records/report"})
+    public Object indexOwnRecordsReport(
+        @RequestParam(value = "query", defaultValue = "") String query,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "200") String sizeParam,
+        @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
+        @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "order", defaultValue = "desc") String order,
+        @RequestParam(value = "export", required = false) String export,
+        HttpServletResponse response,
+        RedirectAttributes redirectAttributes,
+        Model model) throws IOException 
+    {
+        List<Destination> destinationPage;
+        int totalPages = 1;
+        
+        
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/u/report";
+        }
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+
+        // build Sort dynamically
+        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        // map frontend sortBy values to entity fields
+        String sortField;
+        switch (sortBy) {
+            case "code":
+                sortField = "code"; 
+                break;
+            case "id":
+                sortField = "id";
+                break;
+            case "name":
+                sortField = "name";
+                break;
+            case "distance":
+                sortField = "distance";
+                break;
+            default:
+                sortField = "id";
+                break;
+        }
+
+        List<Status> statuses = List.of(Status.PENDING, Status.COMPLETED);
+        Sort sort = Sort.by(direction, sortField);
+        destinationPage = service.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
+        
+        if (showAll) {
+            // fetch all reports with filter
+            destinationPage = service.getAllFiltered(query, sort);
+        } else {
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<Destination> withPage = service.findByFilterQueriesWithStatusAndPage(query, startDate, endDate, pageable, statuses);
+            destinationPage = withPage.getContent();
+            totalPages = withPage.getTotalPages();
+        }
+
+        if ("excel".equalsIgnoreCase(export)) {
+            service.exportExcel(destinationPage, response);
+            return null;
+        }
+
+        // put everything into model
+        model.addAttribute("data", destinationPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
+        model.addAttribute("query", query);
+
+        model.addAttribute("showAll", showAll);
+
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("order", order);
+
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+
+        return "destinations/index_own_records_report";
     }
 
 
@@ -220,6 +411,13 @@ public class DestinationController {
         redirectAttributes.addFlashAttribute("success", truck.getLicensePlate()+ ": Destination deleted successfully!");
         return "redirect:/destinations";
     }
+    @GetMapping("/u/delete/{id}")
+    public String deleteByUser(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        Truck truck = truckService.findById(id).orElse(null);
+        service.deleteById(id);
+        redirectAttributes.addFlashAttribute("success", truck.getLicensePlate()+ ": Destination deleted successfully!");
+        return "redirect:/destinations/u";
+    }
 
 
     @GetMapping("/import")
@@ -255,9 +453,11 @@ public class DestinationController {
 
             int totalRows = excelResult.getDestinations().size();
             int successCount = totalRows - dbErrors.size();
-
-            redirectAttributes.addFlashAttribute("success",
+            if(successCount > 0) {
+                redirectAttributes.addFlashAttribute("success",
                     "Imported successfully: " + successCount + " rows");
+            }
+            
 
             // Collect Excel + DB errors separately (NOT merged)
             List<String> allErrors = new ArrayList<>();
