@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head >
+    <title>Survey Submitted Successfully</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes confettiRain {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(600px) rotate(360deg); opacity: 0; }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--color);
+            top: -10px;
+            opacity: 0;
+            z-index: 9999;
+        }
+        
+        .success-icon {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+   
+        
+        .glow-text {
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .gradient-border {
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6) border-box;
+        }
+        
+        .dark .gradient-border {
+            background: linear-gradient(#1f2937, #1f2937) padding-box,
+                        linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6) border-box;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<th:block th:insert="~{survey-layouts/main :: survey-layout(~{::content}, 'Survey Submitted')}">
+    <th:block th:fragment="content">
+        <!-- Confetti Container -->
+        <div id="confetti-container"></div>
+        
+        <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- Main Success Card -->
+                <div class="max-w-4xl mx-auto">
+                    <div class="relative">
+                        <!-- Background Elements -->
+                        <div class="absolute -top-20 -left-20 w-64 h-64 bg-green-400/10 rounded-full blur-3xl"></div>
+                        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl"></div>
+                        
+                        <!-- Success Content -->
+                        <div class="relative gradient-border rounded-2xl p-8 md:p-12 shadow-2xl backdrop-blur-sm bg-white/80 dark:bg-gray-800/80">
+                            <!-- Success Icon and Title -->
+                            <div class="text-center mb-10">
+                                <div class="relative inline-block mb-6">
+                                    <div class="absolute inset-0 bg-green-500/20 blur-xl rounded-full"></div>
+                                    <div class="success-icon relative">
+                                        <i class="fas fa-check-circle text-8xl"></i>
+                                    </div>
+                                </div>
+                                
+                                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 glow-text">
+                                    សូមអរគុណ!
+                                </h1>
+                                
+                                <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+                                    ការឆ្លើយតបរបស់អ្នកត្រូវបានរក្សាទុកដោយជោគជ័យ។ មតិយោបល់របស់អ្នកគឺមានតម្លៃសម្រាប់យើងខ្ញុំ!
+                                </p>
+                            </div>
+                            
+                            <!-- Progress Indicator -->
+                            <div class="flex items-center justify-center mb-10">
+                                <div class="relative">
+                                    <svg class="w-24 h-24" viewBox="0 0 36 36">
+                                        <path id="progress-bg"
+                                              d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                                              fill="none"
+                                              stroke-width="3"
+                                              stroke="currentColor"
+                                              class="text-gray-200 dark:text-gray-700"/>
+                                        <path id="progress-fill"
+                                              class="progress-ring-circle text-green-500"
+                                              stroke-dasharray="100, 100"
+                                              d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                                              fill="none"
+                                              stroke-width="3"
+                                              stroke-linecap="round"
+                                              stroke="currentColor"/>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i class="fas fa-check text-2xl text-green-500"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Driver Info Card -->
+                            <div class="mb-12">
+                                <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
+                                    ព័ត៌មានរបស់អ្នកបើកបរ
+                                </h2>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="floating-card">
+                                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-xl border border-green-200 dark:border-green-800">
+                                            <div class="flex items-center mb-4">
+                                                <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg mr-4">
+                                                    <i class="fas fa-truck text-green-600 dark:text-green-400 text-xl"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">លេខឡាន</p>
+                                                    <p class="text-xl font-bold text-gray-900 dark:text-white" th:text="${driverInfo?.truckNumber} ?: 'N/A'"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="floating-card" style="animation-delay: 1s;">
+                                        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
+                                            <div class="flex items-center mb-4">
+                                                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg mr-4">
+                                                    <i class="fas fa-user text-blue-600 dark:text-blue-400 text-xl"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">ឈ្មោះពេញ</p>
+                                                    <p class="text-xl font-bold text-gray-900 dark:text-white" th:text="${driverInfo?.fullName} ?: 'N/A'"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="floating-card" style="animation-delay: 1.5s;">
+                                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 rounded-xl border border-purple-200 dark:border-purple-800">
+                                            <div class="flex items-center mb-4">
+                                                <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg mr-4">
+                                                    <i class="fas fa-phone text-purple-600 dark:text-purple-400 text-xl"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">លេខទូរស័ព្ទ</p>
+                                                    <p class="text-xl font-bold text-gray-900 dark:text-white" th:text="${driverInfo?.phoneNumber} ?: 'N/A'"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="floating-card" style="animation-delay: 2s;">
+                                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-6 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                                            <div class="flex items-center mb-4">
+                                                <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg mr-4">
+                                                    <i class="fas fa-envelope text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">អ៊ីមែល</p>
+                                                    <p class="text-xl font-bold text-gray-900 dark:text-white" th:text="${driverInfo?.email} ?: 'N/A'"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Submission Details -->
+                            <div class="mb-12">
+                                <div class="text-center mb-8">
+                                    <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                                        ព័ត៌មានបញ្ជូន
+                                    </h3>
+                                    <p class="text-gray-600 dark:text-gray-400">
+                                        ការបញ្ជូនរបស់អ្នកត្រូវបានបញ្ចប់ដោយជោគជ័យ
+                                    </p>
+                                </div>
+                                
+                                <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                                    <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                        <div class="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                                            <i class="fas fa-calendar-alt text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">កាលបរិច្ឆេទបញ្ជូន</p>
+                                            <p class="text-lg font-semibold text-gray-900 dark:text-white" th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}"></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="hidden md:block">
+                                        <i class="fas fa-arrow-right text-2xl text-gray-400"></i>
+                                    </div>
+                                    <div class="md:hidden">
+                                        <i class="fas fa-arrow-down text-2xl text-gray-400"></i>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+    </th:block>
+</th:block>
+</body>
+</html>
+
+<th:block th:fragment="~{survey-layouts/main :: body-scripts}">
+
+<!-- Celebration Confetti -->
+        <script>
+            // Wait for the DOM to be fully loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize animations after a short delay to ensure SVG is loaded
+                setTimeout(function() {
+                    createConfetti();
+                    animateProgress();
+                }, 100);
+            });
+            
+            function createConfetti() {
+                const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+                const container = document.getElementById('confetti-container');
+                
+                if (!container) return;
+                
+                for (let i = 0; i < 150; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = confetti.style.width;
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.setProperty('--color', confetti.style.backgroundColor);
+                    confetti.style.animation = `confettiRain ${Math.random() * 3 + 2}s linear forwards`;
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        if (confetti.parentNode === container) {
+                            container.removeChild(confetti);
+                        }
+                    }, 5000);
+                }
+            }
+            
+            function animateProgress() {
+                const circle = document.getElementById('progress-fill');
+                if (!circle) {
+                    console.warn('Progress circle not found');
+                    return;
+                }
+                
+                try {
+                    const radius = circle.getAttribute('r') || 15.9155; // Default radius from the path
+                    const circumference = 2 * Math.PI * parseFloat(radius);
+                    
+                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circle.style.strokeDashoffset = circumference;
+                    
+                    setTimeout(() => {
+                        const offset = circumference - (100 / 100 * circumference);
+                        circle.style.strokeDashoffset = offset;
+                    }, 500);
+                } catch (error) {
+                    console.error('Error animating progress:', error);
+                    // Fallback: just show the circle without animation
+                    circle.style.strokeDashoffset = '0';
+                }
+            }
+            
+            
+        </script>
+
+</th:block>

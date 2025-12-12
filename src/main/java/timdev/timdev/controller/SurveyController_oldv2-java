@@ -1,0 +1,300 @@
+package timdev.timdev.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.validation.Valid;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import timdev.timdev.entity.Question;
+import timdev.timdev.entity.QuestionGroup;
+import timdev.timdev.entity.Survey;
+import timdev.timdev.service.QuestionGroupService;
+import timdev.timdev.service.QuestionService;
+import timdev.timdev.service.SurveyService;
+
+@Controller
+@RequestMapping("/old/admin/survey")
+public class SurveyController_oldv2 {
+    
+    @Autowired
+    private SurveyService surveyService;
+    @Autowired
+    private QuestionGroupService questionGroupService;
+    @Autowired
+    private QuestionService questionService;
+
+    @GetMapping({"", "survey"})
+    public String adminDashboard(Model model) {
+        model.addAttribute("surveys", surveyService.getAllSurveys());
+        return "admin-dashboard";
+    }
+    
+  
+    
+    /**
+     * Display survey form for creating/editing
+     */
+    @GetMapping("/form")
+    public String showSurveyForm(@RequestParam(required = false) UUID id, Model model) {
+        Survey survey;
+        
+        if (id != null) {
+            survey = surveyService.findById(id)
+                    ;
+            
+            // Load question groups with questions
+            List<QuestionGroup> questionGroups = questionGroupService.findBySurveyId(id);
+            survey.setQuestionGroups(questionGroups);
+        } else {
+            survey = new Survey();
+            survey.setActive(true);
+            survey.setAccessCode(generateAccessCode());
+            
+            // Add one default question group
+            QuestionGroup defaultGroup = new QuestionGroup();
+            defaultGroup.setTitle("ក្រុមសំណួរចម្បង");
+            defaultGroup.setCode("MAIN_QUESTIONS");
+            defaultGroup.setOrderIndex(0);
+            
+            // Add one default question
+            Question defaultQuestion = new Question();
+            defaultQuestion.setText("សូមវាយតម្លៃការបើកបររបស់អ្នកបើកបរ");
+            defaultQuestion.setRequired(true);
+            defaultQuestion.setOrderIndex(0);
+            defaultQuestion.setQuestionGroup(defaultGroup);
+            
+            defaultGroup.setQuestions(List.of(defaultQuestion));
+            survey.setQuestionGroups(List.of(defaultGroup));
+        }
+        
+        model.addAttribute("survey", survey);
+        model.addAttribute("pageTitle", id != null ? "កែសម្រួលការស្ទង់មតិ" : "បង្កើតការស្ទង់មតិថ្មី");
+        return "admin/survey/form";
+    }
+    
+    /**
+     * Handle survey creation
+     */
+    @PostMapping
+    public String createSurvey(@Valid @ModelAttribute("survey") Survey survey,
+                              BindingResult bindingResult,
+                              RedirectAttributes redirectAttributes,
+                              Model model) {
+        
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("error", "សូមបំពេញព័ត៌មានអោយបានត្រឹមត្រូវ");
+            model.addAttribute("pageTitle", "បង្កើតការស្ទង់មតិថ្មី");
+            return "admin/survey/form";
+        }
+        
+        try {
+            // Generate access code for new surveys
+            if (survey.getAccessCode() == null || survey.getAccessCode().isEmpty()) {
+                survey.setAccessCode(generateAccessCode());
+            }
+            
+            // Set relationships before saving
+            if (survey.getQuestionGroups() != null) {
+                for (QuestionGroup group : survey.getQuestionGroups()) {
+                    group.setSurvey(survey);
+                    
+                    if (group.getQuestions() != null) {
+                        for (Question question : group.getQuestions()) {
+                            question.setQuestionGroup(group);
+                        }
+                    }
+                }
+            }
+            
+            Survey savedSurvey = surveyService.saveSurveyWithRelations(survey);
+            
+            redirectAttributes.addFlashAttribute("message", "ការស្ទង់មតិត្រូវបានបង្កើតដោយជោគជ័យ");
+            return "redirect:/admin/survey";
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "មានកំហុសក្នុងការរក្សាទុក: " + e.getMessage());
+            model.addAttribute("pageTitle", "បង្កើតការស្ទង់មតិថ្មី");
+            return "admin/survey/form";
+        }
+    }
+    
+    /**
+     * Handle survey update
+     */
+    @PostMapping("/{id}")
+    public String updateSurvey(@PathVariable UUID id,
+                              @Valid @ModelAttribute("survey") Survey survey,
+                              BindingResult bindingResult,
+                              RedirectAttributes redirectAttributes,
+                              Model model) {
+        
+        if (!id.equals(survey.getId())) {
+            throw new RuntimeException("ID mismatch");
+        }
+        
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("error", "សូមបំពេញព័ត៌មានអោយបានត្រឹមត្រូវ");
+            model.addAttribute("pageTitle", "កែសម្រួលការស្ទង់មតិ");
+            return "admin/survey/form";
+        }
+        
+        try {
+            // Load existing survey
+            Survey existingSurvey = surveyService.findByIdWithQuestionGroupsAndQuestions(id)
+                    .orElseThrow(() -> new RuntimeException("Survey not found with id: " + id));
+            
+            // Update basic fields
+            existingSurvey.setTitle(survey.getTitle());
+            existingSurvey.setDescription(survey.getDescription());
+            existingSurvey.setScaleDescription(survey.getScaleDescription());
+            existingSurvey.setExpiresAt(survey.getExpiresAt());
+            existingSurvey.setActive(true);
+            
+            // Handle question groups update
+            updateQuestionGroups(existingSurvey, survey.getQuestionGroups());
+            
+            // Save everything
+            Survey savedSurvey = surveyService.saveSurveyWithRelations(existingSurvey);
+            
+            redirectAttributes.addFlashAttribute("message", "ការស្ទង់មតិត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ");
+            return "redirect:/admin/survey";
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "មានកំហុសក្នុងការធ្វើបច្ចុប្បន្នភាព: " + e.getMessage());
+            model.addAttribute("pageTitle", "កែសម្រួលការស្ទង់មតិ");
+            return "admin/survey/form";
+        }
+    }
+    
+    /**
+     * Update question groups and questions
+     */
+    private void updateQuestionGroups(Survey existingSurvey, List<QuestionGroup> newGroups) {
+        if (newGroups == null) {
+            newGroups = new ArrayList<>();
+        }
+        
+        // Clear existing groups and questions
+        existingSurvey.getQuestionGroups().clear();
+        
+        // Add new groups with proper relationships
+        for (int i = 0; i < newGroups.size(); i++) {
+            QuestionGroup newGroup = newGroups.get(i);
+            newGroup.setSurvey(existingSurvey);
+            newGroup.setOrderIndex(i);
+            
+            // Handle questions within the group
+            if (newGroup.getQuestions() != null) {
+                for (int j = 0; j < newGroup.getQuestions().size(); j++) {
+                    Question question = newGroup.getQuestions().get(j);
+                    question.setQuestionGroup(newGroup);
+                    question.setOrderIndex(j);
+                    
+                    // Set default values
+                    if (question.isRequired() == true) {
+                        question.setRequired(false);
+                    }
+                }
+            }
+            
+            existingSurvey.getQuestionGroups().add(newGroup);
+        }
+    }
+    
+    /**
+     * Alternative approach using separate IDs - if you want to update rather than replace
+     */
+    private void updateQuestionGroupsAlternative(Survey existingSurvey, List<QuestionGroup> newGroups) {
+        if (newGroups == null) {
+            return;
+        }
+        
+        // Create maps for existing entities
+        Map<UUID, QuestionGroup> existingGroupsMap = new HashMap<>();
+        for (QuestionGroup group : existingSurvey.getQuestionGroups()) {
+            existingGroupsMap.put(UUID.fromString(group.getId()), group);
+        }
+        
+        // Process each group from the form
+        for (int i = 0; i < newGroups.size(); i++) {
+            QuestionGroup formGroup = newGroups.get(i);
+            
+            if (formGroup.getId() != null && existingGroupsMap.containsKey(formGroup.getId())) {
+                // Update existing group
+                QuestionGroup existingGroup = existingGroupsMap.get(formGroup.getId());
+                existingGroup.setTitle(formGroup.getTitle());
+                existingGroup.setCode(formGroup.getCode());
+                existingGroup.setOrderIndex(i);
+                
+                // Update questions within this group
+                updateQuestions(existingGroup, formGroup.getQuestions());
+                
+                // Remove from map to track which ones are still used
+                existingGroupsMap.remove(formGroup.getId());
+            } else {
+                // New group - add with proper relationships
+                formGroup.setId(null); // Ensure it's treated as new
+                formGroup.setSurvey(existingSurvey);
+                formGroup.setOrderIndex(i);
+                
+                // Set question-group relationships
+                if (formGroup.getQuestions() != null) {
+                    for (Question question : formGroup.getQuestions()) {
+                        question.setId(null); // Ensure new questions
+                        question.setQuestionGroup(formGroup);
+                    }
+                }
+                
+                existingSurvey.getQuestionGroups().add(formGroup);
+            }
+        }
+        
+        // Remove groups that were not in the form (deleted by user)
+        for (QuestionGroup groupToRemove : existingGroupsMap.values()) {
+            existingSurvey.getQuestionGroups().remove(groupToRemove);
+        }
+    }
+    
+    private void updateQuestions(QuestionGroup existingGroup, List<Question> newQuestions) {
+        if (newQuestions == null) {
+            newQuestions = new ArrayList<>();
+        }
+        
+        // Similar logic for questions...
+        // You would need to implement this based on your requirements
+    }
+    
+    /**
+     * Generate unique access code
+     */
+    private String generateAccessCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code = new StringBuilder();
+        
+        for (int i = 0; i < 8; i++) {
+            int index = (int) (Math.random() * chars.length());
+            code.append(chars.charAt(index));
+        }
+        
+        Optional<Survey> existingSurvey = surveyService.findByAccessCode(code.toString());
+        if (existingSurvey.isPresent()) {
+            return generateAccessCode();
+        }
+        
+        return code.toString();
+    }
+}

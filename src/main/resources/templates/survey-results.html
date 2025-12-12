@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/main :: head}">
+    <title>Survey Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .stat-card {
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .rating-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .rating-1 { background-color: #fef2f2; color: #dc2626; }
+        .rating-2 { background-color: #fffbeb; color: #d97706; }
+        .rating-3 { background-color: #f0f9ff; color: #0284c7; }
+        .rating-4 { background-color: #f0fdf4; color: #16a34a; }
+        .rating-5 { background-color: #faf5ff; color: #7c3aed; }
+        .star-rating {
+            color: #fbbf24;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #e5e7eb;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Survey Results')}">
+    <th:block th:fragment="content">
+        <div class="">
+            <div class="mx-auto sm:px-6 lg:px-8">
+
+                <!-- Success Message -->
+                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${success}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${error}"></span>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-6 no-print">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        លទ្ធផលការស្ទង់មតិ
+                    </h1>
+
+                    <div class="flex gap-2 items-center mb-6">
+                        <a th:href="@{/admin/survey}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            <i class="fa fa-arrow-left mr-1"></i>
+                            ត្រឡប់ក្រោយ
+                        </a>
+                        <button onclick="window.print()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <i class="fas fa-print mr-1"></i>
+                            បោះពុម្ព
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                    <!-- Survey Info Header -->
+                    <div class="mb-8">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2" th:text="${survey?.title}"></h2>
+                                    <p class="text-gray-600 dark:text-gray-300" th:text="${survey?.description}"></p>
+                                    <div class="flex items-center mt-3 space-x-4">
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-calendar-alt mr-1"></i>
+                                            ចាប់ផ្តើម: <span th:text="${#temporals.format(survey?.createdAt, 'dd/MM/yyyy')}"></span>
+                                        </span>
+                                        <span th:if="${survey?.expiresAt}" class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            ផុតកំណត់: <span th:text="${#temporals.format(survey?.expiresAt, 'dd/MM/yyyy')}"></span>
+                                        </span>
+                                        <span class="px-3 py-1 text-xs rounded-full" 
+                                              th:classappend="${survey?.active} ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'">
+                                            <span th:text="${survey?.active} ? 'សកម្ម' : 'មិនសកម្ម'"></span>
+                                        </span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-hashtag mr-1"></i>
+                                            កូដ: <span class="font-mono" th:text="${accessCode}"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400" th:text="${responseCount}">0</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">ការឆ្លើយតបសរុប</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            
+                            <div class="p-6">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border border-gray-300 dark:border-gray-600">
+
+                                        <thead >
+                                            <tr>
+                                                <th class="text-left px-4 py-3  text-gray-900 dark:text-white">Survey Question</th>
+                                                <th class="text-center px-4 py-3  text-gray-900 dark:text-white">Rating</th>
+                                                <th class="text-center px-4 py-3  text-gray-900 dark:text-white">Score Distribution</th>
+                                            </tr>
+                                        </thead>
+                                        
+                                        <tbody class=""
+                                            th:each="group, groupStat : ${survey?.questionGroups}"
+                                            th:with="groupLetter=${#strings.substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', groupStat.index, groupStat.index + 1)}">
+                                            <!-- Group Header -->
+                                            <tr class="">
+                                                <td colspan="3" class="px-4 py-3 ">
+                                                    <div class="flex items-center">
+                                                        <span class="text-blue-600 dark:text-blue-400 font-bold mr-3">[[${groupLetter}]].</span>
+                                                        <span class="text-blue-500 dark:text-blue-300 font-extrabold" th:text="${group.title}"></span>
+                                                     
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            
+                                            <!-- Questions -->
+                                            <tr th:each="question, quesStat : ${group.questions}">
+
+                                                <!-- QUESTION TEXT -->
+                                                <td class="px-4 py-3">
+                                                    <div class="flex items-start">
+                                                        <span class="text-sm font-mono text-gray-500 dark:text-gray-400 mr-3">
+                                                            [[${quesStat.index + 1}]].
+                                                        </span>
+                                                        <div>
+                                                            <div class="text-sm font-medium text-gray-900 dark:text-white"
+                                                                th:text="${question.text}"></div>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                                                                th:if="${question.description != null and !#strings.isEmpty(question.description)}"
+                                                                th:text="${question.description}"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="px-4 py-3 ">
+                                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded">
+                                                        <div class="h-5"
+                                                            th:style="${'width: ' + ((questionStats[question.id]?.average ?: 0) * 20) + '%;'} + 
+                                                                    ${(questionStats[question.id]?.average ?: 0) >= 4 ? 'background-color: #22c55e;' : 
+                                                                        (questionStats[question.id]?.average ?: 0) >= 3 ? 'background-color: #facc15;' : 
+                                                                        'background-color: #dc2626;'}">
+                                                        </div>
+                                                    </div>
+
+                                                </td>
+
+
+                                                <!-- AVERAGE NUMBER (RIGHT COLUMN DISPLAY) -->
+                                                <td class="text-center px-4 py-3 ">
+                                                    <span class="text-lg font-bold text-gray-900 dark:text-white"
+                                                        th:text="${questionStats[question.id]?.average} ?: '0.0'"></span>
+                                                </td>
+                                            
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+    
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+</body>
+</html>
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        
+    </script>
+</th:block>

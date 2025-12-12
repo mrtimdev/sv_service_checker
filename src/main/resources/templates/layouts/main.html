@@ -27,6 +27,11 @@
         {
             display: block !important;
         }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 
     <th:block th:fragment="body-scripts"></th:block>
@@ -38,16 +43,16 @@
     <div id="preloader">
         <div class="preloader-content">
             <img src="/images/logo.png" alt="Logo">
-            <p class="!text-white">© 2025 SV Vehicles Fuel Maintenance . All rights reserved.</p>
+            <p class="!text-white">© 2025 SV Statistics Survey . All rights reserved.</p>
         </div>
     </div>
 
     <!-- Header -->
-    <div th:insert="~{partials/header :: header}"></div>
+    <div th:insert="~{partials/header :: header}" class="no-print"></div>
 
 
     <!-- Sidebar -->
-    <div id="sidebar-wrapper">
+    <div id="sidebar-wrapper" class="no-print">
         <div id="sidebarOverlay"
             class=""></div>
 

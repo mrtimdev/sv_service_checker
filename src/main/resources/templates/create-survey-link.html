@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/main :: head}">
+    <title>Create Survey Link</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .link-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .qr-code-placeholder {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            border: 2px dashed #e5e7eb;
+        }
+        .copy-btn {
+            transition: all 0.3s ease;
+        }
+        .copy-btn.copied {
+            background-color: #10b981 !important;
+        }
+    </style>
+</head>
+<body>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Create Survey Link')}">
+    <th:block th:fragment="content">
+        <div class="">
+            <div class="mx-auto sm:px-6 lg:px-8">
+
+                <!-- Success Message -->
+                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${success}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${error}"></span>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        <i class="fas fa-link mr-2"></i>
+                        បង្កើតតំណភ្ជាប់ការស្ទង់មតិ
+                    </h1>
+
+                    <div class="flex gap-2 items-center mb-6">
+                        <a th:href="@{/admin}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            <i class="fa fa-arrow-left mr-1"></i>
+                            ត្រឡប់ក្រោយ
+                        </a>
+                        <a th:href="@{/admin/survey/new}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800">
+                            <i class="fa fa-plus mr-1"></i>
+                            បង្កើតថ្មី
+                        </a>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                    <!-- Survey Information -->
+                    <div class="mb-8">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl">
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                <i class="fas fa-poll mr-2"></i>
+                                ព័ត៌មានការស្ទង់មតិ
+                            </h2>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 w-32">ចំណងជើង:</span>
+                                    <span class="text-gray-900 dark:text-white" th:text="${survey?.title}"></span>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 w-32">ការពិពណ៌នា:</span>
+                                    <span class="text-gray-900 dark:text-white" th:text="${survey?.description}"></span>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 w-32">កូដចូលរួម:</span>
+                                    <span class="font-mono bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded text-blue-600 dark:text-blue-400" th:text="${accessCode}"></span>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 w-32">ស្ថានភាព:</span>
+                                    <span th:if="${survey?.active}" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                        សកម្ម
+                                    </span>
+                                    <span th:unless="${survey?.active}" class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                        មិនសកម្ម
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Survey Link Card -->
+                    <div class="link-card p-8 mb-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-2xl font-bold mb-2">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    តំណភ្ជាប់ការស្ទង់មតិ
+                                </h3>
+                                <p class="text-blue-100 mb-4">
+                                    ចម្លងតំណនេះ និងចែករំលែកទៅអ្នកបើកបរ។ ពួកគេអាចចូលឆ្លើយតបដោយគ្មានគណនី។
+                                </p>
+                            </div>
+                            <div class="text-4xl">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <div class="flex items-center space-x-2 mb-4">
+                                <div class="flex-1">
+                                    <input type="text" 
+                                           id="surveyLink"
+                                           th:value="${surveyUrl}"
+                                           readonly
+                                           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent">
+                                </div>
+                                <button onclick="copySurveyLink()" 
+                                        id="copyBtn"
+                                        class="bg-white text-purple-700 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold copy-btn transition duration-200">
+                                    <i class="fas fa-copy mr-2"></i>
+                                    ចម្លង
+                                </button>
+                            </div>
+                            
+                            <div class="text-sm text-blue-100">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                តំណនេះមានសុវត្ថិភាព និងអាចប្រើប្រាស់បានរហូតដល់ថ្ងៃផុតកំណត់។
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR Code Section -->
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-8 mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                            <i class="fas fa-qrcode mr-2"></i>
+                            កូដ QR
+                        </h3>
+                        
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div class="text-center">
+                                <div class="qr-code-placeholder mb-4">
+                                    <!-- QR Code will be generated here -->
+                                    <div class="text-center">
+                                        <div class="text-4xl mb-2">
+                                            <i class="fas fa-qrcode text-gray-400"></i>
+                                        </div>
+                                        <div class="text-xs text-gray-500">QR Code</div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    ស្កេនដើម្បីចូលទៅកាន់ការស្ទង់មតិ
+                                </p>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-3">វិធីចែករំលែក</h4>
+                                <ul class="space-y-3">
+                                    <li class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-envelope text-blue-600 dark:text-blue-400"></i>
+                                        </div>
+                                        <span class="text-gray-700 dark:text-gray-300">ផ្ញើតាមអ៊ីមែល</span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fab fa-telegram text-green-600 dark:text-green-400"></i>
+                                        </div>
+                                        <span class="text-gray-700 dark:text-gray-300">ផ្ញើតាម Telegram</span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fab fa-whatsapp text-red-600 dark:text-red-400"></i>
+                                        </div>
+                                        <span class="text-gray-700 dark:text-gray-300">ផ្ញើតាម WhatsApp</span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <div class="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-print text-gray-600 dark:text-gray-400"></i>
+                                        </div>
+                                        <span class="text-gray-700 dark:text-gray-300">បោះពុម្ពជាក្រដាស់</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">ការចូលរួមរំពឹងទុក</p>
+                                    <h4 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">១០០+</h4>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">រយៈពេលស្ទង់មតិ</p>
+                                    <h4 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">១៥ ថ្ងៃ</h4>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">ពេលវេលាឆ្លើយតប</p>
+                                    <h4 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">១០ នាទី</h4>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-stopwatch text-purple-600 dark:text-purple-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-6">
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-4">
+                            <i class="fas fa-lightbulb text-yellow-600 dark:text-yellow-400 mr-2"></i>
+                            ការណែនាំសម្រាប់ការចែករំលែក
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 dark:text-green-400 mt-1 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">ប្រាប់អ្នកបើកបរអំពីគោលបំណងនៃការស្ទង់មតិ</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 dark:text-green-400 mt-1 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">ធានាថាពួកគេយល់ពីភាពអនាមិកនៃការឆ្លើយតប</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 dark:text-green-400 mt-1 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">លើកទឹកចិត្តឱ្យពួកគេផ្តល់មតិយោបល់ស្មោះត្រង់</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 dark:text-green-400 mt-1 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">បញ្ជាក់អំពីពេលវេលាដែលការស្ទង់មតិនឹងបញ្ចប់</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-8 flex flex-wrap gap-4">
+                        <a th:href="@{'/survey/' + ${accessCode}}" target="_blank"
+                           class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                            <i class="fas fa-eye mr-2"></i>
+                            មើលទម្រង់ស្ទង់មតិ
+                        </a>
+                        
+                        <button onclick="printPage()"
+                                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                            <i class="fas fa-print mr-2"></i>
+                            បោះពុម្ពទំព័រនេះ
+                        </button>
+                        
+                        <a th:href="@{/admin}"
+                           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            ទៅកាន់ផ្ទាំងគ្រប់គ្រង
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script>
+        function copySurveyLink() {
+            const linkInput = document.getElementById('surveyLink');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                // Change button text and color
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check mr-2"></i>បានចម្លង!';
+                copyBtn.classList.add('copied');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+                
+                // Show notification
+                showNotification('តំណត្រូវបានចម្លងដោយជោគជ័យ!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('មិនអាចចម្លងតំណបានទេ!', 'error');
+            });
+        }
+        
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Add to body
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        function printPage() {
+            window.print();
+        }
+        
+        // Generate QR Code placeholder
+        $(document).ready(function() {
+            // You can implement actual QR code generation here
+            // using a library like qrcode.js
+        });
+    </script>
+</th:block>
+</body>
+</html>

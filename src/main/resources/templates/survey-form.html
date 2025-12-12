@@ -1,0 +1,1040 @@
+
+<!DOCTYPE html>
+<th:block th:fragment="~{survey-layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"  />
+    <style>
+        .rating-star {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .rating-star:hover {
+            transform: scale(1.2);
+        }
+        .rating-star.selected {
+            color: #fbbf24 !important;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        .rating-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        .rating-label.active {
+            opacity: 1;
+            font-weight: 600;
+            color: #fbbf24;
+        }
+        .question-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .question-card.error {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .dark .question-card.error {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+        .error-message {
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .pulse-submit {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.5s ease;
+        }
+        .required-indicator::after {
+            content: " *";
+            color: #ef4444;
+        }
+    </style>
+</th:block>
+
+<th:block th:insert="~{survey-layouts/main :: survey-layout(~{::content}, ${survey?.title + ' - SV TRUCKING Survey' ?: 'SV TRUCKING Survey'})}">
+    <th:block th:fragment="content">
+    
+            <main class="container mx-auto px-4 py-8">
+                <!-- Progress Bar -->
+                <div class="max-w-4xl mx-auto mb-8" style="display: none;">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">ការបំពេញស្ទង់មតិ</span>
+                            <span class="text-sm font-bold text-blue-600 dark:text-blue-400" id="progressPercentage">0%</span>
+                        </div>
+                        <div class="progress-bar rounded-full" id="surveyProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto">
+                    <!-- Survey Header -->
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-xl shadow-lg p-8 mb-8 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-3xl font-bold mb-2" th:class="${!isDesktop} ? 'text-2xl font-bold mb-2' : 'text-3xl font-bold mb-2'" th:text="${survey?.title}"></h1>
+                                <p class="text-blue-100" th:text="${survey?.description}"></p>
+                            </div>
+                            <div class="hidden md:block">
+                                <div class="bg-white/20 p-4 rounded-lg">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold" id="answeredCount">0</div>
+                                        <div class="text-sm opacity-90">សំណួរដែលបានឆ្លើយ</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 bg-white/10 p-4 rounded-lg">
+                            <p class="font-medium" th:text="${survey?.scaleDescription}"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Alert -->
+                    <div id="errorAlert" class="hidden mb-6">
+                        <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300" id="errorTitle"></h3>
+                                    <div class="mt-2 text-sm text-red-700 dark:text-red-400" id="errorMessage"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Driver Information -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8" th:class="${!isDesktop} ? 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-8' : 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8'">
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-id-card text-blue-600 dark:text-blue-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">សូមបញ្ចូលព័ត៌មានរបស់អ្នក</h2>
+                        </div>
+                        
+                        <form th:action="@{/survey/{accessCode}/submit(accessCode=${survey?.accessCode})}" 
+                            th:object="${driverInfo}" method="post" id="surveyForm" onsubmit="return validateForm()">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        លេខឡាន (Truck Number)
+                                    </label>
+                                    <input type="text" th:field="*{truckNumber}" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="ឧ. TRK-001">
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">សូមបញ្ចូលលេខឡានពិតប្រាកដ</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2 required-indicator">
+                                        ឈ្មោះពេញ (Full Name)
+                                    </label>
+                                    <input type="text" th:field="*{fullName}" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="សូមបញ្ចូលឈ្មោះពេញ"
+                                        required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-phone mr-2 text-gray-400"></i>
+                                        លេខទូរស័ព្ទ (Phone Number)
+                                    </label>
+                                    <input type="tel" th:field="*{phoneNumber}" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="ឧ. 012 345 678">
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">សូមបញ្ចូលលេខទូរស័ព្ទពិតប្រាកដ</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-envelope mr-2 text-gray-400"></i>
+                                        អ៊ីមែល (Email)
+                                    </label>
+                                    <input type="email" th:field="*{email}" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="ឧ. example@svtrucking.com">
+                                </div>
+                            </div>
+                            
+                            <!-- Survey Questions -->
+                            <div class="mt-5">
+                                <div th:each="group, groupStat : ${survey?.questionGroups}">
+                                    <div class="flex items-center mb-6">
+                                        <div class="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                                            <span class="text-white font-bold" th:text="${groupStat.index + 1}"></span>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-white"
+                                            th:text="${group.title}">
+                                        </h3>
+                                    </div>
+                                    
+                                    <div th:each="question, questStat : ${group.questions}" 
+                                        class="mb-8 question-card" 
+                                        th:attr="data-question-id=${question.id}"
+                                        th:id="'question-card-' + ${question.id}">
+                                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                            <div class="flex items-start justify-between">
+                                                <div>
+                                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                        <span class="text-blue-600 dark:text-blue-400 mr-2" 
+                                                            th:text="${questStat.index + 1} + '.'"></span>
+                                                        <span th:text="${question.text}"></span>
+                                                        <span th:if="${question.required}" class="text-red-500 ml-1">*</span>
+                                                    </h4>
+                                                    
+                                                    <p class="text-gray-600 dark:text-gray-300 mb-4" 
+                                                    th:text="${question.description}" 
+                                                    th:if="${question.description != null and not #strings.isEmpty(question.description)}">
+                                                    </p>
+                                                </div>
+                                                <div class="ml-4" style="display: none;">
+                                                    <div class="w-10 h-10 rounded-full flex items-center justify-center" 
+                                                        th:classappend="${question.required} ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'">
+                                                        <i th:if="${question.required}" class="fas fa-exclamation-circle"></i>
+                                                        <i th:unless="${question.required}" class="fas fa-question-circle"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            
+                                            
+                                            <!-- Rating Stars -->
+                                            <div class="flex flex-col items-start pt-4">
+                                                <div class="mb-2">
+                                                    <input type="hidden" 
+                                                        th:id="'rating_' + ${question.id}" 
+                                                        th:name="'q_' + ${question.id}"
+                                                        th:attr="data-required=${question.required}"
+                                                        class="rating-input">
+
+                                                    <input type="hidden" 
+                                                        th:id="'answer_' + ${question.id}" 
+                                                        th:name="'ans_' + ${question.id}"
+                                                        th:attr="data-required=${question.required}"
+                                                        class="answer-input">
+                                                    
+                                                    <!-- <div class="flex space-x-1">
+                                                        <button type="button" 
+                                                                th:attr="data-question-id=${question.id}"
+                                                                data-value="1"
+                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
+                                                            ★
+                                                        </button>
+                                                        <button type="button" 
+                                                                th:attr="data-question-id=${question.id}"
+                                                                data-value="2"
+                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
+                                                            ★
+                                                        </button>
+                                                        <button type="button" 
+                                                                th:attr="data-question-id=${question.id}"
+                                                                data-value="3"
+                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
+                                                            ★
+                                                        </button>
+                                                        <button type="button" 
+                                                                th:attr="data-question-id=${question.id}"
+                                                                data-value="4"
+                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
+                                                            ★
+                                                        </button>
+                                                        <button type="button" 
+                                                                th:attr="data-question-id=${question.id}"
+                                                                
+                                                                data-value="5"
+                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
+                                                            ★
+                                                        </button>
+                                                    </div> -->
+
+                                                    <div th:class="${!isDesktop} ? 'flex flex-col space-x-2' : 'flex space-x-2'">
+                                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-extrabold">វាយតម្លៃ: </div>
+                                                        <div class="flex space-x-2">
+                                                            <!-- Option 1 -->
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">១</div>
+                                                            
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="1" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">២</div>
+
+                                                            <!-- Option 2 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="2" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៣</div>
+
+                                                            <!-- Option 3 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="3" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៤</div>
+
+                                                            <!-- Option 4 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="4" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៥</div>
+
+                                                            <!-- Option 5 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="5" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="flex space-x-2" style="display: none;">
+                                                    <!-- Option 1 -->
+                                                    <label class="flex flex-col items-center cursor-pointer rating-option p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        >
+                                                        <div class="text-4xl text-gray-300 dark:text-gray-600 rating-star"
+                                                            data-value="1"
+                                                            th:attr="data-question-id=${question.id}"
+                                                        >★</div>
+                                                    </label>
+
+                                                    <!-- Option 2 -->
+                                                    <label class="flex flex-col items-center cursor-pointer rating-option p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        >
+                                                        <div class="text-4xl text-gray-300 dark:text-gray-600 rating-star"
+                                                            data-value="2"
+                                                            th:attr="data-question-id=${question.id}"
+                                                        >★</div>
+                                                    </label>
+
+                                                    <label class="flex flex-col items-center cursor-pointer rating-option p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        >
+                                                        <div class="text-4xl text-gray-300 dark:text-gray-600 rating-star"
+                                                            data-value="3"
+                                                            th:attr="data-question-id=${question.id}"
+                                                        >★</div>
+                                                    </label>
+
+                                                    <label class="flex flex-col items-center cursor-pointer rating-option p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        >
+                                                        <div class="text-4xl text-gray-300 dark:text-gray-600 rating-star"
+                                                            data-value="4"
+                                                            th:attr="data-question-id=${question.id}"
+                                                        >★</div>
+                                                    </label>
+
+                                                    <!-- Option 5 -->
+                                                    <label class="flex flex-col items-center cursor-pointer rating-option p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        >
+                                                        <div class="text-4xl text-gray-300 dark:text-gray-600 rating-star"
+                                                            data-value="5"
+                                                            th:attr="data-question-id=${question.id}"
+                                                        >★</div>
+                                                    </label>
+                                                </div>
+
+                                                
+                                                <!-- Rating Labels with Hover Effect -->
+                                                <!-- <div class="flex justify-between w-full max-w-md text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                                    <span class="rating-label text-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        data-value="1"
+                                                        th:attr="data-question-id=${question.id}"
+                                                        
+                                                        >
+                                                        <div class="font-bold">១</div>
+                                                        <div>មិនល្អខ្លាំង</div>
+                                                    </span>
+                                                    <span class="rating-label text-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        data-value="2"
+                                                        th:attr="data-question-id=${question.id}"
+                                                        
+                                                        >
+                                                        <div class="font-bold">២</div>
+                                                        <div>មិនល្អ</div>
+                                                    </span>
+                                                    <span class="rating-label text-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        data-value="3"
+                                                        th:attr="data-question-id=${question.id}"
+                                                        >
+                                                        <div class="font-bold">៣</div>
+                                                        <div>មធ្យម</div>
+                                                    </span>
+                                                    <span class="rating-label text-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        data-value="4"
+                                                        th:attr="data-question-id=${question.id}"
+                                                        >
+                                                        <div class="font-bold">៤</div>
+                                                        <div>ល្អ</div>
+                                                    </span>
+                                                    <span class="rating-label text-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                        data-value="5"
+                                                        th:attr="data-question-id=${question.id}"
+                                                        >
+                                                        <div class="font-bold">៥</div>
+                                                        <div>ល្អបំផុត</div>
+                                                    </span>
+                                                </div> -->
+                                            </div>
+                                            
+                                            <!-- Error Message -->
+                                            <div class="hidden error-message mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-exclamation-circle text-red-500 dark:text-red-400 mr-2"></i>
+                                                    <span class="text-sm text-red-600 dark:text-red-300">
+                                                        សូមជ្រើសរើសពិន្ទុសម្រាប់សំណួរនេះ។
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Comments Section -->
+                                <div class="mt-12">
+                                    <div class="flex items-center mb-6">
+                                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
+                                            <i class="fas fa-comment-dots text-green-600 dark:text-green-400"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
+                                            មតិកែលម្អប្រកបដោយស្មោះត្រង់ ✍️
+                                        </h3>
+                                    </div>
+                                    
+                                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-lg border border-green-100 dark:border-gray-700">
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4 font-extrabold">មតិកែលម្អប្រកបដោយស្មោះត្រង់</p>
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4">
+                                            <p>សូមចែករំលែកមតិស្មោះត្រង់របស់អ្នកអំពីអ្វីដែលត្រូវកែលម្អក្នុងផ្នែកនានា រួមមាន៖</p>
+                                            <p>• ការរៀបចំចាត់ចែងជើងឡាន</p>
+                                            <p>• ការទំនាក់ទំនង GPS</p>
+                                            <p>• ការថែទាំជួសជុលបច្ចេកទេស</p>
+                                            <p>• ការគាំទ្រអ្នកបើកបរប្រចាំថ្ងៃពីក្រុមហ៊ុន</p>
+                                            <p>មតិយោបល់របស់អ្នក:</p>
+                                        </p>
+                                        
+                                        <div class="relative">
+                                            <textarea name="comments" 
+                                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                    rows="6"
+                                                    placeholder="សរសេរមតិយោបល់របស់អ្នកនៅទីនេះ..."></textarea>
+                                            <div class="absolute bottom-3 right-3 text-sm text-gray-500 dark:text-gray-400">
+                                                <i class="fas fa-pen mr-1"></i>
+                                                មតិយោបល់
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Form Actions -->
+                                <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                                    <div class="flex flex-col md:flex-row items-center justify-between">
+                                        <div class="mb-4 md:mb-0">
+                                            <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                                <i class="fas fa-shield-alt mr-2"></i>
+                                                <span class="text-sm">
+                                                    ការឆ្លើយតបរបស់អ្នកត្រូវបានរក្សាទុកជាអនាមិក
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex space-x-4">
+                                            <button type="button" onclick="resetForm()" 
+                                                    class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
+                                                <i class="fas fa-redo mr-2"></i>
+                                                លុបចម្លើយទាំងអស់
+                                            </button>
+                                            
+                                            <button type="submit" 
+                                                    class="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg pulse-submit transition duration-200 flex items-center">
+                                                <i class="fas fa-paper-plane mr-2"></i>
+                                                បញ្ជូនការឆ្លើយតប
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Survey Info Footer -->
+                    <div class="mt-8 text-center">
+                        <div class="inline-flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-clock"></i>
+                            <!-- <span>ពេលវេលាប៉ាន់ស្មាន៖ <span class="font-semibold">១០-១៥ នាទី</span></span> -->
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-500">
+                            សូមអរគុណសម្រាប់ការចំណាយពេលរបស់អ្នកក្នុងការជួយកែលម្អសេវាកម្មរបស់យើង។
+                        </p>
+                    </div>
+                </div>
+            </main>
+
+    </th:block>
+</th:block>
+
+<th:block th:fragment="~{survey-layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <script>
+        // Store all required questions for validation
+        let requiredQuestions = [];
+        let totalQuestions = 0;
+        let answeredQuestions = 0;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // rating-checkbox
+            // Initialize required questions array
+            // const ratingInputs = document.querySelectorAll('.rating-input');
+            const ratingInputs = document.querySelectorAll('.answer-input');
+            requiredQuestions = Array.from(ratingInputs)
+                .filter(input => input.getAttribute('data-required') === 'true')
+                .map(input => {
+                    // const questionId = input.id.replace('rating_', '');
+                    const questionId = input.id.replace('answer_', '');
+                    return {
+                        id: questionId,
+                        input: input,
+                        card: document.getElementById('question-card-' + questionId)
+                    };
+                });
+            
+            totalQuestions = requiredQuestions.length;
+            updateProgress();
+            
+            // Add input validation for driver info
+            const driverInfoInputs = document.querySelectorAll('input[required]');
+            driverInfoInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateInput(this);
+                });
+            });
+        });
+
+        $(function() {
+
+            $('.question-card').on('click', '.rating-checkbox', function(e) {
+                var value = $(this).attr('data-value');
+                var questionId = $(this).attr('data-question-id');
+
+                const input = document.getElementById('answer_' + questionId);
+                const checkboxes = document.querySelectorAll(`[data-question-id="${questionId}"].rating-checkbox`);
+
+                // Toggle logic: if clicked checkbox is already checked, uncheck it
+                if (this.checked && input.value == value) {
+                    this.checked = false;
+                    input.value = '';
+
+                    // Update progress
+                    if (input.dataset.counted) {
+                        delete input.dataset.counted;
+                        answeredQuestions--;
+                        updateProgress();
+                    }
+                    return;
+                }
+
+                // Otherwise, check clicked box and uncheck all others
+                checkboxes.forEach(cb => {
+                    cb.checked = (cb === this);
+                });
+
+                // Update hidden input
+                input.value = value;
+
+                // Remove error state
+                const questionCard = document.getElementById('question-card-' + questionId);
+                if (questionCard) {
+                    questionCard.classList.remove('error');
+                    const errorMsg = questionCard.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.classList.add('hidden');
+                    }
+                }
+
+                // Update progress
+                if (input.value && !input.dataset.counted) {
+                    input.dataset.counted = true;
+                    answeredQuestions++;
+                    updateProgress();
+                }
+            });
+
+
+
+            // rating star
+            $('.question-card').on('click', '.rating-star' , function(e) {
+                var value = $(this).attr('data-value');
+                var questionId = $(this).attr('data-question-id');
+                
+
+                const input = document.getElementById('rating_' + questionId);
+                const stars = document.querySelectorAll(`[data-question-id="${questionId}"].rating-star`);
+                const labels = document.querySelectorAll(`[data-question-id="${questionId}"].rating-label`);
+                
+                // Update input value
+                input.value = value;
+                
+                // Update stars
+                stars.forEach((star, index) => {
+                    if (index < value) {
+                        star.classList.add('selected');
+                    } else {
+                        star.classList.remove('selected');
+                    }
+                });
+                
+                // Update labels
+                labels.forEach((label, index) => {
+                    if (index < value) {
+                        label.classList.add('active');
+                    } else {
+                        label.classList.remove('active');
+                    }
+                });
+                
+                // Remove error state
+                const questionCard = document.getElementById('question-card-' + questionId);
+                if (questionCard) {
+                    questionCard.classList.remove('error');
+                    const errorMsg = questionCard.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.classList.add('hidden');
+                    }
+                }
+                
+                // Update progress
+                if (input.value && !input.dataset.counted) {
+                    input.dataset.counted = true;
+                    answeredQuestions++;
+                    updateProgress();
+                } else if (!input.value && input.dataset.counted) {
+                    delete input.dataset.counted;
+                    answeredQuestions--;
+                    updateProgress();
+                }
+            });
+
+            $('.question-card').on('mouseover', '.rating-label' , function(e) {
+                var value = $(this).attr('data-value');
+                var questionId = $(this).attr('data-question-id');
+
+                const labels = document.querySelectorAll(`[data-question-id="${questionId}"].rating-label`);
+                labels.forEach((label, index) => {
+                    if (index < value) {
+                        label.classList.add('active');
+                    }
+                });
+                
+                const stars = document.querySelectorAll(`[data-question-id="${questionId}"].rating-star`);
+                stars.forEach((star, index) => {
+                    if (index < value) {
+                        star.classList.add('hover');
+                    }
+                });
+
+            });
+
+
+            $('.question-card').on('mouseout', '.rating-label' , function(e) {
+                var value = $(this).attr('data-value');
+                var questionId = $(this).attr('data-question-id');
+
+                const input = document.getElementById('rating_' + questionId);
+                const currentValue = input.value ? parseInt(input.value) : 0;
+                
+                const labels = document.querySelectorAll(`[data-question-id="${questionId}"].rating-label`);
+                labels.forEach((label, index) => {
+                    if (index >= currentValue) {
+                        label.classList.remove('active');
+                    }
+                });
+                
+                const stars = document.querySelectorAll(`[data-question-id="${questionId}"].rating-star`);
+                stars.forEach((star, index) => {
+                    if (index >= currentValue) {
+                        star.classList.remove('hover');
+                    }
+                });
+
+            });
+
+            
+
+        })
+        
+        
+        
+        function updateProgress() {
+            const progressPercentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+            const progressBar = document.getElementById('surveyProgress');
+            const progressText = document.getElementById('progressPercentage');
+            const answeredCount = document.getElementById('answeredCount');
+            
+            if (progressBar) {
+                progressBar.style.width = progressPercentage + '%';
+            }
+            if (progressText) {
+                progressText.textContent = progressPercentage + '%';
+            }
+            if (answeredCount) {
+                answeredCount.textContent = answeredQuestions;
+            }
+        }
+        
+        function validateInput(input) {
+            if (input.value.trim() === '') {
+                input.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                input.classList.remove('border-gray-300', 'focus:ring-blue-500');
+                return false;
+            } else {
+                input.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                input.classList.add('border-gray-300', 'focus:ring-blue-500');
+                return true;
+            }
+        }
+        
+        function validateForm() {
+            event.preventDefault();
+            
+            let isValid = true;
+            let errorMessages = [];
+            let firstErrorElement = null;
+            
+            // Validate driver information
+            const driverInfoInputs = document.querySelectorAll('input[required]');
+            driverInfoInputs.forEach(input => {
+                if (!validateInput(input)) {
+                    isValid = false;
+                    if (!firstErrorElement) firstErrorElement = input;
+                }
+            });
+            
+            // Validate survey questions
+            requiredQuestions.forEach(question => {
+                if (!question.input.value) {
+                    isValid = false;
+                    question.card.classList.add('error');
+                    
+                    const errorMsg = question.card.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.classList.remove('hidden');
+                    }
+                    
+                    errorMessages.push(`សូមជ្រើសរើសពិន្ទុសម្រាប់សំណួរ: ${question.card.querySelector('h4').textContent.trim()}`);
+                    
+                    if (!firstErrorElement) {
+                        firstErrorElement = question.card;
+                    }
+                } else {
+                    question.card.classList.remove('error');
+                    const errorMsg = question.card.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.classList.add('hidden');
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                // Show error alert
+                const errorAlert = document.getElementById('errorAlert');
+                const errorTitle = document.getElementById('errorTitle');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                errorTitle.textContent = 'មានបញ្ហាក្នុងការបញ្ជូនការឆ្លើយតប';
+                errorMessage.innerHTML = `
+                    <p class="mb-2">សូមពិនិត្យព័ត៌មានដូចខាងក្រោម៖</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        ${errorMessages.map(msg => `<li>${msg}</li>`).join('')}
+                    </ul>
+                `;
+                
+                errorAlert.classList.remove('hidden');
+                
+                // Scroll to first error
+                if (firstErrorElement) {
+                    firstErrorElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    
+                    // Add focus effect
+                    if (firstErrorElement.tagName === 'INPUT') {
+                        firstErrorElement.focus();
+                    } else {
+                        const inputStar = firstErrorElement.querySelector('.rating-star');
+                        const input = firstErrorElement.querySelector('.answer-input');
+                        if (input) {
+                            input.focus();
+                        }
+                    }
+                }
+                
+                // Auto-hide error alert after 10 seconds
+                setTimeout(() => {
+                    errorAlert.classList.add('hidden');
+                }, 10000);
+                
+                return false;
+            }
+            
+            // Show success confirmation
+            showConfirmationDialog();
+            return false;
+        }
+        
+        function showConfirmationDialog() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'confirmationOverlay';
+            overlay.className = `
+                fixed inset-0 bg-black bg-opacity-50 
+                flex items-center justify-center 
+                z-50 p-4
+                opacity-0 transition-opacity duration-300
+            `;
+
+            // Modal HTML
+            overlay.innerHTML = `
+                <div id="confirmationModal"
+                    class="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-md
+                        transform scale-95 transition-all duration-300">
+                    
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-100 dark:bg-green-900 
+                                    rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i>
+                        </div>
+
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                            ត្រៀមរួចរាល់!
+                        </h3>
+
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                            តើអ្នកប្រាកដថាចង់បញ្ជូនការឆ្លើយតបរបស់អ្នកទេ?
+                        </p>
+
+                        <div class="flex space-x-4">
+                            <button onclick="hideConfirmationDialog()"
+                                class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 
+                                    text-gray-700 dark:text-gray-300 rounded-lg 
+                                    hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
+                                ត្រឡប់ក្រោយ
+                            </button>
+
+                            <button onclick="submitForm()" 
+                                class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 
+                                    hover:from-green-600 hover:to-emerald-700 text-white font-bold 
+                                    rounded-lg transition duration-200">
+                                បញ្ជូនឥឡូវនេះ
+                            </button>
+                        </div>
+
+                        <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-lock mr-1"></i>
+                            ការឆ្លើយតបរបស់អ្នកត្រូវបានរក្សាទុកដោយសុវត្ថិភាព
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Append modal to body
+            document.body.appendChild(overlay);
+
+            // Animate in (opacity + scale)
+            requestAnimationFrame(() => {
+                overlay.classList.remove("opacity-0");
+                overlay.classList.add("opacity-100");
+
+                const modal = document.getElementById("confirmationModal");
+                modal.classList.remove("scale-95");
+                modal.classList.add("scale-100");
+            });
+        }
+        
+        function hideConfirmationDialog() {
+            const overlay = document.getElementById('confirmationOverlay');
+            if (overlay) {
+                const modal = overlay.querySelector('div');
+                modal.classList.remove('scale-100');
+                modal.classList.add('scale-95');
+                
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                }, 300);
+            }
+        }
+        
+        function submitForm() {
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = `
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                កំពុងបញ្ជូន...
+            `;
+            submitBtn.disabled = true;
+            
+            // Hide confirmation dialog
+            hideConfirmationDialog();
+            
+            // Actually submit the form after a short delay
+            setTimeout(() => {
+                document.getElementById('surveyForm').submit();
+            }, 1000);
+        }
+        
+        function resetForm() {
+            if (confirm('តើអ្នកប្រាកដថាចង់លុបចម្លើយទាំងអស់មែនទេ?')) {
+                // Reset rating inputs
+                // const ratingInputs = document.querySelectorAll('.rating-input');
+                const ratingInputs = document.querySelectorAll('.answer-input');
+                const answerCheckbox = document.querySelectorAll('.rating-checkbox');
+                ratingInputs.forEach(input => {
+                    input.value = '';
+                    delete input.dataset.counted;
+                });
+
+                answerCheckbox.forEach(input => {
+                    input.checked = false
+                    delete input.dataset.counted;
+                });
+                
+                // Reset stars
+                const stars = document.querySelectorAll('.rating-star');
+                stars.forEach(star => {
+                    star.classList.remove('selected', 'hover');
+                });
+                
+                // Reset labels
+                const labels = document.querySelectorAll('.rating-label');
+                labels.forEach(label => {
+                    label.classList.remove('active');
+                });
+                
+                // Remove error states
+                const questionCards = document.querySelectorAll('.question-card');
+                questionCards.forEach(card => {
+                    card.classList.remove('error');
+                    const errorMsg = card.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.classList.add('hidden');
+                    }
+                });
+                
+                // Reset driver info inputs
+                const inputs = document.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                    input.classList.add('border-gray-300');
+                });
+                
+                // Reset progress
+                answeredQuestions = 0;
+                updateProgress();
+                
+                // Hide error alert
+                const errorAlert = document.getElementById('errorAlert');
+                if (errorAlert) {
+                    errorAlert.classList.add('hidden');
+                }
+                
+                // Show success message
+                showToast('ការលុបចម្លើយទាំងអស់បានជោគជ័យ!', 'success');
+            }
+        }
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</th:block>

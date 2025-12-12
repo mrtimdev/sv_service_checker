@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/main :: head}">
+    <title>Survey Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .stat-card {
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .rating-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .rating-1 { background-color: #fef2f2; color: #dc2626; }
+        .rating-2 { background-color: #fffbeb; color: #d97706; }
+        .rating-3 { background-color: #f0f9ff; color: #0284c7; }
+        .rating-4 { background-color: #f0fdf4; color: #16a34a; }
+        .rating-5 { background-color: #faf5ff; color: #7c3aed; }
+        .star-rating {
+            color: #fbbf24;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #e5e7eb;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Survey Results')}">
+    <th:block th:fragment="content">
+        <div class="">
+            <div class="mx-auto sm:px-6 lg:px-8">
+
+                <!-- Success Message -->
+                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${success}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${error}"></span>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-6 no-print">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        លទ្ធផលការស្ទង់មតិ
+                    </h1>
+
+                    <div class="flex gap-2 items-center mb-6">
+                        <a th:href="@{/admin/survey}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            <i class="fa fa-arrow-left mr-1"></i>
+                            ត្រឡប់ក្រោយ
+                        </a>
+                        <button onclick="window.print()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <i class="fas fa-print mr-1"></i>
+                            បោះពុម្ព
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                    <!-- Survey Info Header -->
+                    <div class="mb-8">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2" th:text="${survey?.title}"></h2>
+                                    <p class="text-gray-600 dark:text-gray-300" th:text="${survey?.description}"></p>
+                                    <div class="flex items-center mt-3 space-x-4">
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-calendar-alt mr-1"></i>
+                                            ចាប់ផ្តើម: <span th:text="${#temporals.format(survey?.createdAt, 'dd/MM/yyyy')}"></span>
+                                        </span>
+                                        <span th:if="${survey?.expiresAt}" class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            ផុតកំណត់: <span th:text="${#temporals.format(survey?.expiresAt, 'dd/MM/yyyy')}"></span>
+                                        </span>
+                                        <span class="px-3 py-1 text-xs rounded-full" 
+                                              th:classappend="${survey?.active} ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'">
+                                            <span th:text="${survey?.active} ? 'សកម្ម' : 'មិនសកម្ម'"></span>
+                                        </span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-hashtag mr-1"></i>
+                                            កូដ: <span class="font-mono" th:text="${accessCode}"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400" th:text="${responseCount}">0</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">ការឆ្លើយតបសរុប</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុមធ្យម</p>
+                                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                                        <span th:text="${statistics?.averageRating} ?: '0.0'"></span>
+                                    </h3>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-star text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center text-sm">
+                                    <span th:if="${responseCount > 0}" class="text-gray-600 dark:text-gray-400">
+                                        <!-- ផ្អែកលើ <span th:text="${statistics?.totalAnswers} ?: '0'"></span> ចម្លើយ -->
+                                    </span>
+                                    <span th:if="${responseCount == 0}" class="text-gray-600 dark:text-gray-400">
+                                        មិនទាន់មានទិន្នន័យទេ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">អត្រាការឆ្លើយតប</p>
+                                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                                        <span th:text="${statistics?.responseRate} ?: '0'"></span>%
+                                    </h3>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users text-green-600 dark:text-green-400"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">
+                                        <!-- <span th:text="${responseCount}"></span> ក្នុងចំណោម ១០០ អ្នកបើកបរ -->
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុខ្ពស់បំផុត</p>
+                                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                                        <span th:text="${statistics?.highestRating} ?: '0.0'"></span>
+                                    </h3>
+                                </div>
+                                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-trophy text-yellow-600 dark:text-yellow-400"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុខ្ពស់បំផុតដែលទទួលបាន</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-6 rounded-xl shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុទាបបំផុត</p>
+                                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                                        <span th:text="${statistics?.lowestRating} ?: '0.0'"></span>
+                                    </h3>
+                                </div>
+                                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុទាបបំផុតដែលទទួលបាន</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+
+                    <!-- Detailed Results by Question Group -->
+                    <div th:each="group : ${survey?.questionGroups}" class="mb-8">
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            <span th:text="${group.title}"></span>
+                                            <span class="ml-2 text-sm font-normal text-gray-600 dark:text-gray-400">
+                                                (ចំនួនសំណួរ: <span th:text="${group.questions.size()}"></span>)
+                                            </span>
+                                        </h3>
+                                    </div>
+                                    <div th:if="${groupStats[group.id]}" class="text-right">
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុមធ្យមក្រុម</div>
+                                        <div class="text-xl font-bold text-blue-600 dark:text-blue-400" th:text="${groupStats[group.id]?.average}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6">
+                                <!-- Group Statistics -->
+                                <div th:if="${groupStats[group.id]}" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">ពិន្ទុមធ្យមក្រុម</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${groupStats[group.id]?.average} ?: '0.0'">0.0</p>
+                                    </div>
+                                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">ចំនួនការឆ្លើយតប</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${groupStats[group.id]?.responses} ?: '0'">0</p>
+                                    </div>
+                                    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">ចំនួនសំណួរ</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${group.questions.size()}">0</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Questions Table -->
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead>
+                                            <tr class="bg-gray-50 dark:bg-gray-700">
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                    សំណួរ
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                    ពិន្ទុមធ្យម
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                    ការបែងចែកពិន្ទុ
+                                                </th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                    សកម្មភាព
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr th:each="question : ${group.questions}">
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-medium text-gray-900 dark:text-white" th:text="${question.text}"></div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400" th:if="${question.description != null and not #strings.isEmpty(question.description)}" th:text="${question.description}"></div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center">
+                                                        <span class="text-lg font-bold text-gray-900 dark:text-white mr-2" 
+                                                              th:text="${questionStats[question.id]?.average} ?: '0.0'"></span>
+                                                        <div class="flex star-rating">
+                                                            <i th:each="i : ${#numbers.sequence(1, 5)}" 
+                                                               th:classappend="${i <= (questionStats[question.id]?.average ?: 0)} ? 'fas fa-star' : 'far fa-star'"
+                                                               class="mx-0.5"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        ផ្អែកលើ <span th:text="${questionStats[question.id]?.totalRatings} ?: 0"></span> ការឆ្លើយតប
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div th:if="${responseCount > 0}" class="space-y-2">
+                                                        <div th:each="i : ${#numbers.sequence(0, 4)}" class="flex items-center">
+                                                            <span class="w-10 text-xs text-gray-600 dark:text-gray-400" th:text="${i + 1} + '★'"></span>
+                                                            <div class="ml-2 flex-1">
+                                                                <div class="progress-bar">
+                                                                   
+
+                                                                </div>
+
+                                                            </div>
+                                                            <span class="ml-2 w-10 text-xs text-gray-600 dark:text-gray-400 text-right" 
+                                                                  th:text="${questionStats[question.id]?.distribution[i] ?: 0}"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div th:if="${responseCount == 0}" class="text-sm text-gray-500 dark:text-gray-400">
+                                                        គ្មានទិន្នន័យ
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <button onclick="showQuestionDetails('[[${question.id}]]')" 
+                                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
+                                                            th:disabled="${responseCount == 0}">
+                                                        <i class="fas fa-chart-line mr-1"></i>
+                                                        មើលលម្អិត
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <i class="fas fa-comments mr-2"></i>
+                                មតិយោបល់ពីអ្នកបើកបរ
+                                <span class="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">
+                                    (<span th:text="${comments?.size() ?: 0}"></span> មតិយោបល់)
+                                </span>
+                            </h3>
+                            <button onclick="toggleComments()" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                <i class="fas fa-chevron-down mr-1"></i>
+                                បង្ហាញ/លាក់
+                            </button>
+                        </div>
+                        
+                        <div id="commentsSection" th:class="${comments != null and not comments.empty} ? '' : 'hidden'">
+                            <div th:if="${comments == null or comments.empty}" class="text-center py-12">
+                                <i class="fas fa-comment-slash text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 dark:text-gray-400">មិនទាន់មានមតិយោបល់ទេ</p>
+                            </div>
+                            
+                            <div th:if="${comments != null and not comments.empty}" class="space-y-6">
+                                <div th:each="comment : ${comments}" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <span class="font-medium text-gray-900 dark:text-white">
+                                                លេខឡាន: <span th:text="${comment.truckNumber} ?: 'N/A'"></span>
+                                            </span>
+                                            <span th:if="${comment.driverName}" class="ml-4 text-sm text-gray-600 dark:text-gray-400">
+                                                ឈ្មោះ: <span th:text="${comment.driverName}"></span>
+                                            </span>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                <span th:text="${#temporals.format(comment.date, 'dd/MM/yyyy HH:mm')}"></span>
+                                            </div>
+                                        </div>
+                                        <span th:if="${comment.rating}" 
+      class="px-2 py-1 text-xs rounded-full"
+      th:classappend="
+            ${comment.rating >= 4} ? 
+                ' bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+            (${comment.rating >= 3} ?
+                ' bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
+                ' bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200')
+      ">
+    ពិន្ទុ: <span th:text="${comment.rating}"></span>
+</span>
+
+                                    </div>
+                                    <p class="text-gray-700 dark:text-gray-300" th:text="${comment.text}"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Details Table (Collapsible) -->
+                    <div th:if="${responseCount > 0}" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <i class="fas fa-list-alt mr-2"></i>
+                                ព័ត៌មានលម្អិតអំពីការឆ្លើយតប
+                                <span class="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">
+                                    (<span th:text="${responseCount}"></span> ការឆ្លើយតប)
+                                </span>
+                            </h3>
+                            <button onclick="toggleResponseDetails()" 
+                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                <i class="fas fa-chevron-down mr-1"></i>
+                                បង្ហាញ/លាក់
+                            </button>
+                        </div>
+                        
+                        <div id="responseDetails" class="hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead>
+                                        <tr class="bg-gray-50 dark:bg-gray-700">
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                លេខឡាន
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                ឈ្មោះអ្នកបើកបរ
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                ពិន្ទុមធ្យម
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                ថ្ងៃឆ្លើយតប
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                សកម្មភាព
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <tr th:each="response : ${responses}">
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                                      th:text="${response.driverInfo?.truckNumber} ?: 'N/A'"></span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm text-gray-900 dark:text-white"
+                                                      th:text="${response.driverInfo?.fullName} ?: 'អនាមិក'"></span>
+                                                <div th:if="${response.driverInfo?.phoneNumber}" class="text-xs text-gray-500 dark:text-gray-400">
+                                                    <i class="fas fa-phone mr-1"></i>
+                                                    <span th:text="${response.driverInfo.phoneNumber}"></span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center">
+                                                    <span class="text-sm font-medium text-gray-900 dark:text-white mr-2">
+                                                        <span th:if="${response.answers != null and not response.answers.isEmpty()}">
+                                                            <span th:text="${#aggregates.sum(response.answers.values()) / response.answers.size()}"></span>
+                                                        </span>
+                                                        <span th:if="${response.answers == null or response.answers.isEmpty()}">0.0</span>
+                                                    </span>
+                                                    <div class="flex text-yellow-400">
+                                                        <i th:each="i : ${#numbers.sequence(1, 5)}" 
+                                                           th:classappend="${response.answers != null and not response.answers.isEmpty() and i <= (#aggregates.sum(response.answers.values()) / response.answers.size())} ? 'fas fa-star' : 'far fa-star'"
+                                                           class="text-xs mx-0.5"></i>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm text-gray-600 dark:text-gray-400"
+                                                      th:text="${#temporals.format(response.submittedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <button 
+                                                    th:attr="data-response-id=${response.id}"
+                                                    onclick="viewResponseDetails('[[${response.id}]]')"
+                                                        class="view-response-details text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                                    <i class="fas fa-eye mr-1"></i>
+                                                    មើល
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        // Initialize charts when page loads
+        $(document).ready(function() {
+            // Only initialize chart if there are responses
+            const responseCount = parseInt([[${responseCount}]]) || 0;
+            if (responseCount > 0) {
+                initializeCharts();
+            }
+        });
+        
+        function initializeCharts() {
+            // Get rating distribution data from Thymeleaf
+            const ratingDistribution = /*[[${statistics?.ratingDistribution}]]*/ {};
+            
+            if (ratingDistribution && Object.keys(ratingDistribution).length > 0) {
+                const ratingCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+                new Chart(ratingCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(ratingDistribution),
+                        datasets: [{
+                            label: 'ភាគរយការឆ្លើយតប',
+                            data: Object.values(ratingDistribution),
+                            backgroundColor: [
+                                '#f87171',
+                                '#fbbf24',
+                                '#60a5fa',
+                                '#34d399',
+                                '#a78bfa'
+                            ],
+                            borderColor: [
+                                '#dc2626',
+                                '#d97706',
+                                '#2563eb',
+                                '#059669',
+                                '#7c3aed'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.raw + '%';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'ភាគរយ'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'កម្រិតពេញចិត្ត'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function toggleResponseDetails() {
+            const details = document.getElementById('responseDetails');
+            const button = event.target.closest('button');
+            const icon = button.querySelector('i');
+            
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                details.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+        
+        function toggleComments() {
+            const commentsSection = document.getElementById('commentsSection');
+            const button = event.target.closest('button');
+            const icon = button.querySelector('i');
+            
+            if (commentsSection.classList.contains('hidden')) {
+                commentsSection.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                commentsSection.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        $(function() {
+            $("#responseDetails").on('click', '.view-response-details', function(e) {
+                const responseId = $(this).data('response-id');
+                alert('មុខងារមើលលម្អិតការឆ្លើយតបនឹងត្រូវបានអភិវឌ្ឍនៅពេលក្រោយ!\nResponse ID: ' + responseId);
+            });
+        })
+        
+        function showQuestionDetails(questionId) {
+            // In a real app, this would show detailed question statistics
+            const responseCount = parseInt([[${responseCount}]]) || 0;
+            if (responseCount === 0) {
+                showNotification('មិនទាន់មានទិន្នន័យសម្រាប់សំណួរនេះទេ!', 'warning');
+                return;
+            }
+            alert('មុខងារមើលលម្អិតសំណួរនឹងត្រូវបានអភិវឌ្ឍនៅពេលក្រោយ!\nQuestion ID: ' + questionId);
+        }
+        
+        
+        
+        function showNotification(message, type) {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.custom-notification');
+            existingNotifications.forEach(notification => {
+                notification.remove();
+            });
+            
+            const notification = document.createElement('div');
+            notification.className = `custom-notification fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${
+                        type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-triangle' :
+                        type === 'warning' ? 'exclamation-circle' :
+                        'info-circle'
+                    } mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Print styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @media print {
+                .no-print {
+                    display: none !important;
+                }
+                body {
+                    font-size: 12pt;
+                }
+                .stat-card, .rounded-xl, .shadow-md {
+                    box-shadow: none !important;
+                    border: 1px solid #ddd !important;
+                }
+                .chart-container {
+                    height: 250px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</th:block>
+</body>
+</html>

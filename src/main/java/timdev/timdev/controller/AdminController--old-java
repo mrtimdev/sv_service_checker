@@ -1,0 +1,79 @@
+package timdev.timdev.controller;
+
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import lombok.AllArgsConstructor;
+import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.entity.Survey;
+import timdev.timdev.service.SurveyService;
+import timdev.timdev.service.TruckService;
+import timdev.timdev.service.UserService;
+
+@Controller
+@AllArgsConstructor
+public class AdminController {
+
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private TruckService truckService;
+
+    @Autowired
+    private SurveyService surveyService;
+    
+    @GetMapping("/results/{accessCode}")
+    public String viewResults(@PathVariable String accessCode, Model model) {
+        Optional<Survey> surveyOpt = surveyService.getSurveyByAccessCode(accessCode);
+        
+        if (surveyOpt.isEmpty()) {
+            model.addAttribute("error", "សំណើមិនត្រឹមត្រូវ។");
+            return "error";
+        }
+        
+        Survey survey = surveyOpt.get();
+        long responseCount = surveyService.getResponseCount(survey.getId());
+        
+        model.addAttribute("survey", survey);
+        model.addAttribute("responseCount", responseCount);
+        return "survey-results";
+    }
+
+    
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        return "redirect:/dashboard/maintenance";
+    }
+
+    @GetMapping("/admin/dashboard")
+    public String showDashboard(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return "redirect:/dashboard/maintenance";
+    }
+
+    @GetMapping("/dashboard/maintenance")
+    public String maintenancePage(Model model) {
+        model.addAttribute("title", "Maintenance Mode");
+        model.addAttribute("message", "We're working hard to improve your experience");
+        model.addAttribute("estimatedTime", "48 hours");
+        model.addAttribute("progress", 65);
+        return "coming_soon";
+    }
+    
+
+
+
+
+
+
+
+
+
+
+}

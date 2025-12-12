@@ -51,6 +51,16 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
+                // Allow survey access without login - SPECIFIC ENDPOINTS
+                .requestMatchers(
+                    "/survey/{accessCode}",           // GET survey by access code
+                    "/survey/{accessCode}/submit",    // POST survey submission
+                    "/survey/response/{surveyId}/{responseId}"  // GET survey response view
+                ).permitAll()
+
+                // Restrict specific survey endpoints that need authentication
+                .requestMatchers("/admin/survey/**", "/admin/**").authenticated()
+
                 // .requestMatchers("/ws/**").permitAll() 
                 // .anyRequest().authenticated()
                 
@@ -86,7 +96,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/auth/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
+                .defaultSuccessUrl("/admin/survey", true)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
@@ -116,7 +126,10 @@ public class SecurityConfig {
             
             // API specific configurations
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/v1/**") // Disable CSRF for API
+                .ignoringRequestMatchers(
+                    "/api/v1/**",
+                    "/survey/{accessCode}/submit"
+                ) // Disable CSRF for API
                 
             )
             // .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+</th:block>
+
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
+    <th:block th:fragment="content">
+</head>
+<body>
+ 
+    
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Page Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white" th:text="${pageTitle}"></h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        បង្កើត ឬកែសម្រួលការស្ទង់មតិសម្រាប់អ្នកបើកបរ
+                    </p>
+                </div>
+                
+                <div class="space-x-4">
+                    <a th:href="@{/admin/survey}" 
+                       class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg">
+                        <i class="fa fa-arrow-left"></i> ត្រឡប់ក្រោយ
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${message}" class="bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-200 px-4 py-3 rounded-lg mb-6">
+                <span th:text="${message}"></span>
+            </div>
+            
+            <div th:if="${error}" class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-6">
+                <span th:text="${error}"></span>
+            </div>
+            
+            <!-- Survey Form -->
+            <form th:action="${survey.id != null} ? @{/admin/survey/{id}(id=${survey.id})} : @{/admin/survey}" 
+                  th:object="${survey}" method="post" id="surveyForm" class="space-y-8">
+                
+                <input type="hidden" th:field="*{id}" th:if="${survey.id != null}">
+                <input type="hidden" th:field="*{accessCode}" th:if="${survey.accessCode != null}">
+                
+                <!-- Basic Information Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                        ព័ត៌មានមូលដ្ឋាន
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                ចំណងជើងការស្ទង់មតិ *
+                            </label>
+                            <input type="text" th:field="*{title}" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                ការពិពណ៌នា *
+                            </label>
+                            <textarea th:field="*{description}" 
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                      rows="4"
+                                      required></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                មាត្រដ្ឋានវាយតម្លៃ *
+                            </label>
+                            <input type="text" th:field="*{scaleDescription}" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   value="មាត្រដ្ឋានវាយតម្លៃ៖ ១ = មិនល្អខ្លាំង | ២ = មិនល្អ | ៣ = មធ្យម | ៤ = ល្អ | ៥ = ល្អបំផុត"
+                                   required>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                    ថ្ងៃផុតកំណត់
+                                </label>
+                                <input type="text" th:field="*{expiresAt}" 
+                                    id="date"
+                                       class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" th:field="*{active}" 
+                                       id="active"
+                                       class="mr-2 w-5 h-5">
+                                <label for="active" class="text-gray-700 dark:text-gray-300">
+                                    ការស្ទង់មតិសកម្ម
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Questions Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            សំណួរក្នុងការស្ទង់មតិ
+                        </h2>
+                        
+                        <button type="button" onclick="addQuestionGroup()"
+                            style="position: fixed; z-index: 100; right: 20px; bottom: 20px;"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fa fa-plus"></i> បន្ថែមក្រុមសំណួរ
+                        </button>
+                    </div>
+                    
+                    <!-- Existing Question Groups -->
+                    <div id="questionGroupsContainer">
+                        <div th:each="group, groupStat : ${survey.questionGroups}" 
+                             class="question-group bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6" 
+                             th:attr="data-group-index=${groupStat.index}">
+                            
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white" 
+                                    th:text="${group.title}"></h4>
+                                <button type="button" onclick="removeQuestionGroup(this)" 
+                                        class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                        th:unless="${groupStat.first}">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                        ចំណងជើងក្រុម *
+                                    </label>
+                                    <input type="text" th:field="*{questionGroups[__${groupStat.index}__].title}" 
+                                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                           required>
+                                </div>
+                                
+                              
+                                
+                                <input type="hidden" th:field="*{questionGroups[__${groupStat.index}__].id}">
+                                <input type="hidden" th:field="*{questionGroups[__${groupStat.index}__].orderIndex}" 
+                                       th:value="${groupStat.index}">
+                            </div>
+                            
+                            <div class="questions-container mb-4">
+                                <!-- Existing Questions -->
+                                <div th:each="question, questStat : ${group.questions}" 
+                                     class="question-item bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
+                                    
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h5 class="font-medium text-gray-900 dark:text-white">
+                                            សំណួរទី <span th:text="${group.orderIndex * 100 + questStat.index + 1}"></span>
+                                        </h5>
+                                        <button type="button" onclick="removeQuestion(this)" 
+                                                class="text-red-500 hover:text-red-700">
+                                            <i class="fa fa-trash-alt delete-question-icon"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                                សំណួរ *
+                                            </label>
+                                            <input type="text" th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].text}" 
+                                                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                                   required>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                                ការពិពណ៌នា (តាមជម្រើស)
+                                            </label>
+                                            <textarea th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].description}" 
+                                                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                                      rows="2"></textarea>
+                                        </div>
+                                        
+                                        <div class="flex items-center">
+                                            <input type="checkbox" 
+                                                   th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].required}" 
+                                                   th:id="'required-' + ${groupStat.index} + '-' + ${questStat.index}"
+                                                   class="mr-2">
+                                            <label th:for="'required-' + ${groupStat.index} + '-' + ${questStat.index}" 
+                                                   class="text-gray-700 dark:text-gray-300">
+                                                តម្រូវឱ្យមានចម្លើយ
+                                            </label>
+                                        </div>
+                                        
+                                        <input type="hidden" th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].id}">
+                                        <input type="hidden" th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].orderIndex}" 
+                                               th:value="${questStat.index}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" onclick="addQuestion(this)" 
+                                    class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg">
+                                + បន្ថែមសំណួរ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="flex justify-between items-center pt-6">
+                    <div>
+                        <a th:href="@{/admin/survey}" 
+                           class="bg-red-500 dark:bg-red-700 hover:bg-red-300 dark:hover:bg-red-600 text-white px-6 py-3 rounded-lg mr-4">
+                            <span th:text="#{cancel}"></span>
+                        </a>
+                        <button type="submit" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                            <span th:text="#{save}"></span>
+                        </button>
+                        
+                    </div>
+                </div>
+            </form>
+            
+            
+        </div>
+    </main>
+    
+    </th:block>
+</th:block>
+
+
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+
+       
+
+        $(function () {
+            $("#date").flatpickr({
+                enableTime: true,
+                defaultDate: $("#date").val() || '',
+                dateFormat: "M d, Y H:i", 
+                allowInput: true,
+                locale: "en"
+            });
+        })
+        let questionCounter = 13;
+        
+        // Add new question group
+        function addQuestionGroup() {
+            const groupsContainer = document.getElementById('questionGroupsContainer');
+            const groupIndex = groupsContainer.children.length;
+            
+            const groupTemplate = `
+                <div class="question-group bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6" data-group-index="${groupIndex}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">ក្រុមសំណួរថ្មី</h4>
+                        <button type="button" onclick="removeQuestionGroup(this)" 
+                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-4 mb-6">
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                ចំណងជើងក្រុម *
+                            </label>
+                            <input type="text" name="questionGroups[${groupIndex}].title" 
+                                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                   value="ក្រុមសំណួរថ្មី" required>
+                        </div>
+                        
+                        
+                        
+                        <input type="hidden" name="questionGroups[${groupIndex}].orderIndex" value="${groupIndex}">
+                    </div>
+                    
+                    <div class="questions-container mb-4" id="questions-container-${groupIndex}">
+                        <!-- Questions will be added here -->
+                    </div>
+                    
+                    <button type="button" onclick="addQuestion(this)" 
+                            class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg">
+                        + បន្ថែមសំណួរ
+                    </button>
+                </div>
+            `;
+            
+            groupsContainer.insertAdjacentHTML('beforeend', groupTemplate);
+            updateQuestionGroupsIndex();
+        }
+        
+        // Remove question group
+        function removeQuestionGroup(button) {
+            const groupElement = button.closest('.question-group');
+            groupElement.remove();
+            updateQuestionGroupsIndex();
+        }
+        
+        // Add new question
+        function addQuestion(button) {
+            const groupElement = button.closest('.question-group');
+            const groupIndex = groupElement.getAttribute('data-group-index');
+            const questionsContainer = groupElement.querySelector('.questions-container');
+            const questionIndex = questionsContainer.children.length;
+            
+            questionCounter++;
+            const questionNumber = questionCounter;
+            
+            const questionTemplate = `
+                <div class="question-item bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h5 class="font-medium text-gray-900 dark:text-white">សំណួរទី ${questionNumber}</h5>
+                        <button type="button" onclick="removeQuestion(this)" 
+                                class="text-red-500 hover:text-red-700">
+                            <i class="fa fa-trash-alt delete-question-icon"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                សំណួរ *
+                            </label>
+                            <input type="text" name="questionGroups[${groupIndex}].questions[${questionIndex}].text" 
+                                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                   value="សំណួរថ្មី" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                ការពិពណ៌នា (តាមជម្រើស)
+                            </label>
+                            <textarea name="questionGroups[${groupIndex}].questions[${questionIndex}].description" 
+                                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                      rows="2"></textarea>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="questionGroups[${groupIndex}].questions[${questionIndex}].required" 
+                                   id="required-${groupIndex}-${questionIndex}"
+                                   class="mr-2" checked>
+                            <label for="required-${groupIndex}-${questionIndex}" class="text-gray-700 dark:text-gray-300">
+                                តម្រូវឱ្យមានចម្លើយ
+                            </label>
+                        </div>
+                        
+                        <input type="hidden" name="questionGroups[${groupIndex}].questions[${questionIndex}].orderIndex" value="${questionIndex}">
+                    </div>
+                </div>
+            `;
+            
+            questionsContainer.insertAdjacentHTML('beforeend', questionTemplate);
+        }
+        
+        // Remove question
+        function removeQuestion(button) {
+            const questionElement = button.closest('.question-item');
+            questionElement.remove();
+        }
+        
+        // Update question groups index
+        function updateQuestionGroupsIndex() {
+            const groups = document.querySelectorAll('.question-group');
+            groups.forEach((group, index) => {
+                group.setAttribute('data-group-index', index);
+                
+                // Update all inputs within this group
+                const titleInput = group.querySelector('input[name$="].title"]');
+                const codeInput = group.querySelector('input[name$="].code"]');
+                const orderInput = group.querySelector('input[name$="].orderIndex"]');
+                
+                if (titleInput) titleInput.name = `questionGroups[${index}].title`;
+                if (codeInput) codeInput.name = `questionGroups[${index}].code`;
+                if (orderInput) orderInput.value = index;
+                
+                // Update questions within this group
+                const questions = group.querySelectorAll('.question-item');
+                questions.forEach((question, qIndex) => {
+                    const textInput = question.querySelector('input[name$="].text"]');
+                    const descInput = question.querySelector('textarea[name$="].description"]');
+                    const requiredInput = question.querySelector('input[name$="].required"]');
+                    const qOrderInput = question.querySelector('input[name$="].orderIndex"]');
+                    
+                    if (textInput) textInput.name = `questionGroups[${index}].questions[${qIndex}].text`;
+                    if (descInput) descInput.name = `questionGroups[${index}].questions[${qIndex}].description`;
+                    if (requiredInput) requiredInput.name = `questionGroups[${index}].questions[${qIndex}].required`;
+                    if (qOrderInput) qOrderInput.name = `questionGroups[${index}].questions[${qIndex}].orderIndex`;
+                    if (qOrderInput) qOrderInput.value = qIndex;
+                });
+            });
+        }
+        
+        // Preview survey
+        function previewSurvey() {
+            const form = document.getElementById('surveyForm');
+            const formData = new FormData(form);
+            
+            // You can implement preview logic here
+            alert('ការមើលជាមុននឹងត្រូវបានអភិវឌ្ឍនៅពេលក្រោយ។');
+        }
+        
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial question counter based on existing questions
+            const existingQuestions = document.querySelectorAll('.question-item');
+            if (existingQuestions.length > 0) {
+                questionCounter = existingQuestions.length;
+            }
+        });
+        
+    </script>
+</th:block>
