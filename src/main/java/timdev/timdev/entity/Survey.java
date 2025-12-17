@@ -21,7 +21,12 @@ public class Survey {
     
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    private String commentTitle;
     
+    @Column(columnDefinition = "TEXT")
+    private String commentDescription;
+
     private String scaleDescription;
     
     @OneToMany(mappedBy = "survey", 
@@ -115,4 +120,20 @@ public class Survey {
     
     public String getAccessCode() { return accessCode; }
     public void setAccessCode(String accessCode) { this.accessCode = accessCode; }
+
+    public String getCommentTitle() {
+        return commentTitle;
+    }
+
+    public void setCommentTitle(String commentTitle) {
+        this.commentTitle = commentTitle;
+    }
+
+    public String getCommentDescription() {
+        return commentDescription;
+    }
+
+    public void setCommentDescription(String commentDescription) {
+        this.commentDescription = commentDescription;
+    }
 }

@@ -5,6 +5,7 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"  />
+    
     <style>
         .rating-star {
             transition: all 0.2s ease-in-out;
@@ -74,13 +75,16 @@
             content: " *";
             color: #ef4444;
         }
+
+        
+
     </style>
 </th:block>
 
 <th:block th:insert="~{survey-layouts/main :: survey-layout(~{::content}, ${survey?.title + ' - SV TRUCKING Survey' ?: 'SV TRUCKING Survey'})}">
     <th:block th:fragment="content">
     
-            <main class="container mx-auto px-4 py-8">
+            <main th:class="${isDesktop} ? 'container mx-auto px-4 py-8' : 'container mx-auto p-0'">
                 <!-- Progress Bar -->
                 <div class="max-w-4xl mx-auto mb-8" style="display: none;">
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
@@ -94,11 +98,11 @@
 
                 <div class="max-w-4xl mx-auto">
                     <!-- Survey Header -->
-                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-xl shadow-lg p-8 mb-8 text-white">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-xl shadow-lg mb-8 text-white" th:classappend="${isDesktop} ? 'p-8' : 'p-4'">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h1 class="text-3xl font-bold mb-2" th:class="${!isDesktop} ? 'text-2xl font-bold mb-2' : 'text-3xl font-bold mb-2'" th:text="${survey?.title}"></h1>
-                                <p class="text-blue-100" th:text="${survey?.description}"></p>
+                                <p class="text-blue-100" th:utext="${survey?.description}"></p>
                             </div>
                             <div class="hidden md:block">
                                 <div class="bg-white/20 p-4 rounded-lg">
@@ -111,7 +115,7 @@
                         </div>
                         
                         <div class="mt-6 bg-white/10 p-4 rounded-lg">
-                            <p class="font-medium" th:text="${survey?.scaleDescription}"></p>
+                            <p class="font-medium" th:utext="${survey?.scaleDescription}"></p>
                         </div>
                     </div>
                     
@@ -166,11 +170,12 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                    <label class="block text-gray-700 dark:text-gray-300 mb-2 required-indicator">
                                         <i class="fas fa-phone mr-2 text-gray-400"></i>
                                         លេខទូរស័ព្ទ (Phone Number)
                                     </label>
                                     <input type="tel" th:field="*{phoneNumber}" 
+                                        required
                                         class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="ឧ. 012 345 678">
@@ -216,7 +221,7 @@
                                                     </h4>
                                                     
                                                     <p class="text-gray-600 dark:text-gray-300 mb-4" 
-                                                    th:text="${question.description}" 
+                                                    th:utext="${question.description}" 
                                                     th:if="${question.description != null and not #strings.isEmpty(question.description)}">
                                                     </p>
                                                 </div>
@@ -246,106 +251,61 @@
                                                         th:attr="data-required=${question.required}"
                                                         class="answer-input">
                                                     
-                                                    <!-- <div class="flex space-x-1">
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="1"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="2"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="3"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="4"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                
-                                                                data-value="5"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                    </div> -->
 
-                                                    <div th:class="${!isDesktop} ? 'flex flex-col space-x-2' : 'flex space-x-2'">
-                                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-extrabold">វាយតម្លៃ: </div>
-                                                        <div class="flex space-x-2">
-                                                            <!-- Option 1 -->
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">១</div>
-                                                            
-                                                            <label class="flex flex-row items-center cursor-pointer">
-                                                                <input type="checkbox" 
-                                                                    th:attr="data-question-id=${question.id}" 
-                                                                    data-value="1" 
-                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                                
-                                                                
+                                                    <div>
+                                                        <div class="text-sm text-black font-extrabold">វាយតម្លៃ: </div>
+                                                        <div class="flex flex-col space-y-3">
+    <!-- Option 1 -->
+                                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                                <span class="text-sm text-gray-600 dark:text-gray-400">១ = មិនល្អខ្លាំង</span>
+                                                                <input type="checkbox"
+                                                                    th:attr="data-question-id=${question.id}"
+                                                                    data-value="1"
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded
+                                                                            focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                             </label>
-
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">២</div>
 
                                                             <!-- Option 2 -->
-                                                            <label class="flex flex-row items-center cursor-pointer">
-                                                                <input type="checkbox" 
-                                                                    th:attr="data-question-id=${question.id}" 
-                                                                    data-value="2" 
-                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                                
-                                                                
+                                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                                <span class="text-sm text-gray-600 dark:text-gray-400">២ = មិនល្អ</span>
+                                                                <input type="checkbox"
+                                                                    th:attr="data-question-id=${question.id}"
+                                                                    data-value="2"
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded
+                                                                            focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                             </label>
-
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៣</div>
 
                                                             <!-- Option 3 -->
-                                                            <label class="flex flex-row items-center cursor-pointer">
-                                                                <input type="checkbox" 
-                                                                    th:attr="data-question-id=${question.id}" 
-                                                                    data-value="3" 
-                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                                
-                                                                
+                                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                                <span class="text-sm text-gray-600 dark:text-gray-400">៣ = មធ្យម</span>
+                                                                <input type="checkbox"
+                                                                    th:attr="data-question-id=${question.id}"
+                                                                    data-value="3"
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded
+                                                                            focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                             </label>
-
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៤</div>
 
                                                             <!-- Option 4 -->
-                                                            <label class="flex flex-row items-center cursor-pointer">
-                                                                <input type="checkbox" 
-                                                                    th:attr="data-question-id=${question.id}" 
-                                                                    data-value="4" 
-                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                                
-                                                                
+                                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                                <span class="text-sm text-gray-600 dark:text-gray-400">៤ = ល្អ</span>
+                                                                <input type="checkbox"
+                                                                    th:attr="data-question-id=${question.id}"
+                                                                    data-value="4"
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded
+                                                                            focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                             </label>
-
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៥</div>
 
                                                             <!-- Option 5 -->
-                                                            <label class="flex flex-row items-center cursor-pointer">
-                                                                
-                                                                <input type="checkbox" 
-                                                                    th:attr="data-question-id=${question.id}" 
-                                                                    data-value="5" 
-                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                                <span class="text-sm text-gray-600 dark:text-gray-400">៥ = ល្អបំផុត</span>
+                                                                <input type="checkbox"
+                                                                    th:attr="data-question-id=${question.id}"
+                                                                    data-value="5"
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded
+                                                                            focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                             </label>
                                                         </div>
+
                                                     </div>
 
                                                 </div>
@@ -457,13 +417,14 @@
                                         <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
                                             <i class="fas fa-comment-dots text-green-600 dark:text-green-400"></i>
                                         </div>
-                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-                                            មតិកែលម្អប្រកបដោយស្មោះត្រង់ ✍️
+                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white" th:utext="${survey?.commentTitle}">
+                                            មតិកែលម្អប្រកបដោយស្មោះត្រង់ ✍️fsd
                                         </h3>
                                     </div>
                                     
                                     <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-lg border border-green-100 dark:border-gray-700">
-                                        <p class="text-gray-700 dark:text-gray-300 mb-4 font-extrabold">មតិកែលម្អប្រកបដោយស្មោះត្រង់</p>
+                                        <div th:utext="${survey?.commentDescription}" class="mb-2"></div>
+                                        <!-- <p class="text-gray-700 dark:text-gray-300 mb-4 font-extrabold">មតិកែលម្អប្រកបដោយស្មោះត្រង់</p>
                                         <p class="text-gray-700 dark:text-gray-300 mb-4">
                                             <p>សូមចែករំលែកមតិស្មោះត្រង់របស់អ្នកអំពីអ្វីដែលត្រូវកែលម្អក្នុងផ្នែកនានា រួមមាន៖</p>
                                             <p>• ការរៀបចំចាត់ចែងជើងឡាន</p>
@@ -471,7 +432,7 @@
                                             <p>• ការថែទាំជួសជុលបច្ចេកទេស</p>
                                             <p>• ការគាំទ្រអ្នកបើកបរប្រចាំថ្ងៃពីក្រុមហ៊ុន</p>
                                             <p>មតិយោបល់របស់អ្នក:</p>
-                                        </p>
+                                        </p> -->
                                         
                                         <div class="relative">
                                             <textarea name="comments" 
@@ -525,7 +486,7 @@
                             <!-- <span>ពេលវេលាប៉ាន់ស្មាន៖ <span class="font-semibold">១០-១៥ នាទី</span></span> -->
                         </div>
                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-500">
-                            សូមអរគុណសម្រាប់ការចំណាយពេលរបស់អ្នកក្នុងការជួយកែលម្អសេវាកម្មរបស់យើង។
+                            សូមអរគុណសម្រាប់ការចូលរួមក្នុងការស្ទង់មតិនេះ! មតិរបស់អ្នកមានតម្លៃខ្លាំងណាស់ក្នុងការកែលម្អសេវាកម្មរបស់យើង។
                         </p>
                     </div>
                 </div>

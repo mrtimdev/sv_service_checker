@@ -2,9 +2,6 @@
 <th:block th:fragment="~{layouts/main :: head}">
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
-
-    <!-- <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote.min.css" rel="stylesheet"> -->
 </th:block>
 
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
@@ -69,9 +66,7 @@
                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
                                 ការពិពណ៌នា *
                             </label>
-                            <textarea 
-                                id="description"
-                                th:field="*{description}" 
+                            <textarea th:field="*{description}" 
                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                       rows="4"
@@ -82,13 +77,11 @@
                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
                                 មាត្រដ្ឋានវាយតម្លៃ *
                             </label>
-                            <textarea
-                                id="scaleDescription"
-                                 type="text" th:field="*{scaleDescription}" 
+                            <input type="text" th:field="*{scaleDescription}" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                    value="មាត្រដ្ឋានវាយតម្លៃ៖ ១ = មិនល្អខ្លាំង | ២ = មិនល្អ | ៣ = មធ្យម | ៤ = ល្អ | ៥ = ល្អបំផុត"
-                                   required rows="4"></textarea>
+                                   required>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,11 +141,11 @@
                             <div class="grid grid-cols-1 gap-4 mb-6">
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 mb-2">
-                                        ចំណងជើងក្រុម <span class="text-red-500">*</span>
+                                        ចំណងជើងក្រុម *
                                     </label>
                                     <input type="text" th:field="*{questionGroups[__${groupStat.index}__].title}" 
                                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                           placeholder="Please, provide the group name of questions...">
+                                           required>
                                 </div>
                                 
                               
@@ -180,23 +173,20 @@
                                     <div class="grid grid-cols-1 gap-4">
                                         <div>
                                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
-                                                Title <span class="text-red-500">*</span>
+                                                សំណួរ *
                                             </label>
                                             <input type="text" th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].text}" 
                                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                                   required
-                                                   placeholder="Please, provide the title..."
-                                                   >
+                                                   required>
                                         </div>
-    
+                                        
                                         <div>
                                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
-                                                Question <span class="text-red-500">*</span>
+                                                ការពិពណ៌នា (Optional)
                                             </label>
-                                            <textarea type="text" th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].description}" 
-                                                class="question-text w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                                placeholder="Please, provide the question..."
-                                                rows="4"></textarea>
+                                            <textarea th:field="*{questionGroups[__${groupStat.index}__].questions[__${questStat.index}__].description}" 
+                                                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                                      rows="2"></textarea>
                                         </div>
                                         
                                         <div class="flex items-center">
@@ -223,26 +213,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Comments Section -->
-                    <div class="mt-12">
-                        <div class="flex items-center mb-6">
-                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
-                                <i class="fas fa-comment-dots text-green-600 dark:text-green-400"></i>
-                            </div>
-                            <input type="text" th:field="*{commentTitle}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
-                        </div>
-                        
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-lg border border-green-100 dark:border-gray-700">
-                            <textarea
-                                id="commentDescription"
-                                type="text" th:field="*{commentDescription}" 
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                rows="4"></textarea>
-                        </div>
-                    </div>
-
-
                 </div>
                 
                 <!-- Form Actions -->
@@ -279,10 +249,6 @@
        
 
         $(function () {
-            $('#description').summernote();
-            $('#scaleDescription').summernote();
-            $('.question-text').summernote();
-            $("#commentDescription").summernote();
             $("#date").flatpickr({
                 enableTime: true,
                 defaultDate: $("#date").val() || '',
@@ -313,11 +279,11 @@
                     <div class="grid grid-cols-1 gap-4 mb-6">
                         <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
-                                ចំណងជើងក្រុម <span class="text-red-500">*</span>
+                                ចំណងជើងក្រុម *
                             </label>
                             <input type="text" name="questionGroups[${groupIndex}].title" 
                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                   placeholder="Please, provide the group name of questions..." required>
+                                   value="ក្រុមសំណួរថ្មី" required>
                         </div>
                         
                         
@@ -369,20 +335,30 @@
                     
                     <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-extrabold">
-                                Title <span class="text-red-500">*</span>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                Title
                             </label>
                             <input type="text" name="questionGroups[${groupIndex}].questions[${questionIndex}].text" 
                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                   placeholder="Please, provide the title..." required>
-                        </div>                        
+                                   value="Title" required>
+                        </div>
+
                         <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2">
-                                Question <span class="text-red-500">*</span>
+                                Sub Title
                             </label>
-                            <textarea type="text" name="questionGroups[${groupIndex}].questions[${questionIndex}].description" 
-                                   class="question-text w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-                                   placeholder="Please, provide the question..." rows="4"></textarea>
+                            <input type="text" name="questionGroups[${groupIndex}].questions[${questionIndex}].text" 
+                                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                   value="សំណួរថ្មី" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2">
+                                ការពិពណ៌នា (Optional)
+                            </label>
+                            <textarea name="questionGroups[${groupIndex}].questions[${questionIndex}].description" 
+                                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                      rows="2"></textarea>
                         </div>
                         
                         <div class="flex items-center">
@@ -401,8 +377,6 @@
             `;
             
             questionsContainer.insertAdjacentHTML('beforeend', questionTemplate);
-
-            $('.question-text').summernote();
         }
         
         // Remove question
@@ -441,8 +415,6 @@
                     if (qOrderInput) qOrderInput.value = qIndex;
                 });
             });
-
-            
         }
         
         // Preview survey

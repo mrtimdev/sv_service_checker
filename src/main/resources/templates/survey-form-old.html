@@ -97,8 +97,8 @@
                     <div class="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-xl shadow-lg p-8 mb-8 text-white">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h1 class="text-3xl font-bold mb-2" th:text="${survey?.title}"></h1>
-                                <p class="text-blue-100" th:text="${survey?.description}"></p>
+                                <h1 class="text-3xl font-bold mb-2" th:class="${!isDesktop} ? 'text-2xl font-bold mb-2' : 'text-3xl font-bold mb-2'" th:text="${survey?.title}"></h1>
+                                <p class="text-blue-100" th:utext="${survey?.description}"></p>
                             </div>
                             <div class="hidden md:block">
                                 <div class="bg-white/20 p-4 rounded-lg">
@@ -111,7 +111,7 @@
                         </div>
                         
                         <div class="mt-6 bg-white/10 p-4 rounded-lg">
-                            <p class="font-medium" th:text="${survey?.scaleDescription}"></p>
+                            <p class="font-medium" th:utext="${survey?.scaleDescription}"></p>
                         </div>
                     </div>
                     
@@ -131,7 +131,7 @@
                     </div>
 
                     <!-- Driver Information -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8" th:class="${!isDesktop} ? 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-8' : 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8'">
                         <div class="flex items-center mb-6">
                             <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
                                 <i class="fas fa-id-card text-blue-600 dark:text-blue-400"></i>
@@ -205,22 +205,22 @@
                                         class="mb-8 question-card" 
                                         th:attr="data-question-id=${question.id}"
                                         th:id="'question-card-' + ${question.id}">
-                                        <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg">
-                                            <div class="flex items-start justify-between mb-4">
+                                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                            <div class="flex items-start justify-between">
                                                 <div>
                                                     <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                                         <span class="text-blue-600 dark:text-blue-400 mr-2" 
-                                                            th:text="${groupStat.index * 100 + questStat.index + 1} + '.'"></span>
+                                                            th:text="${questStat.index + 1} + '.'"></span>
                                                         <span th:text="${question.text}"></span>
                                                         <span th:if="${question.required}" class="text-red-500 ml-1">*</span>
                                                     </h4>
                                                     
                                                     <p class="text-gray-600 dark:text-gray-300 mb-4" 
-                                                    th:text="${question.description}" 
+                                                    th:utext="${question.description}" 
                                                     th:if="${question.description != null and not #strings.isEmpty(question.description)}">
                                                     </p>
                                                 </div>
-                                                <div class="ml-4">
+                                                <div class="ml-4" style="display: none;">
                                                     <div class="w-10 h-10 rounded-full flex items-center justify-center" 
                                                         th:classappend="${question.required} ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'">
                                                         <i th:if="${question.required}" class="fas fa-exclamation-circle"></i>
@@ -232,7 +232,7 @@
                                             
                                             
                                             <!-- Rating Stars -->
-                                            <div class="flex flex-col items-center py-4">
+                                            <div class="flex flex-col items-start pt-4">
                                                 <div class="mb-2">
                                                     <input type="hidden" 
                                                         th:id="'rating_' + ${question.id}" 
@@ -242,94 +242,77 @@
 
                                                     <input type="hidden" 
                                                         th:id="'answer_' + ${question.id}" 
-                                                        th:name="'q_' + ${question.id}"
+                                                        th:name="'ans_' + ${question.id}"
                                                         th:attr="data-required=${question.required}"
                                                         class="answer-input">
                                                     
-                                                    <!-- <div class="flex space-x-1">
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="1"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="2"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="3"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
-                                                                data-value="4"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                        <button type="button" 
-                                                                th:attr="data-question-id=${question.id}"
+
+                                                    <div th:class="${!isDesktop} ? 'flex flex-col space-x-2' : 'flex space-x-2'">
+                                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-extrabold">វាយតម្លៃ: </div>
+                                                        <div class="flex space-x-2">
+                                                            <!-- Option 1 -->
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">១</div>
+                                                            
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="1" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
                                                                 
-                                                                data-value="5"
-                                                                class="rating-star text-4xl text-gray-300 dark:text-gray-600 hover:text-yellow-400 dark:hover:text-yellow-300">
-                                                            ★
-                                                        </button>
-                                                    </div> -->
+                                                                
+                                                            </label>
 
-                                                    <div class="flex space-x-2">
-                                                        <!-- Option 1 -->
-                                                        <label class="flex flex-col items-center cursor-pointer">
-                                                            <input type="checkbox" 
-                                                                th:attr="data-question-id=${question.id}" 
-                                                                data-value="1" 
-                                                                class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                            <div class="font-bold mt-1">១</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">មិនល្អខ្លាំង</div>
-                                                        </label>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">២</div>
 
-                                                        <!-- Option 2 -->
-                                                        <label class="flex flex-col items-center cursor-pointer">
-                                                            <input type="checkbox" 
-                                                                th:attr="data-question-id=${question.id}" 
-                                                                data-value="2" 
-                                                                class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                            <div class="font-bold mt-1">២</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">មិនល្អ</div>
-                                                        </label>
+                                                            <!-- Option 2 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="2" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
 
-                                                        <!-- Option 3 -->
-                                                        <label class="flex flex-col items-center cursor-pointer">
-                                                            <input type="checkbox" 
-                                                                th:attr="data-question-id=${question.id}" 
-                                                                data-value="3" 
-                                                                class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                            <div class="font-bold mt-1">៣</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">មធ្យម</div>
-                                                        </label>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៣</div>
 
-                                                        <!-- Option 4 -->
-                                                        <label class="flex flex-col items-center cursor-pointer">
-                                                            <input type="checkbox" 
-                                                                th:attr="data-question-id=${question.id}" 
-                                                                data-value="4" 
-                                                                class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                            <div class="font-bold mt-1">៤</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">ល្អ</div>
-                                                        </label>
+                                                            <!-- Option 3 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="3" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
 
-                                                        <!-- Option 5 -->
-                                                        <label class="flex flex-col items-center cursor-pointer">
-                                                            <input type="checkbox" 
-                                                                th:attr="data-question-id=${question.id}" 
-                                                                data-value="5" 
-                                                                class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
-                                                            <div class="font-bold mt-1">៥</div>
-                                                            <div class="text-sm text-gray-500 dark:text-gray-400">ល្អបំផុត</div>
-                                                        </label>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៤</div>
+
+                                                            <!-- Option 4 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="4" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                                
+                                                                
+                                                            </label>
+
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">|</div>
+                                                            <div class="text-sm text-gray-500 dark:text-gray-400">៥</div>
+
+                                                            <!-- Option 5 -->
+                                                            <label class="flex flex-row items-center cursor-pointer">
+                                                                
+                                                                <input type="checkbox" 
+                                                                    th:attr="data-question-id=${question.id}" 
+                                                                    data-value="5" 
+                                                                    class="rating-checkbox w-6 h-6 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400 dark:border-gray-600 dark:focus:ring-yellow-300">
+                                                            </label>
+                                                        </div>
                                                     </div>
 
                                                 </div>
@@ -441,13 +424,14 @@
                                         <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
                                             <i class="fas fa-comment-dots text-green-600 dark:text-green-400"></i>
                                         </div>
-                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-                                            មតិកែលម្អប្រកបដោយស្មោះត្រង់ ✍️
+                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white" th:utext="${survey?.commentTitle}">
+                                            មតិកែលម្អប្រកបដោយស្មោះត្រង់ ✍️fsd
                                         </h3>
                                     </div>
                                     
                                     <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-lg border border-green-100 dark:border-gray-700">
-                                        <p class="text-gray-700 dark:text-gray-300 mb-4 font-extrabold">មតិកែលម្អប្រកបដោយស្មោះត្រង់</p>
+                                        <div th:utext="${survey?.commentDescription}" class="mb-2"></div>
+                                        <!-- <p class="text-gray-700 dark:text-gray-300 mb-4 font-extrabold">មតិកែលម្អប្រកបដោយស្មោះត្រង់</p>
                                         <p class="text-gray-700 dark:text-gray-300 mb-4">
                                             <p>សូមចែករំលែកមតិស្មោះត្រង់របស់អ្នកអំពីអ្វីដែលត្រូវកែលម្អក្នុងផ្នែកនានា រួមមាន៖</p>
                                             <p>• ការរៀបចំចាត់ចែងជើងឡាន</p>
@@ -455,7 +439,7 @@
                                             <p>• ការថែទាំជួសជុលបច្ចេកទេស</p>
                                             <p>• ការគាំទ្រអ្នកបើកបរប្រចាំថ្ងៃពីក្រុមហ៊ុន</p>
                                             <p>មតិយោបល់របស់អ្នក:</p>
-                                        </p>
+                                        </p> -->
                                         
                                         <div class="relative">
                                             <textarea name="comments" 
@@ -531,11 +515,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             // rating-checkbox
             // Initialize required questions array
-            const ratingInputs = document.querySelectorAll('.rating-input');
+            // const ratingInputs = document.querySelectorAll('.rating-input');
+            const ratingInputs = document.querySelectorAll('.answer-input');
             requiredQuestions = Array.from(ratingInputs)
                 .filter(input => input.getAttribute('data-required') === 'true')
                 .map(input => {
-                    const questionId = input.id.replace('rating_', '');
+                    // const questionId = input.id.replace('rating_', '');
+                    const questionId = input.id.replace('answer_', '');
                     return {
                         id: questionId,
                         input: input,
@@ -806,7 +792,8 @@
                     if (firstErrorElement.tagName === 'INPUT') {
                         firstErrorElement.focus();
                     } else {
-                        const input = firstErrorElement.querySelector('.rating-star');
+                        const inputStar = firstErrorElement.querySelector('.rating-star');
+                        const input = firstErrorElement.querySelector('.answer-input');
                         if (input) {
                             input.focus();
                         }
@@ -930,9 +917,16 @@
         function resetForm() {
             if (confirm('តើអ្នកប្រាកដថាចង់លុបចម្លើយទាំងអស់មែនទេ?')) {
                 // Reset rating inputs
-                const ratingInputs = document.querySelectorAll('.rating-input');
+                // const ratingInputs = document.querySelectorAll('.rating-input');
+                const ratingInputs = document.querySelectorAll('.answer-input');
+                const answerCheckbox = document.querySelectorAll('.rating-checkbox');
                 ratingInputs.forEach(input => {
                     input.value = '';
+                    delete input.dataset.counted;
+                });
+
+                answerCheckbox.forEach(input => {
+                    input.checked = false
                     delete input.dataset.counted;
                 });
                 

@@ -62,6 +62,8 @@ public class SurveyService {
         survey.setTitle(incomingSurvey.getTitle());
         survey.setDescription(incomingSurvey.getDescription());
         survey.setScaleDescription(incomingSurvey.getScaleDescription());
+        survey.setCommentTitle(incomingSurvey.getCommentTitle());
+        survey.setCommentDescription(incomingSurvey.getCommentDescription());
         survey.setAccessCode(incomingSurvey.getAccessCode());
         survey.setActive(incomingSurvey.isActive());
         survey.setExpiresAt(incomingSurvey.getExpiresAt());
@@ -105,6 +107,8 @@ public class SurveyService {
         dbSurvey.setTitle(incomingSurvey.getTitle());
         dbSurvey.setDescription(incomingSurvey.getDescription());
         dbSurvey.setScaleDescription(incomingSurvey.getScaleDescription());
+        dbSurvey.setCommentTitle(incomingSurvey.getCommentTitle());
+        dbSurvey.setCommentDescription(incomingSurvey.getCommentDescription());
         dbSurvey.setAccessCode(incomingSurvey.getAccessCode());
         dbSurvey.setActive(incomingSurvey.isActive());
         dbSurvey.setExpiresAt(incomingSurvey.getExpiresAt());
@@ -617,6 +621,8 @@ public Survey replaceSurveyGroups(Survey dbSurvey, List<QuestionGroup> incomingG
                     duplicate.setTitle(original.getTitle() + " (Copy)");
                     duplicate.setDescription(original.getDescription());
                     duplicate.setScaleDescription(original.getScaleDescription());
+                    duplicate.setCommentTitle(original.getCommentTitle());
+                    duplicate.setCommentDescription(original.getCommentDescription());
                     duplicate.setActive(true);
                     
                     // Deep copy question groups

@@ -85,7 +85,7 @@
                             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2" th:text="${survey?.title}"></h2>
-                                    <p class="text-gray-600 dark:text-gray-300" th:text="${survey?.description}"></p>
+                                    <p class="text-gray-600 dark:text-gray-300" th:utext="${survey?.description}"></p>
                                     <div class="flex items-center mt-3 space-x-4">
                                         <span class="text-sm text-gray-500 dark:text-gray-400">
                                             <i class="fas fa-calendar-alt mr-1"></i>
@@ -156,7 +156,7 @@
 
                                                             <div class="text-sm text-gray-500 dark:text-gray-400 mt-1"
                                                                 th:if="${question.description != null and !#strings.isEmpty(question.description)}"
-                                                                th:text="${question.description}"></div>
+                                                                th:utext="${question.description}"></div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -183,6 +183,33 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <div class="mt-12">
+                                    <div class="flex items-center mb-6">
+                                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
+                                            <i class="fas fa-comment-dots text-green-600 dark:text-green-400"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
+                                            Comments
+                                        </h3>
+                                    </div>
+                                    
+                                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-lg border border-green-100 dark:border-gray-700">
+                                        
+                                        <div 
+                                            th:each="response : ${responses}"
+                                            class="mb-2">
+
+                                            <h4>
+                                                <i class="fa fa-user-circle"></i>
+                                                <span th:text="${response?.driverInfo?.fullName}"></span>
+                                                <span th:text="${response?.driverInfo?.phoneNumber}"></span>
+                                            </h4>
+                                            <p class="pl-5 text-gray-400" th:utext="${response?.comments}" ></p>
+                                        </div>
+                                        
+                                    </div>
                                 </div>
     
                         </div>

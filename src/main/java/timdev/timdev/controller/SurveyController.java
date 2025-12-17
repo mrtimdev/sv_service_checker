@@ -7,10 +7,10 @@ import timdev.timdev.entity.DriverInfo;
 import timdev.timdev.entity.QuestionGroup;
 import timdev.timdev.service.SurveyService;
 import timdev.timdev.service.QuestionService;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,6 +28,7 @@ import timdev.timdev.repository.SurveyResponseRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import timdev.timdev.repository.DriverInfoRepository;
 
 
 
@@ -42,6 +43,13 @@ public class SurveyController {
     private QuestionService questionService;
 
     @Autowired private SurveyResponseRepository surveyResponseRepository;
+
+    // @Autowired
+    // private SurveyResponseService surveyResponseService;
+    @Autowired
+    private DriverInfoRepository driverInfoRepository;
+
+    
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -92,21 +100,21 @@ public class SurveyController {
             boolean alreadySubmitted = surveyResponseRepository
                     .existsBySurveyIdAndIpAddressAndUserAgent(survey.getId(), ip, userAgent);
 
-            if (alreadySubmitted) {
-                SurveyResponse response = surveyResponseRepository
-                    .findBySurveyIdAndIpAddressAndUserAgent(survey.getId(), ip, userAgent);
+            // if (alreadySubmitted) {
+            //     SurveyResponse response = surveyResponseRepository
+            //         .findBySurveyIdAndIpAddressAndUserAgent(survey.getId(), ip, userAgent);
                 
-                DriverInfo driverInfo = response.getDriverInfo();
-                model.addAttribute("isAlreadySubmitted", true);
-                model.addAttribute("error", "អ្នកបានបញ្ចូនការឆ្លើយតបរួចហើយ។");
+            //     DriverInfo driverInfo = response.getDriverInfo();
+            //     model.addAttribute("isAlreadySubmitted", true);
+            //     model.addAttribute("error", "អ្នកបានបញ្ចូនការឆ្លើយតបរួចហើយ។");
 
-                model.addAttribute("response", response);
-                model.addAttribute("driverInfo", driverInfo);
-                model.addAttribute("survey", survey);
-                model.addAttribute("submittedAt", response.getSubmittedAt());
-                model.addAttribute("answers", response.getAnswers());
-                return "survey-response-view";  // or another page to show message
-            }
+            //     model.addAttribute("response", response);
+            //     model.addAttribute("driverInfo", driverInfo);
+            //     model.addAttribute("survey", survey);
+            //     model.addAttribute("submittedAt", response.getSubmittedAt());
+            //     model.addAttribute("answers", response.getAnswers());
+            //     return "survey-response-view";  // or another page to show message
+            // }
             
             model.addAttribute("survey", survey);
             model.addAttribute("driverInfo", new DriverInfo());
@@ -121,83 +129,86 @@ public class SurveyController {
                             BindingResult bindingResult,
                             HttpServletRequest request,
                             Model model) {
+
+        if (driverInfo.getTruckNumber() == null || driverInfo.getTruckNumber().trim().isEmpty()) {
+            bindingResult.rejectValue("truckNumber", "required", "សូមបញ្ចូលលេខឡាន");
+        }
         
-        try {
-            // Validate required fields
-            if (driverInfo.getTruckNumber() == null || driverInfo.getTruckNumber().trim().isEmpty()) {
-                bindingResult.rejectValue("truckNumber", "required", "សូមបញ្ចូលលេខឡាន");
-            }
-            
-            if (driverInfo.getFullName() == null || driverInfo.getFullName().trim().isEmpty()) {
-                bindingResult.rejectValue("fullName", "required", "សូមបញ្ចូលឈ្មោះពេញ");
-            }
-            
-            // Extract comments
-            String comments = formParams.get("comments");
-            
-            // Check if all required questions are answered
-            Survey survey = surveyService.getSurveyByAccessCode(accessCode)
-                .orElseThrow(() -> new IllegalArgumentException("Survey not found"));
+        if (driverInfo.getFullName() == null || driverInfo.getFullName().trim().isEmpty()) {
+            bindingResult.rejectValue("fullName", "required", "សូមបញ្ចូលឈ្មោះពេញ");
+        }
+        
+        // Extract comments
+        String comments = formParams.get("comments");
+        
+        // Check if all required questions are answered
+        Survey survey = surveyService.getSurveyByAccessCode(accessCode)
+            .orElseThrow(() -> new IllegalArgumentException("Survey not found"));
 
+        Optional<SurveyResponse> responseOpt =
+            surveyResponseRepository.findBySurveyIdAndDriverInfo(
+                survey.getId(),
+                driverInfo.getFullName(),
+                driverInfo.getPhoneNumber()
+            );
 
-            String ip = request.getRemoteAddr();
-            String userAgent = request.getHeader("User-Agent");
+        if (responseOpt.isPresent()) {
+            SurveyResponse response_ = responseOpt.get();
+                
+                DriverInfo driverInfo_ = response_.getDriverInfo();
+                model.addAttribute("isAlreadySubmitted", true);
+                model.addAttribute("error", "អ្នកបានបញ្ចូនការឆ្លើយតបរួចហើយ។");
 
-            // Check duplicate submission
-            boolean alreadyExists = surveyResponseRepository
-                    .existsBySurveyIdAndIpAddressAndUserAgent(survey.getId(), ip, userAgent);
+                model.addAttribute("response", response_);
+                model.addAttribute("driverInfo", driverInfo_);
+                model.addAttribute("survey", survey);
+                model.addAttribute("submittedAt", response_.getSubmittedAt());
+                model.addAttribute("answers", response_.getAnswers());
+                return "survey-response-view"; 
 
-            if (alreadyExists) {
-                throw new IllegalArgumentException("អ្នកបានបញ្ចូនការឆ្លើយតបរួចហើយ។");
-            }
+        }
+
             
-            List<String> unansweredQuestions = new ArrayList<>();
-            for (QuestionGroup group : survey.getQuestionGroups()) {
-                for (Question question : group.getQuestions()) {
-                    if (question.isRequired()) {
-                        String questionId = question.getId();
-                        // String answer = formParams.get("q_" + questionId);
-                        String answer = formParams.get("ans_" + questionId);
-                        if (answer == null || answer.trim().isEmpty()) {
-                            unansweredQuestions.add(question.getText());
-                        }
+        
+        List<String> unansweredQuestions = new ArrayList<>();
+        for (QuestionGroup group : survey.getQuestionGroups()) {
+            for (Question question : group.getQuestions()) {
+                if (question.isRequired()) {
+                    String questionId = question.getId();
+                    // String answer = formParams.get("q_" + questionId);
+                    String answer = formParams.get("ans_" + questionId);
+                    if (answer == null || answer.trim().isEmpty()) {
+                        unansweredQuestions.add(question.getText());
                     }
                 }
             }
-            
-            if (!unansweredQuestions.isEmpty()) {
-                StringBuilder errorMessage = new StringBuilder("សូមជ្រើសរើសពិន្ទុសម្រាប់សំណួរទាំងអស់៖<br>");
-                for (int i = 0; i < Math.min(unansweredQuestions.size(), 3); i++) {
-                    errorMessage.append("• ").append(unansweredQuestions.get(i)).append("<br>");
-                }
-                if (unansweredQuestions.size() > 3) {
-                    errorMessage.append("• និងសំណួរផ្សេងទៀត...");
-                }
-                
-                model.addAttribute("survey", survey);
-                model.addAttribute("driverInfo", driverInfo);
-                model.addAttribute("error", errorMessage.toString());
-                model.addAttribute("unansweredQuestions", unansweredQuestions);
-                return "survey-form";
+        }
+        
+        if (!unansweredQuestions.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder("សូមជ្រើសរើសពិន្ទុសម្រាប់សំណួរទាំងអស់៖<br>");
+            for (int i = 0; i < Math.min(unansweredQuestions.size(), 3); i++) {
+                errorMessage.append("• ").append(unansweredQuestions.get(i)).append("<br>");
+            }
+            if (unansweredQuestions.size() > 3) {
+                errorMessage.append("• និងសំណួរផ្សេងទៀត...");
             }
             
-            // Submit survey
-            SurveyResponse response = surveyService.submitSurvey(accessCode, formParams, comments, driverInfo, request);
-            
-            model.addAttribute("message", "សូមអរគុណ! ការឆ្លើយតបរបស់អ្នកត្រូវបានរក្សាទុក។");
+            model.addAttribute("survey", survey);
             model.addAttribute("driverInfo", driverInfo);
-            model.addAttribute("responseDate", LocalDateTime.now());
-            
-            // return "survey-response";
-            return "redirect:/survey/response/" + survey.getId() + "/" + response.getId();
-            
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "survey-response";
-        } catch (Exception e) {
-            model.addAttribute("error", "មានកំហុសកើតឡើងក្នុងការបញ្ជូនការឆ្លើយតប។ សូមព្យាយាមម្តងទៀត។");
-            return "survey-response";
+            model.addAttribute("error", errorMessage.toString());
+            model.addAttribute("unansweredQuestions", unansweredQuestions);
+            return "survey-form";
         }
+        
+        // Submit survey
+        SurveyResponse response = surveyService.submitSurvey(accessCode, formParams, comments, driverInfo, request);
+        
+        model.addAttribute("message", "សូមអរគុណ! ការឆ្លើយតបរបស់អ្នកត្រូវបានរក្សាទុក។");
+        model.addAttribute("driverInfo", driverInfo);
+        model.addAttribute("responseDate", LocalDateTime.now());
+        
+        // return "survey-response";
+        return "redirect:/survey/response/" + survey.getId() + "/" + response.getId();
     }
 
     // GET method to view a submitted response

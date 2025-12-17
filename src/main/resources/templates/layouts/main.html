@@ -6,6 +6,10 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="'SV Trucking' + (${pageTitle} ? ' - ' + ${pageTitle} : '')">SV Trucking</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&display=swap" rel="stylesheet">
     
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -13,9 +17,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons@3.3.1/css/all/all.min.css">
-    <!-- In your <head> -->
-    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    
     <link th:href="@{/css/admin.css}" rel="stylesheet">
+
+     <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-lite.min.css" rel="stylesheet">
+    
+    
     
     <style>
         .dataTables_filter 
@@ -31,6 +38,36 @@
             .no-print {
                 display: none !important;
             }
+        }
+
+        .battambang-thin {
+            font-family: "Battambang", system-ui;
+            font-weight: 100;
+            font-style: normal;
+        }
+
+        .battambang-light {
+            font-family: "Battambang", system-ui;
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        .battambang-regular {
+            font-family: "Battambang", system-ui;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .battambang-bold {
+            font-family: "Battambang", system-ui;
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        .battambang-black {
+            font-family: "Battambang", system-ui;
+            font-weight: 900;
+            font-style: normal;
         }
     </style>
 
@@ -103,6 +140,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/detect-mobile-browser@5.0.0/detect-browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mobile-detect@1.4.5/mobile-detect.min.js"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-lite.min.js"></script>
 
     <script>
         dayjs.extend(dayjs_plugin_relativeTime);

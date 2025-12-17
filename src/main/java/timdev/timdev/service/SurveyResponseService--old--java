@@ -1,0 +1,76 @@
+package timdev.timdev.service;
+
+import java.util.Optional;
+
+import org.hibernate.cfg.Unsafe;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import timdev.timdev.entity.SurveyResponse;
+import timdev.timdev.entity.DriverInfo;
+import timdev.timdev.repository.DriverInfoRepository;
+import timdev.timdev.repository.SurveyRepository;
+import timdev.timdev.repository.SurveyResponseRepository;
+
+import java.util.UUID;
+
+import timdev.timdev.entity.Survey;
+
+@Service
+public class SurveyResponseService {
+
+    
+    @Autowired private DriverInfoRepository driverInfoRepository;
+    @Autowired
+    private SurveyResponseRepository surveyResponseRepository;
+    @Autowired
+    private SurveyRepository surveyRepository;
+
+
+    @Transactional(readOnly = true)
+    public boolean canSubmitSurvey(SurveyResponse surveyResponse) {
+        DriverInfo driverInfo = surveyResponse.getDriverInfo();
+        UUID surveyId = surveyResponse.getSurvey().getId();
+
+        if (driverInfo.getFullName() != null && driverInfo.getPhoneNumber() != null) {
+            var existingDriver = driverInfoRepository.findByFullNameAndPhoneNumberAndSurveyId(
+                driverInfo.getFullName(), 
+                driverInfo.getPhoneNumber(),
+                surveyId
+            );
+            
+            if (existingDriver.isPresent()) {
+                return false; 
+            }
+        }
+        return true; 
+    }
+    @Transactional(readOnly = true)
+    public boolean isCanSubmitSurvey(Survey survey, DriverInfo driverInfo) {
+
+        if (driverInfo.getFullName() != null && driverInfo.getPhoneNumber() != null) {
+            var existingDriver = driverInfoRepository.findByFullNameAndPhoneNumberAndSurveyId(
+                driverInfo.getFullName(), 
+                driverInfo.getPhoneNumber(),
+                survey.getId()
+            );
+            
+            if (existingDriver.isPresent()) {
+                return false; 
+            }
+        }
+        return true; 
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SurveyResponse> getExistingDriverSubmission(
+            UUID surveyId, String fullName, String phoneNumber) {
+        
+        if (fullName == null || phoneNumber == null || surveyId == null) {
+            return Optional.empty();
+        }
+        
+        return surveyResponseRepository.findBySurveyIdAndDriverInfo(surveyId, fullName, phoneNumber);
+    }
+}

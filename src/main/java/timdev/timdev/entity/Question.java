@@ -10,7 +10,14 @@ public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(columnDefinition = "TEXT")
+    private String title;
     
+    @Column(columnDefinition = "TEXT")
+    private String subTitle;
+
+    // for question
     @Column(columnDefinition = "TEXT")
     private String text;
     
@@ -51,4 +58,20 @@ public class Question {
     
     public boolean isRequired() { return required; }
     public void setRequired(boolean required) { this.required = required; }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getSubTitle() {
+        return subTitle;
+    }
+
+    public void setSubTitle(String subTitle) {
+        this.subTitle = subTitle;
+    }
 }

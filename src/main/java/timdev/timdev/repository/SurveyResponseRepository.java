@@ -41,4 +41,15 @@ public interface SurveyResponseRepository extends JpaRepository<SurveyResponse, 
 
     boolean existsBySurveyIdAndIpAddressAndUserAgent(UUID surveyId, String ipAddress, String userAgent);
     SurveyResponse findBySurveyIdAndIpAddressAndUserAgent(UUID surveyId, String ipAddress, String userAgent);
+
+
+    @Query("SELECT sr FROM SurveyResponse sr " +
+           "JOIN sr.driverInfo di " +
+           "WHERE sr.survey.id = :surveyId " +
+           "AND di.fullName = :fullName " +
+           "AND di.phoneNumber = :phoneNumber")
+    Optional<SurveyResponse> findBySurveyIdAndDriverInfo(
+            @Param("surveyId") UUID surveyId,
+            @Param("fullName") String fullName,
+            @Param("phoneNumber") String phoneNumber);
 }

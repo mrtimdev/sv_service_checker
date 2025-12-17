@@ -13,13 +13,46 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons@3.3.1/css/all/all.min.css">
-    <!-- In your <head> -->
-    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&display=swap" rel="stylesheet">
     <link th:href="@{/css/admin.css}" rel="stylesheet">
 
 
     <th:block th:fragment="body-scripts"></th:block>
      <link rel="stylesheet" th:href="@{/css/main.css}">
+
+    <style>
+        .battambang-thin {
+            font-family: "Battambang", system-ui;
+            font-weight: 100;
+            font-style: normal;
+        }
+
+        .battambang-light {
+            font-family: "Battambang", system-ui;
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        .battambang-regular {
+            font-family: "Battambang", system-ui;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .battambang-bold {
+            font-family: "Battambang", system-ui;
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        .battambang-black {
+            font-family: "Battambang", system-ui;
+            font-weight: 900;
+            font-style: normal;
+        }
+    </style>
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full" th:classappend="${isMobile} ? 'mobile' : (isTablet ? 'tablet' : 'desktop')">
@@ -39,7 +72,10 @@
 
     <th:block th:fragment="survey-layout(content, title)">
         <main id="main-content">
-            <div class="transition-[margin-left] duration-100 ease-in-out min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 !pt-[105px] font-sans ml-0" 
+            <div 
+                th:classappend="${isDesktop} ? 'p-4 sm:p-6 lg:p-8 !pt-[105px]' : ''"
+                th:attr="style=${isDesktop} ? '' : 'padding-top: 25px;'"
+                class="transition-[margin-left] duration-100 ease-in-out min-h-screen bg-gray-100 dark:bg-gray-900 font-sans ml-0" 
                 id="content-body" 
                 th:insert="${content}"></div>
         </main>
