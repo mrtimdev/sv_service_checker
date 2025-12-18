@@ -342,6 +342,10 @@ public class DestinationSettingController {
 
     @GetMapping("/edit/{id}")
     public String edit(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        if (!permissionChecker.has("DESTINATION_SETTINGS_UPDATE")) {
+            redirectAttributes.addFlashAttribute("error", "Oop!, You do not have permission to create a new destinations setting.");
+            return "redirect:/destination-settings";
+        }
         DestinationSetting setting = service.findById(id);
         if(setting != null && !setting.getDestinations().isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Destination Setting " + setting.getCode() +" and " + setting.getName() +" can not editable .!");
@@ -402,6 +406,10 @@ public class DestinationSettingController {
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        if (!permissionChecker.has("DESTINATION_SETTINGS_DELETE")) {
+            redirectAttributes.addFlashAttribute("error", "Oop!, You do not have permission to create a new destinations setting.");
+            return "redirect:/destination-settings";
+        }
         DestinationSetting setting = service.findById(id);
         if(setting != null && !setting.getDestinations().isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Destination Setting " + setting.getCode() +" and " + setting.getName() +" can not deletable .!");

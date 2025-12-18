@@ -87,7 +87,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Permissions</label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="form-label text-gray-700 dark:text-gray-100">Permissions</label>
+                                <button type="button" id="toggleAllPermissions" 
+                                        class="text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded transition duration-200">
+                                    Check All
+                                </button>
+                            </div>
 
                             <select id="permissions" name="permissionIds"
                                     multiple
@@ -103,7 +109,7 @@
 
                             </select>
 
-                            <div class="form-text">Hold CTRL to select multiple permissions.</div>
+                            <div class="form-text text-gray-500 dark:text-gray-400 mt-2">Hold CTRL to select multiple permissions or use the "Check All" button above.</div>
                         </div>
 
                         
@@ -136,11 +142,35 @@
     <script>
 
         $(function () {
+            // Initialize Select2 for permissions
             $('#permissions').select2({
                 placeholder: "Select permissions",
                 allowClear: true
             });
-        })
+            
+            // Toggle all permissions button functionality
+            $('#toggleAllPermissions').on('click', function() {
+                const permissionsSelect = $('#permissions');
+                const allOptions = permissionsSelect.find('option');
+                const allSelected = allOptions.length === permissionsSelect.val()?.length;
+                
+                if (allSelected) {
+                    // If all are selected, deselect all
+                    permissionsSelect.val(null).trigger('change');
+                    $(this).text('Check All').removeClass('bg-blue-500 text-white').addClass('bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200');
+                } else {
+                    // If not all are selected, select all
+                    const allValues = allOptions.map(function() {
+                        return $(this).val();
+                    }).get();
+                    permissionsSelect.val(allValues).trigger('change');
+                    $(this).text('Uncheck All').removeClass('bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200').addClass('bg-blue-500 text-white');
+                }
+            });
+            
+            
+            
+        });
         
     </script>
 </th:block>

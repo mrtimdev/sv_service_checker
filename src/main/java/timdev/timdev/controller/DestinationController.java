@@ -26,15 +26,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import timdev.timdev.dto.CompanyTruckRequestDTO;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.ExcelImportResult;
 import timdev.timdev.dto.Status;
-import timdev.timdev.dto.SubTruckRequestDTO;
 import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
-import timdev.timdev.entity.TruckDistance;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
 import timdev.timdev.service.TruckService;
@@ -106,18 +103,32 @@ public class DestinationController {
                 break;
         }
 
+        List<Status> statuses = List.of(Status.PENDING);
         Sort sort = Sort.by(direction, sortField);
-        destinationPage = service.findByFilterQueriesWithList(query, startDate, endDate, sort);
+        destinationPage = service.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
         
         if (showAll) {
             // fetch all reports with filter
             destinationPage = service.getAllFiltered(query, sort);
         } else {
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Destination> withPage = service.findByFilterQueriesWithPage(query, startDate, endDate, pageable);
+            Page<Destination> withPage = service.findByFilterQueriesWithStatusAndPage(query, startDate, endDate, pageable, statuses);
             destinationPage = withPage.getContent();
             totalPages = withPage.getTotalPages();
         }
+
+        // Sort sort = Sort.by(direction, sortField);
+        // destinationPage = service.findByFilterQueriesWithList(query, startDate, endDate, sort);
+        
+        // if (showAll) {
+        //     // fetch all reports with filter
+        //     destinationPage = service.getAllFiltered(query, sort);
+        // } else {
+        //     Pageable pageable = PageRequest.of(page, size, sort);
+        //     Page<Destination> withPage = service.findByFilterQueriesWithPage(query, startDate, endDate, pageable);
+        //     destinationPage = withPage.getContent();
+        //     totalPages = withPage.getTotalPages();
+        // }
 
         if ("excel".equalsIgnoreCase(export)) {
             service.exportExcel(destinationPage, response);

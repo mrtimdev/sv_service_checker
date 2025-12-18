@@ -32,10 +32,10 @@ scp -P 2236 ./vehicle_fuel_maintenace.sql deverloper@154.26.134.117:~/sv_vehicle
 mysql -u root -p sv_vehicle_maintenace < ~/sv_vehicle_maintenace/vehicle_fuel_maintenace.sql
 
 #export
-mysqldump -u root -p sv_vehicle_maintenace > ~/backup/sv_vehicle_maintenace_backup_Dec_12_12.sql;
+mysqldump -u root -p sv_vehicle_maintenace > ~/backup/sv_vehicle_maintenace_backup_Dec_18_2025.sql;
 
 #save to local
-scp -p 2236 deverloper@154.26.134.117:~/backup/sv_vehicle_maintenace_backup_Dec_12_12.sql
+scp -P 2236 deverloper@154.26.134.117:~/backup/sv_vehicle_maintenace_backup_Dec_18_2025.sql;
 
 sudo nano /etc/systemd/system/sv_vehicle_maintenace.service
 

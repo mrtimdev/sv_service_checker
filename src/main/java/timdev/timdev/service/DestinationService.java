@@ -316,14 +316,14 @@ public class DestinationService {
 
             Sheet sheet = workbook.getSheetAt(2);
 
-            for (int rowNum = 1; rowNum <= sheet.getLastRowNum(); rowNum++) {
+            for (int rowNum = 2; rowNum <= sheet.getLastRowNum(); rowNum++) {
 
                 Row currentRow = sheet.getRow(rowNum);
                 if (currentRow == null || isRowEmpty(currentRow)) {
                     continue;
                 }
 
-                int excelRow = (rowNum + 1) - 1; // Excel rows start at row 1
+                int excelRow = (rowNum + 2) - 1; // Excel rows start at row 1
 
                 Destination destination = new Destination();
 
@@ -537,7 +537,7 @@ public class DestinationService {
         Sheet sheet = workbook.createSheet("Truck Destinations Report");
 
         // Column widths
-        int[] widths = {5000, 6000, 6000, 15000, 5000, 4000, 4000, 4000, 8000, 6000, 8000, 6000};
+        int[] widths = {5000, 6000, 6000, 15000, 5000, 4000, 4000, 4000, 8000, 6000, 8000, 6000, 6000, 6000};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i]);
 
         // ===== STYLES =====
@@ -575,7 +575,7 @@ public class DestinationService {
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("របាយការណ៏តួរលេខចាក់ប្រេងឡាន");
         titleCell.setCellStyle(headerStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10)); // updated to match new column count
 
         // Row 1: Khmer headers
         Row headerRow1 = sheet.createRow(1);
@@ -601,12 +601,12 @@ public class DestinationService {
 
         // Merge fuel-related columns only (example: "កម្រិតស៊ីប្រេង" spans 2 subcolumns)
         sheet.addMergedRegion(new CellRangeAddress(1,1,5,6));
-        // Merge last 3 headers with row 3 (no English subtitle)
-        sheet.addMergedRegion(new CellRangeAddress(1,2,8,8)); // "ប្រេងផ្សេងៗ"
-        sheet.addMergedRegion(new CellRangeAddress(1,2,9,9)); // "សរុបប្រេងចាក់អោយឡាន"
-        sheet.addMergedRegion(new CellRangeAddress(1,2,10,10)); // "ផ្សេងៗ"
+        // Merge last 3 headers with row 3
+        sheet.addMergedRegion(new CellRangeAddress(1,2,8,8)); 
+        sheet.addMergedRegion(new CellRangeAddress(1,2,9,9)); 
+        sheet.addMergedRegion(new CellRangeAddress(1,2,10,10)); 
 
-        // Row 2: English headers (subtitles)
+        // Row 2: English headers
         Row headerRow2 = sheet.createRow(2);
         String[] englishHeaders = {
             "Date",
@@ -616,7 +616,7 @@ public class DestinationService {
             "Total KM",
             "មធ្យមភាគ",
             "កម្រិតស៊ី",
-            "Litre",
+            "Litre"
         };
 
         for (int i = 0; i < englishHeaders.length; i++) {
@@ -625,6 +625,23 @@ public class DestinationService {
             cell.setCellStyle(headerStyle);
         }
 
+        // ===== NEW HEADER ROW (row 4) =====
+        Row headerRow4 = sheet.createRow(3); // row index = 3
+        String[] newColumns = {
+            "Column3", "Column5","Column6","Column7","Column8","Column9","Column10","Column11","Column12","Column13","Column14"
+        };
+        for (int i = 0; i < newColumns.length; i++) {
+            Cell cell = headerRow4.createCell(i);
+            cell.setCellValue(newColumns[i]);
+            cell.setCellStyle(headerStyle);
+        }
+
+        // Row 5 blank or hidden
+        Row blankRow = sheet.createRow(4); // row index = 4
+        blankRow.setZeroHeight(true);
+
+        // Apply filter (from row 1 to last header row = row 4, across all columns)
+        sheet.setAutoFilter(new CellRangeAddress(3, 3, 0, 10));
 
         // Create a cell style for "L 100" (prefix L)
         CellStyle kmStyle = workbook.createCellStyle();
@@ -638,12 +655,12 @@ public class DestinationService {
         litreStyle.setDataFormat(format.getFormat("# \"L\"")); // displays 100 L
 
         // ===== BODY ROWS =====
-        int rowIndex = 3;
+        int rowIndex = 5; // data starts from row 6 (index 5)
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
         for (Destination d : destinations) {
             Row row = sheet.createRow(rowIndex++);
-        
-            row.createCell(0).setCellValue(d.getCreatedAt() != null ? d.getDate().format(dateFormatter).toString() : "");
+
+            row.createCell(0).setCellValue(d.getCreatedAt() != null ? d.getDate().format(dateFormatter) : "");
             row.createCell(1).setCellValue(d.getTruck() != null ? d.getTruck().getLicensePlate() : "");
             row.createCell(2).setCellValue(d.getTruck() != null ? d.getTruck().getGroup() : "");
             row.createCell(3).setCellValue(d.getSetting() != null ? d.getSetting().getName() : "");
@@ -663,6 +680,7 @@ public class DestinationService {
         workbook.write(response.getOutputStream());
         workbook.close();
     }
+
 
     // for report
 
@@ -1080,6 +1098,10 @@ public class DestinationService {
         Sort sort
     ) {
         return repository.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
+    }
+
+    public Optional<Destination> findFirstByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId) {
+        return repository.findFirstByDateAndTruckIdAndSettingId(date, truckId, settingId);
     }
 
     

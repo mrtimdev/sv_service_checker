@@ -1,20 +1,26 @@
 package timdev.timdev.service;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -280,15 +286,48 @@ public class CompanyTruckService {
         repository.deleteById(id); 
     }
 
+    private String getCellValue(Cell cell, FormulaEvaluator evaluator) {
+        if (cell == null) return "";
+
+        CellType cellType = cell.getCellType();
+
+        if (cellType == CellType.FORMULA) {
+            CellValue evaluatedValue = evaluator.evaluate(cell);
+            if (evaluatedValue == null) return "";
+
+            return switch (evaluatedValue.getCellType()) {
+                case STRING -> evaluatedValue.getStringValue().trim();
+                case NUMERIC -> new DataFormatter().formatRawCellContents(
+                        evaluatedValue.getNumberValue(),
+                        cell.getCellStyle().getDataFormat(),
+                        cell.getCellStyle().getDataFormatString()
+                );
+                case BOOLEAN -> String.valueOf(evaluatedValue.getBooleanValue());
+                case ERROR -> "";
+                default -> "";
+            }; // or return "#ERROR"
+        }
+
+        // Non-formula cells
+        DataFormatter formatter = new DataFormatter();
+        return formatter.formatCellValue(cell).trim();
+    }
+
+
+
+
 
     public List<CompanyTruckRequestDTO> readExcel(MultipartFile file) {
         List<CompanyTruckRequestDTO> dataList = new ArrayList<>();
         
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            // IMPORTANT: Force POI to evaluate formulas
+            evaluator.setIgnoreMissingWorkbooks(true); // Ignore missing external references
+            evaluator.clearAllCachedResultValues(); // Clear any cached values
             // Start from row 3 (0-based index, so row 5 = Excel row 6)
-            for (int rowNum = 3; rowNum <= sheet.getLastRowNum(); rowNum++) {
+            for (int rowNum = 5; rowNum <= sheet.getLastRowNum(); rowNum++) {
                 Row row = sheet.getRow(rowNum);
                 if (row == null) continue; // Skip empty rows
                 
@@ -298,7 +337,12 @@ public class CompanyTruckService {
                     // Read cells from column A to K (0 to 10)
                     for (int colNum = 0; colNum <= 10; colNum++) {
                         Cell cell = row.getCell(colNum, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                        setCellValueToDTO(dto, colNum, cell);
+                        String value = getCellValue(cell, evaluator);
+                        
+                        String cellValue = getFormulaEvaluatedValue(cell, evaluator);
+                        setCellValueToDTO(dto, colNum, cellValue);
+                        // setCellValueToDTO(dto, colNum, cell, evaluator);
+                        
                     }
                     
                     // Validate required fields before adding
@@ -318,44 +362,251 @@ public class CompanyTruckService {
         return dataList;
     }
 
-    private void setCellValueToDTO(CompanyTruckRequestDTO dto, int columnIndex, Cell cell) {
+    private String getFormulaEvaluatedValue(Cell cell, FormulaEvaluator evaluator) {
+    if (cell == null) {
+        return "";
+    }
+    
+    try {
+        // Check if cell contains a formula
+        if (cell.getCellType() == CellType.FORMULA) {
+            try {
+                // Evaluate the formula to get its value
+                CellValue cellValue = evaluator.evaluate(cell);
+                
+                if (cellValue != null) {
+                    switch (cellValue.getCellType()) {
+                        case NUMERIC -> {
+                            // Check if it's a date
+                            if (DateUtil.isCellDateFormatted(cell)) {
+                                // Format date properly
+                                Date date = cell.getDateCellValue();
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
+                                return sdf.format(date);
+                            } else {
+                                // Return numeric value
+                                double numValue = cellValue.getNumberValue();
+                                // Remove trailing .0 if it's an integer
+                                if (numValue == Math.floor(numValue)) {
+                                    return String.valueOf((int) numValue);
+                                }
+                                return String.valueOf(numValue);
+                            }
+                        }
+                        case STRING -> {
+                            return cellValue.getStringValue().trim();
+                        }
+                        case BOOLEAN -> {
+                            return String.valueOf(cellValue.getBooleanValue());
+                        }
+                        case ERROR -> {
+                            // Formula resulted in an error (like #VALUE!, #N/A)
+                            return getCachedFormulaValue(cell);
+                        }
+                        default -> {
+                            return getCachedFormulaValue(cell);
+                        }
+                    }
+                } else {
+                    // Evaluation failed, try to get cached value
+                    return getCachedFormulaValue(cell);
+                }
+            } catch (Exception e) {
+                // If formula evaluation fails, try cached value
+                return getCachedFormulaValue(cell);
+            }
+        } else {
+            // Regular cell (not a formula)
+            return getRegularCellValue(cell, evaluator);
+        }
+    } catch (Exception e) {
+        return "";
+    }
+}
+
+private String getCachedFormulaValue(Cell cell) {
+    try {
+        DataFormatter formatter = new DataFormatter();
+        
+        switch (cell.getCachedFormulaResultType()) {
+            case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return formatter.formatCellValue(cell);
+                }
+                double num = cell.getNumericCellValue();
+                if (num == Math.floor(num)) {
+                    return String.valueOf((int) num);
+                }
+                return String.valueOf(num);
+            }
+            case STRING -> {
+                String str = cell.getStringCellValue();
+                return str != null ? str.trim() : "";
+            }
+            case BOOLEAN -> {
+                return String.valueOf(cell.getBooleanCellValue());
+            }
+            case ERROR -> {
+                return ""; // Return empty for formula errors
+            }
+            default -> {
+                return "";
+            }
+        }
+    } catch (Exception e) {
+        return "";
+    }
+}
+
+/**
+ * Gets value from regular (non-formula) cells
+ */
+private String getRegularCellValue(Cell cell, FormulaEvaluator evaluator) {
+    try {
+        DataFormatter formatter = new DataFormatter();
+        String value = formatter.formatCellValue(cell, evaluator).trim();
+        
+        // Handle numeric formatting
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            // Already handled by DataFormatter
+        }
+        
+        return value;
+    } catch (Exception e) {
+        return "";
+    }
+}
+
+    private String getCellValueAsString(Cell cell) {
+    if (cell == null) {
+        return "";
+    }
+    
+    try {
+        switch (cell.getCellType()) {
+            case STRING -> {
+                return cell.getStringCellValue();
+            }
+            case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            }
+            case BOOLEAN -> {
+                return String.valueOf(cell.getBooleanCellValue());
+            }
+            case FORMULA -> {
+                return cell.getCellFormula();
+            }
+            case BLANK -> {
+                return "";
+            }
+            case ERROR -> {
+                return "ERROR";
+            }
+            default -> {
+                return "";
+            }
+        }
+    } catch (Exception e) {
+        return "";
+    }
+}
+
+    // private void setCellValueToDTO(CompanyTruckRequestDTO dto, int columnIndex, Cell cell, FormulaEvaluator evaluator) {
+    //     DataFormatter dataFormatter = new DataFormatter();
+    //     String cellValue;
+        
+    //     try {
+    //         // Check if cell has a formula error
+    //         if (cell.getCellType() == CellType.FORMULA) {
+    //             CellValue cellVal = evaluator.evaluate(cell);
+    //             if (cellVal.getCellType() == CellType.ERROR) {
+    //                 // Handle formula error - either log or use empty value
+    //                 cellValue = "";
+    //             } else {
+    //                 cellValue = dataFormatter.formatCellValue(cell, evaluator).trim();
+    //             }
+    //         } else {
+    //             cellValue = dataFormatter.formatCellValue(cell, evaluator).trim();
+    //         }
+    //     } catch (Exception e) {
+    //         // Fallback to basic cell value
+    //         cellValue = getCellValueAsString(cell).trim();
+    //     }
+    //     // DataFormatter dataFormatter = new DataFormatter();
+    //     // String cellValue = dataFormatter.formatCellValue(cell, evaluator).trim();
+        
+    //     switch (columnIndex) {
+    //         case 0: // Date (A column) - "01-Oct-2025"
+    //             dto.setDate(parseDate(cellValue));
+    //             break;
+    //         case 1: // License Plate (B column) - "3E-2637"
+    //             dto.setLicensePlate(cellValue);
+    //             break;
+    //         case 2: // Truck Type (C column) - "CY-Big Truck"
+    //             // Consider adding this to DTO if needed for validation or logging
+    //             // dto.setTruckType(cellValue);
+    //             break;
+    //         case 3: // Destination (D column) - "ការ៉ាស់ថ្មី - KHB - KKG3 - ការ៉ាស់ថ្មី"
+    //             dto.setTotalDestination(cellValue);
+    //             break;
+    //         case 4: // Total KM (E column) - "km604"
+    //             dto.setTotalKm(parseKm(cellValue));
+    //             break;
+    //         case 5: // Average (F column) - "0.36"
+    //             dto.setAverage(parseDouble(cellValue));
+    //             break;
+    //         case 6: // Fuel Level (G column) - "កម្រិតធ្ងន់"
+    //             dto.setMeasurement(mapToMeasurement(cellValue));
+    //             break;
+    //         case 7: // Fuel Quantity (H column) - "L217"
+    //             dto.setLitreQuantity(parseLitre(cellValue));
+    //             break;
+    //         case 8: // Other Fuel (I column)
+    //             dto.setOtherOils(parseLitreString(cellValue));
+    //             break;
+    //         case 9: // Total Fuel (J column) - "L217"
+    //             dto.setTotalOilsChange(parseLitre(cellValue));
+    //             break;
+    //         case 10: // Other (K column)
+    //             dto.setNote(cellValue);
+    //             break;
+    //         default:
+    //             // Log unexpected column
+    //             break;
+    //     }
+    // }
+
+    private void setCellValueToDTO(CompanyTruckRequestDTO dto, int columnIndex, String cellValue) {
         DataFormatter dataFormatter = new DataFormatter();
-        String cellValue = dataFormatter.formatCellValue(cell).trim();
+        // String cellValue = dataFormatter.formatCellValue(cell).trim();
         
         switch (columnIndex) {
-            case 0: // Date (A column) - "01-Oct-2025"
+            case 0 -> 
                 dto.setDate(parseDate(cellValue));
-                break;
-            case 1: // License Plate (B column) - "3E-2637" - Store for later truck lookup
+            case 1 -> 
                 dto.setLicensePlate(cellValue);
-                break;
-            case 2: // Truck Type (C column) - "CY-Big Truck" - Can be used for validation
-                // This field might not be needed in DTO since you have truckId
-                break;
-            case 3: // Destination (D column) - "ការ៉ាស់ថ្មី - KHB - KKG3 - ការ៉ាស់ថ្មី"
+            case 2 -> {
+            }
+            case 3 -> 
                 dto.setTotalDestination(cellValue);
-                break;
-            case 4: // Total KM (E column) - "km604"
+            case 4 -> 
                 dto.setTotalKm(parseKm(cellValue));
-                break;
-            case 5: // Average (F column) - "0.36"
+            case 5 -> 
                 dto.setAverage(parseDouble(cellValue));
-                break;
-            case 6: // Fuel Level (G column) - "កម្រិតធ្ងន់" - Map to Measurement enum
+            case 6 -> 
                 dto.setMeasurement(mapToMeasurement(cellValue));
-                break;
-            case 7: // Fuel Quantity (H column) - "L217" - This is litreQuantity
+            case 7 -> 
                 dto.setLitreQuantity(parseLitre(cellValue));
-                break;
-            case 8: // Other Fuel (I column) - Could be otherOils
-                dto.setOtherOils(parseLitreString(cellValue)); // Store as string with L
-                break;
-            case 9: // Total Fuel (J column) - "L217" - Could be totalOilsChange
+            case 8 -> 
+                dto.setOtherOils(parseLitreString(cellValue)); 
+            case 9 -> 
                 dto.setTotalOilsChange(parseLitre(cellValue));
-                break;
-            case 10: // Other (K column) - This could be note
+            case 10 -> 
                 dto.setNote(cellValue);
-                break;
         }
     }
 
@@ -366,6 +617,8 @@ public class CompanyTruckService {
         }
         
         try {
+            DateTimeFormatter javaDateFormatter =
+                DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
             // Try different date formats including your format "01-Oct-2025"
             DateTimeFormatter[] formatters = {
                 DateTimeFormatter.ofPattern("dd-MMM-yyyy", new Locale("en")),
@@ -375,11 +628,16 @@ public class CompanyTruckService {
                 DateTimeFormatter.ofPattern("yyyy-MM-dd"),
                 DateTimeFormatter.ofPattern("dd/MM/yy"),
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-                DateTimeFormatter.ofPattern("MM/dd/yyyy")
+                DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+                javaDateFormatter
             };
             
             for (DateTimeFormatter formatter : formatters) {
                 try {
+                    if (formatter == javaDateFormatter) {
+                        ZonedDateTime zdt = ZonedDateTime.parse(dateString, formatter);
+                        return zdt.toLocalDate();
+                    }
                     return LocalDate.parse(dateString, formatter);
                 } catch (DateTimeParseException e) {
                     // Try next format
@@ -387,7 +645,7 @@ public class CompanyTruckService {
             }
             
             throw new RuntimeException("Invalid date format: " + dateString);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Error parsing date: " + dateString);
         }
     }
@@ -402,7 +660,7 @@ public class CompanyTruckService {
 
             if (cleaned.isEmpty()) return null;
 
-            return Double.parseDouble(cleaned);
+            return Double.valueOf(cleaned);
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid KM format: '" + kmString + "'");
         }
@@ -417,8 +675,8 @@ public class CompanyTruckService {
             String cleaned = cleanNumber(litreString);
 
             if (cleaned.isEmpty()) return null;
-
-            return Double.parseDouble(cleaned);
+            double value = Double.parseDouble(cleaned);
+            return (double) Math.round(value);
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid litre format: '" + litreString + "'");
         }

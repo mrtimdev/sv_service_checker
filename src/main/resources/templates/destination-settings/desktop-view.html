@@ -92,16 +92,21 @@
                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${item.getDistanceFormat()}"></td>
 
                     <td class="p-3 text-center border">
-                        <a th:href="@{'/destination-settings/edit/' + ${item.id}}" 
-                        class="text-blue-600 hover:underline mr-2">
-                            Edit
-                        </a>
-                        |
-                        <a th:href="@{'/destination-settings/delete/' + ${item.id}}" 
-                        onclick="return confirm('Are you sure?')"
-                        class="text-red-600 hover:underline ml-2">
-                            Delete
-                        </a>
+                        <div sec:authorize="hasAuthority('DESTINATION_SETTINGS_UPDATE') || hasAuthority('DESTINATION_SETTINGS_DELETE')">
+                            <a sec:authorize="hasAuthority('DESTINATION_SETTINGS_UPDATE')" th:href="@{'/destination-settings/edit/' + ${item.id}}" 
+                            class="text-blue-600 hover:underline mr-2">
+                                Edit
+                            </a>
+                            
+                            <a sec:authorize="hasAuthority('DESTINATION_SETTINGS_DELETE')" th:href="@{'/destination-settings/delete/' + ${item.id}}" 
+                            onclick="return confirm('Are you sure?')"
+                            class="text-red-600 hover:underline ml-2">
+                                Delete
+                            </a>
+                        </div>
+                        <div sec:authorize="!hasAuthority('DESTINATION_SETTINGS_UPDATE') && !hasAuthority('DESTINATION_SETTINGS_DELETE')">
+                            <i class="fa fa-eye-slash"></i>
+                        </div>
                     </td>
                 </tr>
             </tbody>

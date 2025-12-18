@@ -46,9 +46,13 @@ import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanyTruck;
+import timdev.timdev.entity.Destination;
+import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanyTruckService;
+import timdev.timdev.service.DestinationService;
+import timdev.timdev.service.DestinationSettingService;
 import timdev.timdev.service.TruckService;
 
 
@@ -59,6 +63,9 @@ public class CompanyTruckController {
     
     private CompanyTruckService service;
     private TruckService truckService;
+
+    private  DestinationService destinationService;
+    private  DestinationSettingService destinationSettingService;
 
     @GetMapping
     public Object index(Model model,
@@ -217,10 +224,56 @@ public class CompanyTruckController {
                     return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
                 }
 
+                String destinationCode = companyTruck.getTotalDestination().trim();
+        
+                DestinationSetting destinationSetting = destinationSettingService.findByName(destinationCode);
+
+                Truck truck = truckService.findByLicensePlate(companyTruck.getTruck().getLicensePlate().trim())
+                .orElseThrow(() -> new RuntimeException("Truck not found: " + companyTruck.getTruck().getLicensePlate()));
+
+                Optional<Destination> optionalDest = destinationService.findFirstByDateAndTruckIdAndSettingId(
+                    companyTruck.getDate(),
+                    truck.getId(),
+                    destinationSetting.getId()
+                );
+
+                if (optionalDest.isPresent()) {
+                    Destination destination = optionalDest.get();
+
+                    // // 🔥 NEW: Check if already completed → throw error
+                    // if (destination.getStatus() == Status.COMPLETED) {
+
+                    //     redirectAttributes.addFlashAttribute(
+                    // "error",
+                    //         "Destination already COMPLETED for date: " + 
+                    //             companyTruck.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
+                    //             ", truck: " + truck.getLicensePlate() +
+                    //             ", destination: " + destinationCode
+                    //     );
+
+                    //     return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
+                    // }
+
+                    // 🔥 Update status (only if not completed)
+                    destination.setStatus(Status.PENDING);
+                    destinationService.save(destination);
+
+                } else {
+                    redirectAttributes.addFlashAttribute(
+                    "error",
+                        "No destination found for date: " + 
+                        companyTruck.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
+                        ", truck: " + truck.getLicensePlate() +
+                        ", destination: " + destinationCode
+                    );
+
+                    return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
+                }
+
                 service.deleteById(id);
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + companyTruck.getTruck().getLicensePlate() + " deleted successfully!");
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Something went wrong: " + e.getMessage());
         }
         return "redirect:/company-trucks";

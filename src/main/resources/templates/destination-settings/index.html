@@ -49,7 +49,7 @@
                     </a>
                     
                     <!-- Add New -->
-                    <a th:href="@{/destination-settings/form}" 
+                    <a sec:authorize="hasAuthority('DESTINATION_SETTINGS_CREATE')" th:href="@{/destination-settings/form}" 
                        class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-200">
                         <i class="fa fa-plus-circle"></i> 
                         <span th:text="#{add_new_entry}" th:if="${isDesktop}"></span>
