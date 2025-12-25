@@ -92,3 +92,8 @@ scp -P 22236 ./sv_repairman.sql deverloper@192.168.1.249:~/sv_repairman/
 
 #import
 mysql -u root -p sv_repairman < ~/sv_repairman/sv_repairman.sql
+
+
+CREATE INDEX idx_destinations_date ON destinations(date);
+CREATE INDEX idx_destinations_status ON destinations(status);
+CREATE INDEX idx_destinations_truck ON destinations(truck_id);

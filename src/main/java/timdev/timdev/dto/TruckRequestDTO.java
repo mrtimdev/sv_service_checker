@@ -1,7 +1,9 @@
 package timdev.timdev.dto;
 
+import io.micrometer.common.lang.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import timdev.timdev.enums.TruckSize;
 
 public class TruckRequestDTO {
@@ -15,8 +17,11 @@ public class TruckRequestDTO {
     private String group;
 
 
-    @NotNull(message = "Truck size is required")
+    @Nullable
     private TruckSize size;
+
+    @Nullable
+    private String sizeOfTruck;
 
 
     public Long getId() {
@@ -56,6 +61,16 @@ public class TruckRequestDTO {
 
     public void setSize(TruckSize size) {
         this.size = size;
+    }
+
+
+    public String getSizeOfTruck() {
+        return sizeOfTruck;
+    }
+
+
+    public void setSizeOfTruck(String sizeOfTruck) {
+        this.sizeOfTruck = sizeOfTruck;
     }   
     
 }

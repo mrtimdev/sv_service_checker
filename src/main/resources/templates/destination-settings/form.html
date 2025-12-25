@@ -54,12 +54,12 @@
 
                             <div>
                                 <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{code}"></label>
-                                <input type="text" th:field="*{code}" id="code" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                                <input th:attr="readonly=${destination.id != null ? 'readonly' : null}" type="text" th:field="*{code}" id="code" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{destination}"></label>
-                                <input type="text" th:field="*{name}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                                <input th:attr="readonly=${destination.id != null ? 'readonly' : null}" type="text" th:field="*{name}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
                             </div>
 
                             <div>

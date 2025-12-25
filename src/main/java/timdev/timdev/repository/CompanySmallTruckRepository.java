@@ -13,57 +13,57 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import timdev.timdev.dto.Status;
-import timdev.timdev.entity.CompanyTruck;
+import timdev.timdev.entity.CompanySmallTruck;
 import timdev.timdev.entity.Truck;
 
 @Repository
-public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long> {
+public interface CompanySmallTruckRepository extends JpaRepository<CompanySmallTruck, Long> {
 
-        List<CompanyTruck> findByTruck_LicensePlateContaining(String licensePlate, Sort sort);
+        List<CompanySmallTruck> findByTruck_LicensePlateContaining(String licensePlate, Sort sort);
 
         // Non-paginated search by Truck License Plate
-        List<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate);
+        List<CompanySmallTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate);
 
         // Paginated search by Truck License Plate
-        Page<CompanyTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
+        Page<CompanySmallTruck> findByTruck_LicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 
-        @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck")
-        List<CompanyTruck> findAllWithTruck();
+        @Query("SELECT c FROM CompanySmallTruck c JOIN FETCH c.truck")
+        List<CompanySmallTruck> findAllWithTruck();
 
 
-        @Query("SELECT c FROM CompanyTruck c JOIN FETCH c.truck WHERE LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))")
-        Page<CompanyTruck> findByTruckLicensePlateWithTruck(@Param("licensePlate") String licensePlate, Pageable pageable);
+        @Query("SELECT c FROM CompanySmallTruck c JOIN FETCH c.truck WHERE LOWER(c.truck.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))")
+        Page<CompanySmallTruck> findByTruckLicensePlateWithTruck(@Param("licensePlate") String licensePlate, Pageable pageable);
 
         boolean existsByTruckAndDate(Truck truck, LocalDate date);
 
-        Optional<CompanyTruck> findByTruckAndDate(Truck truck, LocalDate date);
+        Optional<CompanySmallTruck> findByTruckAndDate(Truck truck, LocalDate date);
 
 
-        List<CompanyTruck> findByStatus(Status status);
+        List<CompanySmallTruck> findByStatus(Status status);
 
         
 
-        Page<CompanyTruck> findByStatus(Status status, Pageable pageable);
+        Page<CompanySmallTruck> findByStatus(Status status, Pageable pageable);
 
         @Query("""
                 SELECT c 
-                FROM CompanyTruck c 
+                FROM CompanySmallTruck c 
                 JOIN FETCH c.truck t 
                 WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
                 AND c.status = :status
         """)
-        List<CompanyTruck> findByLicensePlateContainingAndStatus(
+        List<CompanySmallTruck> findByLicensePlateContainingAndStatus(
                 @Param("licensePlate") String licensePlate,
                 @Param("status") Status status);
 
         @Query("""
                 SELECT c 
-                FROM CompanyTruck c 
+                FROM CompanySmallTruck c 
                 JOIN c.truck t 
                 WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
                 AND c.status = :status
         """)
-        Page<CompanyTruck> findByLicensePlateContainingAndStatus(
+        Page<CompanySmallTruck> findByLicensePlateContainingAndStatus(
                 @Param("licensePlate") String licensePlate,
                 @Param("status") Status status,
                 Pageable pageable);
@@ -71,12 +71,12 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
 
         @Query("""
                 SELECT c 
-                FROM CompanyTruck c 
+                FROM CompanySmallTruck c 
                 JOIN c.truck t 
                 WHERE LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :licensePlate, '%'))
                 AND c.status IN :statuses
         """)
-        Page<CompanyTruck> findByLicensePlateContainingAndStatusIn(
+        Page<CompanySmallTruck> findByLicensePlateContainingAndStatusIn(
                 @Param("licensePlate") String licensePlate,
                 @Param("statuses") List<Status> statuses,
                 Pageable pageable);
@@ -84,7 +84,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
 
         @Query("""
                 SELECT c
-                FROM CompanyTruck c
+                FROM CompanySmallTruck c
                 WHERE (:startDate IS NULL OR c.date >= :startDate)
                 AND (:endDate IS NULL OR c.date <= :endDate)
                 AND (
@@ -93,7 +93,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                         OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
                 )
         """)
-        Page<CompanyTruck> findByFilterQueriesPage(
+        Page<CompanySmallTruck> findByFilterQueriesPage(
                 @Param("startDate") LocalDate startDate,
                 @Param("endDate") LocalDate endDate,
                 @Param("query") String query,
@@ -102,7 +102,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
 
         @Query("""
                 SELECT c
-                FROM CompanyTruck c
+                FROM CompanySmallTruck c
                 WHERE (:startDate IS NULL OR c.date >= :startDate)
                 AND (:endDate IS NULL OR c.date <= :endDate)
                 AND (
@@ -112,7 +112,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                 )
                 AND (:status IS NULL OR c.status = :status)
         """)
-        Page<CompanyTruck> findByFilterQueriesPageAndStatus(
+        Page<CompanySmallTruck> findByFilterQueriesPageAndStatus(
                 @Param("startDate") LocalDate startDate,
                 @Param("endDate") LocalDate endDate,
                 @Param("query") String query,
@@ -120,9 +120,11 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                 @Param("status") Status status
         );
 
+
+
         @Query("""
                 SELECT c
-                FROM CompanyTruck c
+                FROM CompanySmallTruck c
                 WHERE (:startDate IS NULL OR c.date >= :startDate)
                 AND (:endDate IS NULL OR c.date <= :endDate)
                 AND (
@@ -131,7 +133,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                         OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
                 )
         """)
-        List<CompanyTruck> findByFilterQueriesList(
+        List<CompanySmallTruck> findByFilterQueriesList(
                 @Param("startDate") LocalDate startDate,
                 @Param("endDate") LocalDate endDate,
                 @Param("query") String query,
@@ -140,7 +142,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
 
         @Query("""
                 SELECT c
-                FROM CompanyTruck c
+                FROM CompanySmallTruck c
                 WHERE (:startDate IS NULL OR c.date >= :startDate)
                 AND (:endDate IS NULL OR c.date <= :endDate)
                 AND (
@@ -149,7 +151,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                         OR LOWER(c.totalDestination) LIKE LOWER(CONCAT('%', :query, '%'))
                 )
         """)
-        List<CompanyTruck> findByFilterQueriesListAndSort(
+        List<CompanySmallTruck> findByFilterQueriesListAndSort(
                 @Param("startDate") LocalDate startDate,
                 @Param("endDate") LocalDate endDate,
                 @Param("query") String query,
@@ -158,7 +160,7 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
 
         @Query("""
                 SELECT c
-                FROM CompanyTruck c
+                FROM CompanySmallTruck c
                 WHERE (:startDate IS NULL OR c.date >= :startDate)
                 AND (:endDate IS NULL OR c.date <= :endDate)
                 AND (
@@ -168,13 +170,24 @@ public interface CompanyTruckRepository extends JpaRepository<CompanyTruck, Long
                 )
                 AND (:status IS NULL OR c.status = :status)
         """)
-        List<CompanyTruck> findByFilterQueriesListAndSortAndStatus(
+        List<CompanySmallTruck> findByFilterQueriesListAndSortAndStatus(
                 @Param("startDate") LocalDate startDate,
                 @Param("endDate") LocalDate endDate,
                 @Param("query") String query,
                 Sort sort,
                 @Param("status") Status status
         );
+
+
+        // Optional (Update case – ignore same record)
+        boolean existsByDateAndTruck_IdAndTotalDestinationAndIdNot(
+                LocalDate date,
+                Long truckId,
+                String totalDestination,
+                Long id
+        );
+
+
 
 
 

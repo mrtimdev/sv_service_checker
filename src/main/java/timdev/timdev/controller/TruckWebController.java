@@ -107,6 +107,7 @@ public class TruckWebController {
         dto.setLicensePlate(t.getLicensePlate());
         dto.setGroup(t.getGroup());
         dto.setSize(t.getSize());
+        dto.setSizeOfTruck(t.getSizeOfTruck());
 
         model.addAttribute("truck", dto);
         model.addAttribute("sizes", TruckSize.values());
@@ -141,7 +142,8 @@ public class TruckWebController {
 
             truck.setLicensePlate(truckDTO.getLicensePlate());
             truck.setGroup(truckDTO.getGroup());
-            truck.setSize(truckDTO.getSize());
+            truck.setSize(truckDTO.getSize() != null ? truckDTO.getSize() : null);
+            truck.setSizeOfTruck(truckDTO.getSizeOfTruck() != null ? truckDTO.getSizeOfTruck() : null);
 
             truckService.save(truck);
             redirectAttributes.addFlashAttribute("success", (id == null ? "Truck created successfully!" : "Truck updated successfully!"));
@@ -169,6 +171,8 @@ public class TruckWebController {
             Truck truck = new Truck();
             truck.setLicensePlate(truckDTO.getLicensePlate());
             truck.setGroup(truckDTO.getGroup());
+            truck.setSize(truckDTO.getSize() != null ? truckDTO.getSize() : null);
+            truck.setSizeOfTruck(truckDTO.getSizeOfTruck() != null ? truckDTO.getSizeOfTruck() : null);
 
             truckService.save(truck);
             redirectAttributes.addFlashAttribute("success", "Truck created successfully!");

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+</th:block>
+
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'New Entry')}">
+    <th:block th:fragment="content">
+        <div class="">
+            <div class="mx-auto sm:px-6 lg:px-8">
+
+                <!-- Success Message -->
+                <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${success}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline" th:text="${error}"></span>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        <span th:switch="${truckDto?.id != null}">
+                            <span th:case="true" th:text="#{edit_entry}"></span>
+                            <span th:case="false" th:text="#{add_new_entry}"></span>
+                        </span>
+                    </h1>
+
+                    <div class="flex gap-2 items-center mb-6">
+                        <a th:href="@{/company-small-trucks/oils-change}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
+                            <i class="fa fa-list mr-1"></i>
+                            Back To List
+                        </a>
+                        <a th:href="@{/company-small-trucks}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800">
+                            <i class="fa fa-list-alt mr-1"></i>
+                            Back To Reports
+                        </a>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
+                    <form th:action="@{/company-small-trucks/save}" th:object="${truckDto}" method="post"
+                        >
+                        <input type="hidden" th:if="${truckDto?.id != null}" th:field="*{id}"/>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Date -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{date}"></label>
+                                <input type="text" id="date" th:field="*{date}" th:value="${currentDate}"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('date')}" th:errors="*{date}"></p>
+                            </div>
+
+                            <!-- Truck -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{truck}"></label>
+                                <select th:field="*{truckId}" id="truck"
+                                    style="width: 100%;"
+                                    required
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                    <option value="" th:text="#{select_one}"></option>
+                                    <option th:each="t : ${trucks}" 
+                                            th:value="${t.id}" 
+                                            th:text="${t.licensePlate}"
+                                            th:selected="${selectedTruckId != null} ? ${t.id} == ${selectedTruckId} : false">
+                                    </option>
+                                </select>
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('truckId')}" th:errors="*{truckId}"></p>
+                            </div>
+
+                            <!-- Total Destination -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{total_destination}"></label>
+                                <input type="text" min="0" th:field="*{totalDestination}" 
+                                    required
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('totalDestination')}" th:errors="*{totalDestination}"></p>
+                            </div>
+
+                            <!-- Total KM -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{total_km}"></label>
+                                <input type="number" step="0.01" min="0" th:field="*{totalKm}" 
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('totalKm')}" th:errors="*{totalKm}"></p>
+                            </div>
+
+
+                            <!-- Measurement -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{measurement}"></label>
+                               
+                                <input type="text" step="0.01" min="0" th:field="*{measurement}" 
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('measurement')}" th:errors="*{measurement}"></p>
+                            </div>
+
+                            <!-- Litre Quantity -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{litre_quantity}"></label>
+                                <input type="number" step="0.01" min="0" th:field="*{litreQuantity}"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('litreQuantity')}" th:errors="*{litreQuantity}"></p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{total_fuel_filling}"></label>
+                                <input type="number" step="0.01" min="0" th:field="*{totalOilsChange}" placeholder=""
+                                    required
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('totalOilsChange')}" th:errors="*{totalOilsChange}"></p>
+                            </div>
+
+
+                            <!-- Note -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{note}"></label>
+                                <textarea th:field="*{note}" rows="3" 
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"></textarea>
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <a th:href="@{/company-small-trucks}" 
+                                
+                                class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                <i class="fas fa-arrow-circle-left mr-1"></i> 
+                                <span th:text="#{cancel}"></span>
+                            </a>
+
+                            <button type="submit"
+                                
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                                <i class="fas fa-save mr-1"></i> 
+                                <span th:text="#{save}"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+
+        $(function () {
+            $('#truck').select2({
+                placeholder: "Select Truck",
+                allowClear: true
+            });
+            $("#date").flatpickr({
+                defaultDate: $("#date").val() || new Date(),
+                dateFormat: "M d, Y",
+                allowInput: true,
+                locale: "en"
+            });
+        })
+        
+    </script>
+</th:block>

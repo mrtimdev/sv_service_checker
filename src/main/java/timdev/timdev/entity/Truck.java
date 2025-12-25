@@ -34,13 +34,17 @@ public class Truck {
     @Column(name = "license_plate", nullable = false, unique = true)
     private String licensePlate;
 
-    @Column(name = "truck_group", nullable = false)
+    @Column(name = "truck_group", nullable = true)
     private String group;
 
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TruckSize size;
+    @Column(nullable = true)
+    private TruckSize size = null;
+
+
+    @Column(name = "size_of_truck", length=50)
+    private String sizeOfTruck; // 3T, 5T, 10T, etc.
 
 
     public Long getId() {
@@ -80,6 +84,16 @@ public class Truck {
 
     public void setSize(TruckSize size) {
         this.size = size;
+    }
+
+
+    public String getSizeOfTruck() {
+        return sizeOfTruck;
+    }
+
+
+    public void setSizeOfTruck(String sizeOfTruck) {
+        this.sizeOfTruck = sizeOfTruck;
     }
 
     

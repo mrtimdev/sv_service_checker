@@ -347,10 +347,10 @@ public class DestinationSettingController {
             return "redirect:/destination-settings";
         }
         DestinationSetting setting = service.findById(id);
-        if(setting != null && !setting.getDestinations().isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Destination Setting " + setting.getCode() +" and " + setting.getName() +" can not editable .!");
-            return "redirect:/destination-settings";
-        }
+        // if(setting != null && !setting.getDestinations().isEmpty()) {
+        //     redirectAttributes.addFlashAttribute("error", "Destination Setting " + setting.getCode() +" and " + setting.getName() +" can not editable .!");
+        //     return "redirect:/destination-settings";
+        // }
         model.addAttribute("destination", setting);
         return "destination-settings/form";
     }
@@ -364,43 +364,59 @@ public class DestinationSettingController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        DestinationSetting existingData = null;
         User user = userDetails.getUser();
+        DestinationSetting ds;
 
+        // =========================
+        // UPDATE
+        // =========================
         if (destination.getId() != null) {
-            existingData = service.findById(destination.getId());
-            existingData.setUpdatedBy(user);
+
+            ds = service.findById(destination.getId());
+            if (ds == null) {
+                redirectAttributes.addFlashAttribute("error", "Destination not found!");
+                return "redirect:/destination-settings";
+            }
+
+            // ✅ UPDATE ONLY distance
+            ds.setDistance(destination.getDistance());
+            ds.setUpdatedBy(user);
+
         } 
+        // =========================
+        // CREATE
+        // =========================
+        else {
 
-        // ✅ Check duplicate code
-        DestinationSetting byCode = service.findByCode(destination.getCode());
-        if (byCode != null && (existingData == null || !byCode.getId().equals(existingData.getId()))) {
-            redirectAttributes.addFlashAttribute("error", "Destination code already exists!");
-            redirectAttributes.addFlashAttribute("destination", destination);
-            return "redirect:/destination-settings/form";
+            // ✅ Check duplicate code
+            DestinationSetting byCode = service.findByCode(destination.getCode());
+            if (byCode != null) {
+                redirectAttributes.addFlashAttribute("error", "Destination code already exists!");
+                redirectAttributes.addFlashAttribute("destination", destination);
+                return "redirect:/destination-settings/form";
+            }
+
+            // ✅ Check duplicate name
+            DestinationSetting byName = service.findByName(destination.getName());
+            if (byName != null) {
+                redirectAttributes.addFlashAttribute("error", "Destination name already exists!");
+                redirectAttributes.addFlashAttribute("destination", destination);
+                return "redirect:/destination-settings/form";
+            }
+
+            ds = new DestinationSetting();
+            ds.setCode(destination.getCode());
+            ds.setName(destination.getName());
+            ds.setDistance(destination.getDistance());
+            ds.setCreatedBy(user);
         }
-
-        // ✅ Check duplicate name
-        DestinationSetting byName = service.findByName(destination.getName());
-        if (byName != null && (existingData == null || !byName.getId().equals(existingData.getId()))) {
-            redirectAttributes.addFlashAttribute("error", "Destination name already exists!");
-            redirectAttributes.addFlashAttribute("destination", destination);
-            return "redirect:/destination-settings/form";
-        }
-
-        DestinationSetting ds = (existingData != null) ? existingData : new DestinationSetting();
-
-        ds.setCode(destination.getCode());
-        ds.setName(destination.getName());
-        ds.setDistance(destination.getDistance());
-
-        ds.setCreatedBy(user);
 
         service.save(ds);
 
         redirectAttributes.addFlashAttribute("success", "Destination saved successfully!");
         return "redirect:/destination-settings";
     }
+
 
 
 

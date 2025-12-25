@@ -20,7 +20,7 @@
                             th:classappend="${requestURI == '/dashboard/maintenance'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-chart-pie"></i>
-                            <span>Dashboard <span class="text-purple-500">Fats/Oils</span></span>
+                            <span>Dashboard <span class="text-purple-500">Charts</span></span>
                         </a>
                     </li>
                 </ul>
@@ -53,6 +53,14 @@
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks_status}"></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/company-small-trucks"
+                            th:classappend="${requestURI.startsWith('/company-small-trucks') and requestURI != '/company-small-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sign-out"></i>
+                            <span th:text="#{company_small_trucks}"></span>
                         </a>
                     </li>
                     <li>
@@ -104,6 +112,14 @@
                             <span th:text="#{company_trucks}"></span>
                         </a>
                     </li>
+                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
+                        <a href="/company-small-trucks/user-record"
+                            th:classappend="${requestURI == '/company-small-trucks/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sign-out"></i>
+                            <span th:text="#{company_small_trucks}"></span>
+                        </a>
+                    </li>
                     <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
                         <a href="/sub-trucks/user-record"
                             th:classappend="${requestURI == '/sub-trucks/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -152,6 +168,16 @@
                             <span th:text="#{company_trucks_reports}"></span>
                         </a>
                     </li>
+
+                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
+                        <a href="/company-small-trucks/user-record/report"
+                            th:classappend="${requestURI == '/company-small-trucks/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sign-out"></i>
+                            <span th:text="#{company_small_trucks_reports}"></span>
+                        </a>
+                    </li>
+
                     <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
                         <a href="/sub-trucks/user-record/report"
                             th:classappend="${requestURI == '/sub-trucks/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"

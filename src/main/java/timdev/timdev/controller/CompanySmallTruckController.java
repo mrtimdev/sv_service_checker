@@ -40,17 +40,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import timdev.timdev.dto.CompanyTruckRequestDTO;
+import timdev.timdev.dto.CompanySmallTruckRequestDTO;
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
-import timdev.timdev.entity.CompanyTruck;
+import timdev.timdev.entity.CompanySmallTruck;
 import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
-import timdev.timdev.service.CompanyTruckService;
+import timdev.timdev.service.CompanySmallTruckService;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
 import timdev.timdev.service.TruckService;
@@ -58,10 +58,10 @@ import timdev.timdev.service.TruckService;
 
 @Controller
 @AllArgsConstructor
-@RequestMapping("/company-trucks")
-public class CompanyTruckController {
+@RequestMapping("/company-small-trucks")
+public class CompanySmallTruckController {
     
-    private CompanyTruckService service;
+    private CompanySmallTruckService service;
     private TruckService truckService;
 
     private  DestinationService destinationService;
@@ -81,13 +81,13 @@ public class CompanyTruckController {
         RedirectAttributes redirectAttributes
     ) throws IOException {
 
-        List<CompanyTruck> trucks;
+        List<CompanySmallTruck> trucks;
         int totalPages = 1;
         int size;
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
-            return "redirect:/company-trucks";
+            return "redirect:/company-small-trucks";
         }
 
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -96,7 +96,7 @@ public class CompanyTruckController {
             size = Integer.parseInt(sizeParam);
         }
 
-        List<CompanyTruck> allTrucks;
+        List<CompanySmallTruck> allTrucks;
         Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
 
         // allTrucks = service.findByFilterQueriesListAndSort(startDate, endDate, query, sortByIdDesc);
@@ -106,16 +106,15 @@ public class CompanyTruckController {
             trucks = allTrucks;
         } else {
             Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            // Page<CompanyTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
-            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
-
+            // Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
+            Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
 
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
         }
 
         if ("excel".equalsIgnoreCase(export)) {
-            exportCompanyTrucksReportToExcel(trucks, response);
+            exportCompanySmallTrucksReportToExcel(trucks, response);
             return null;
         }
 
@@ -131,7 +130,7 @@ public class CompanyTruckController {
         model.addAttribute("statuses", Status.values());
         model.addAttribute("status", status);
 
-        return "company-trucks/index";
+        return "company-small-trucks/index";
     }
 
 
@@ -139,7 +138,7 @@ public class CompanyTruckController {
     // --- Create Form ---
     @GetMapping("/create")
     public String createForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model) {
-        CompanyTruckRequestDTO dto = new CompanyTruckRequestDTO();
+        CompanySmallTruckRequestDTO dto = new CompanySmallTruckRequestDTO();
         if (truckId != null) {
             dto.setTruckId(truckId);
         }
@@ -149,48 +148,54 @@ public class CompanyTruckController {
         model.addAttribute("trucks", truckService.getAll());
         model.addAttribute("currentDate", LocalDate.now());
         model.addAttribute("measurements", Measurement.values());
-        return "company-trucks/form";
+        return "company-small-trucks/form";
     }
 
     // --- Edit Form ---
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
-        CompanyTruck companyTruck = service.getTruckById(id);
-        CompanyTruckRequestDTO dto = service.convertToDto(companyTruck);
+        CompanySmallTruck companySmallTruck = service.getTruckById(id);
+        CompanySmallTruckRequestDTO dto = service.convertToDto(companySmallTruck);
 
         model.addAttribute("truckDto", dto);
         model.addAttribute("trucks", truckService.getAll());
         model.addAttribute("currentDate", dto.getDate());
         model.addAttribute("measurements", Measurement.values());
 
-        return "company-trucks/form";
+        return "company-small-trucks/form";
     }
 
     // --- Save or Update ---
     @PostMapping("/save")
-    public String saveTruck(@ModelAttribute("truckDto") CompanyTruckRequestDTO dto, RedirectAttributes redirectAttributes, @AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+    public String saveTruck(
+            @ModelAttribute("truckDto") CompanySmallTruckRequestDTO dto,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         User user = userDetails.getUser();
+
         Truck truck = truckService.findById(dto.getTruckId()).orElse(null);
         if (truck == null) {
             redirectAttributes.addFlashAttribute("error", "Truck not found!");
-            return "redirect:/company-trucks";
+            return "redirect:/company-small-trucks";
         }
 
-        // // ✅ Only check for existing record if creating new OR editing to a different date
-        // boolean exists = service.isExistsByTruckAndDate(truck, dto.getDate());
+        boolean duplicate = service.isDuplicate(
+                dto.getDate(),
+                dto.getTruckId(),
+                dto.getTotalDestination(),
+                dto.getId() // null for create, id for update
+        );
 
-        // if (exists) {
-        //     // ✅ Fetch existing record by truck and date
-        //     CompanyTruck existing = service.findByTruckAndDate(truck, dto.getDate());
-        //     // If it's not the same record being edited, block it
-        //     if (dto.getId() == null || !existing.getId().equals(dto.getId())) {
-        //         redirectAttributes.addFlashAttribute(
-        //             "error",
-        //             "ឡានលេខ " + truck.getLicensePlate() + " មានរបាយការណ៍សម្រាប់ថ្ងៃ " + dto.getDate() + " រួចហើយ!"
-        //         );
-        //         return "redirect:/company-trucks/create?truckId=" + truck.getId();
-        //     }
-        // }
+        if (duplicate) {
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "❌ Duplicate report for truck " + truck.getLicensePlate()
+                            + " on " + dto.getDate()
+            );
+            return "redirect:/company-small-trucks";
+        }
+
         if (dto.getId() == null) {
             dto.setCreatedBy(user.getId());
             service.createTruck(dto);
@@ -198,96 +203,46 @@ public class CompanyTruckController {
             dto.setUpdatedBy(user.getId());
             service.updateTruck(dto.getId(), dto);
         }
+
         redirectAttributes.addFlashAttribute(
-            "success",
-            "✅ Report for truck " + truck.getLicensePlate() + " on " + dto.getDate() + " saved successfully!"
+                "success",
+                "✅ Report for truck " + truck.getLicensePlate()
+                        + " on " + dto.getDate() + " saved successfully!"
         );
 
-        return "redirect:/company-trucks?licensePlate="+truck.getLicensePlate();
+        return "redirect:/company-small-trucks?licensePlate=" + truck.getLicensePlate();
     }
+
 
 
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
-            Optional<CompanyTruck> truckOpt = service.findById(id);
+            Optional<CompanySmallTruck> truckOpt = service.findById(id);
             if (truckOpt.isEmpty()) {
-                CompanyTruck companyTruck = truckOpt.get();
+                CompanySmallTruck companySmallTruck = truckOpt.get();
                 redirectAttributes.addFlashAttribute("error", "Truck not found");
-                return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
+                return "redirect:/company-small-trucks?licensePlate="+companySmallTruck.getTruck().getLicensePlate();
             } else {
-                CompanyTruck companyTruck = truckOpt.get();
+                CompanySmallTruck companySmallTruck = truckOpt.get();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-                String dateString = companyTruck.getDate().format(formatter);
-
-                if (Status.DEDUCTED.equals(companyTruck.getStatus())) {
-                    redirectAttributes.addFlashAttribute(
-                    "error",
-                        "Oops, This truck transaction " + companyTruck.getTruck().getLicensePlate() + " on " + dateString + " fuel has been filled, can not deletable!"
-                    );
-
-                    return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
-                }
-
-                String destinationCode = companyTruck.getTotalDestination().trim();
-        
-                DestinationSetting destinationSetting = destinationSettingService.findByName(destinationCode);
-
-                Truck truck = truckService.findByLicensePlate(companyTruck.getTruck().getLicensePlate().trim())
-                .orElseThrow(() -> new RuntimeException("Truck not found: " + companyTruck.getTruck().getLicensePlate()));
-
-                Optional<Destination> optionalDest = destinationService.findFirstByDateAndTruckIdAndSettingId(
-                    companyTruck.getDate(),
-                    truck.getId(),
-                    destinationSetting.getId()
-                );
-
-                if (optionalDest.isPresent()) {
-                    Destination destination = optionalDest.get();
-
-                    // // 🔥 NEW: Check if already completed → throw error
-                    // if (destination.getStatus() == Status.COMPLETED) {
-
-                    //     redirectAttributes.addFlashAttribute(
-                    // "error",
-                    //         "Destination already COMPLETED for date: " + 
-                    //             companyTruck.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
-                    //             ", truck: " + truck.getLicensePlate() +
-                    //             ", destination: " + destinationCode
-                    //     );
-
-                    //     return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
-                    // }
-
-                    // 🔥 Update status (only if not completed)
-                    destination.setStatus(Status.PENDING);
-                    destinationService.save(destination);
-
-                } else {
-                    redirectAttributes.addFlashAttribute(
-                    "error",
-                        "No destination found for date: " + 
-                        companyTruck.getDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
-                        ", truck: " + truck.getLicensePlate() +
-                        ", destination: " + destinationCode
-                    );
-
-                    return "redirect:/company-trucks?licensePlate="+companyTruck.getTruck().getLicensePlate();
-                }
+                String dateString = companySmallTruck.getDate().format(formatter);
 
                 service.deleteById(id);
-                redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + companyTruck.getTruck().getLicensePlate() + " deleted successfully!");
+                redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + companySmallTruck.getTruck().getLicensePlate() + " deleted successfully!");
+
+                return "redirect:/company-small-trucks?licensePlate="+companySmallTruck.getTruck().getLicensePlate();
             }
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Something went wrong: " + e.getMessage());
         }
-        return "redirect:/company-trucks";
+        return "redirect:/company-small-trucks";
     }
 
     @GetMapping("/import")
     public String showImportForm() {
-        return "company-trucks/import"; 
+        return "company-small-trucks/import"; 
     }
 
     @PostMapping("/import")
@@ -296,13 +251,13 @@ public class CompanyTruckController {
                             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         try {
-            List<CompanyTruckRequestDTO> list = service.readExcel(file);
+            List<CompanySmallTruckRequestDTO> list = service.readExcel(file);
 
             int successCount = 0;
             List<String> errorMessages = new ArrayList<>();
 
             for (int i = 0; i < list.size(); i++) {
-                CompanyTruckRequestDTO dto = list.get(i);
+                CompanySmallTruckRequestDTO dto = list.get(i);
                 try {
                     service.saveTruckFromExcel(dto, userDetails.getUser());
                     successCount++;
@@ -325,15 +280,15 @@ public class CompanyTruckController {
             redirectAttributes.addFlashAttribute("error", "Import failed: " + e.getMessage());
         }
 
-        return "redirect:/company-trucks/import";
+        return "redirect:/company-small-trucks/import";
     }
 
-    private void exportCompanyTrucksReportToExcel(List<CompanyTruck> trucks, HttpServletResponse response) throws IOException {
+    private void exportCompanySmallTrucksReportToExcel(List<CompanySmallTruck> trucks, HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=\"company_trucks_fuel_report.xlsx\"");
+        response.setHeader("Content-Disposition", "attachment; filename=\"company_small_trucks.xlsx\"");
         
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("របាយការណ៏តួរលេខចាក់ប្រេងឡាន");
+            Sheet sheet = workbook.createSheet("ឡានខ្នាតតូច");
             
             // Create styles
             CellStyle headerStyle = workbook.createCellStyle();
@@ -424,14 +379,13 @@ public class CompanyTruckController {
             String[] headers = {
                 "កាលបរិច្ឆេទ", 
                 "លេខឡាន", 
+                "ទំហំឡាន", 
                 "គោលដៅសរុប", 
                 "ចម្ងាយសរុប (គីឡូម៉ែត្រ)", 
-                "មធ្យមភាគ (Average)", 
                 "ប្រភេទវាស់វែង",
                 "ចំនួនប្រេង", 
-                "ប្រេងផ្សេងៗ", 
                 "សរុបប្រេងចាក់អោយឡាន",
-                "ស្ថានភាព",
+                "កំណត់សម្គាល់",
                 "បង្កើតនៅ", 
                 "កែប្រែចុងក្រោយ", 
                 "អ្នកបង្កើត"
@@ -443,7 +397,7 @@ public class CompanyTruckController {
             
             // Create data rows
             int rowNum = 3;
-            for (CompanyTruck truck : trucks) {
+            for (CompanySmallTruck truck : trucks) {
                 Row row = sheet.createRow(rowNum++);
                 row.setHeightInPoints(20);
                 
@@ -454,46 +408,44 @@ public class CompanyTruckController {
                 createCell(row, 1, truck.getTruck() != null && truck.getTruck().getLicensePlate() != null ? 
                     truck.getTruck().getLicensePlate() : "", dataStyle);
                 
+                // Size of Truck
+                createCell(row, 2, truck.getTruck().getSizeOfTruck() != null ? 
+                    truck.getTruck().getSizeOfTruck() : "", dataStyle);    
                 // Total Destination
-                createCell(row, 2, truck.getTotalDestination() != null ? 
+                createCell(row, 3, truck.getTotalDestination() != null ? 
                     truck.getTotalDestination() : "0", dataStyle);
+
+                
                 
                 // Total KM
-                createCell(row, 3, truck.getTotalKm() != null ? 
+                createCell(row, 4, truck.getTotalKm() != null ? 
                     truck.getTotalKmFormat() : 0.0, numberStyle);
                 
-                // Average
-                createCell(row, 4, truck.getAverage() != null ? 
-                    truck.getAverageFormat() : 0.0, numberStyle);
                 
                 // Measurement
                 createCell(row, 5, truck.getMeasurement() != null ? 
-                    truck.getMeasurement().name() : "", dataStyle);
+                    truck.getMeasurement() : "", dataStyle);
                 
                 // Litre Quantity
                 createCell(row, 6, truck.getLitreQuantity() != null ? 
                     truck.getLitreQuantityFormat() : 0.0, numberStyle);
                 
-                // Other Oils
-                createCell(row, 7, truck.getOtherOils() != null ? 
-                    truck.getOtherOils() : "", dataStyle);
-                
                 // Total Oils Change
-                createCell(row, 8, truck.getTotalOilsChange() != null ? 
+                createCell(row, 7, truck.getTotalOilsChange() != null ? 
                     truck.getTotalOilsChangeFormat() : 0.0, numberStyle);
-                // Status
-                createCell(row, 9, truck.getStatus() != null ? 
-                    truck.getStatus().name() : "", dataStyle);
+
+                createCell(row, 8, truck.getNote() != null ? 
+                    truck.getNote() : "", dataStyle);
                 // Created At
-                createCell(row, 10, truck.getCreatedAt() != null ? 
+                createCell(row, 9, truck.getCreatedAt() != null ? 
                     truck.getCreatedAt() : LocalDateTime.now(), datetimeStyle);
                 
                 // Updated At
-                createCell(row, 11, truck.getUpdatedAt() != null ? 
+                createCell(row, 10, truck.getUpdatedAt() != null ? 
                     truck.getUpdatedAt() : "", datetimeStyle);
                 
                 // Created By
-                createCell(row, 12, truck.getCreatedBy() != null && truck.getCreatedBy().fullName() != null ? 
+                createCell(row, 11, truck.getCreatedBy() != null && truck.getCreatedBy().fullName() != null ? 
                     truck.getCreatedBy().fullName() : "", dataStyle);
             }
             
@@ -563,13 +515,13 @@ public class CompanyTruckController {
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
 
-        Optional<CompanyTruck> optional = service.findById(id);
+        Optional<CompanySmallTruck> optional = service.findById(id);
         if (optional.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "CompanyTruck not found");
+            redirectAttributes.addFlashAttribute("error", "CompanySmallTruck not found");
             return "redirect:"+backUrl;
         }
 
-        CompanyTruck truck = optional.get();
+        CompanySmallTruck truck = optional.get();
         User user = userDetails.getUser();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
@@ -626,33 +578,33 @@ public class CompanyTruckController {
     public String approve(@PathVariable Long id, @RequestParam("status") RequestStatus status, RedirectAttributes redirectAttributes,
     @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        CompanyTruck companyTruck = service.findById(id).orElse(null);
-        if (companyTruck == null) {
-            redirectAttributes.addFlashAttribute("error", "CompanyTruck not found!");
-            return "redirect:/company-trucks/deduction/status";
+        CompanySmallTruck companySmallTruck = service.findById(id).orElse(null);
+        if (companySmallTruck == null) {
+            redirectAttributes.addFlashAttribute("error", "CompanySmallTruck not found!");
+            return "redirect:/company-small-trucks/deduction/status";
         }
 
         User currentUser = userDetails.getUser();
         if(status.equals(RequestStatus.APPROVED)) {
-            companyTruck.setRequestStatus(status);
-            companyTruck.setApprovedAt(LocalDateTime.now());
-            companyTruck.setApprovedBy(currentUser);
+            companySmallTruck.setRequestStatus(status);
+            companySmallTruck.setApprovedAt(LocalDateTime.now());
+            companySmallTruck.setApprovedBy(currentUser);
         }
 
         else if(status.equals(RequestStatus.REJECTED)) {
-            companyTruck.setRequestStatus(status);
-            companyTruck.setRejectedAt(LocalDateTime.now());
-            companyTruck.setRejectedBy(currentUser);
+            companySmallTruck.setRequestStatus(status);
+            companySmallTruck.setRejectedAt(LocalDateTime.now());
+            companySmallTruck.setRejectedBy(currentUser);
         }
         else if(status.equals(status)) {
-            companyTruck.setRequestStatus(RequestStatus.REQUESTED);
-            companyTruck.setRejectedAt(LocalDateTime.now()); 
-            companyTruck.setRejectedBy(currentUser);
+            companySmallTruck.setRequestStatus(RequestStatus.REQUESTED);
+            companySmallTruck.setRejectedAt(LocalDateTime.now()); 
+            companySmallTruck.setRejectedBy(currentUser);
         }
         
-        service.saveTruck(companyTruck); 
+        service.saveTruck(companySmallTruck); 
         redirectAttributes.addFlashAttribute("success", "Request has been "+ status);
-        return "redirect:/company-trucks/deduction/status";
+        return "redirect:/company-small-trucks/deduction/status";
     }
 
     @GetMapping("/deduction/status")
@@ -660,50 +612,50 @@ public class CompanyTruckController {
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-        @RequestParam(value = "query", required = false) String query,
-        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
-        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
-        @RequestParam(value = "status", required = false) Status status,
+        @RequestParam(value = "licensePlate", required = false) String licensePlate,
         @RequestParam(value = "export", required = false) String export,
-        HttpServletResponse response,
-        RedirectAttributes redirectAttributes
+        HttpServletResponse response
     ) throws IOException {
 
-        List<CompanyTruck> trucks;
+        List<CompanySmallTruck> trucks;
         int totalPages = 1;
         int size;
-
-        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
-            return "redirect:/company-trucks/deduction/status";
-        }
-
+        
         if ("all".equalsIgnoreCase(sizeParam)) {
             size = Integer.MAX_VALUE;
         } else {
-            size = Integer.parseInt(sizeParam);
+            size = Integer.parseInt(sizeParam); 
         }
 
-        List<CompanyTruck> allTrucks;
-        Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+        List<CompanySmallTruck> allTrucks;
 
-        allTrucks = service.findByFilterQueriesListAndSort(startDate, endDate, query, sortByIdDesc);
-        allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, status);
+        // ✅ Always sorted by ID DESC
+        // Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+        Sort sort = Sort.by(
+            Sort.Order.desc("deductedAt"),
+            Sort.Order.desc("id") // fallback if deductedAt is null
+        );
+
+        if (licensePlate != null && !licensePlate.isEmpty()) {
+            allTrucks = service.findByLicensePlateContaining(licensePlate, sort);
+        } else {
+            allTrucks = service.getAllWIthSort(sort);
+        }
 
         if (showAll) {
             trucks = allTrucks;
         } else {
-            Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            // Page<CompanyTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
-            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<CompanySmallTruck> truckPage;
+
+            if (licensePlate != null && !licensePlate.isEmpty()) {
+                truckPage = service.findByLicensePlateContainingWithPageable(licensePlate, pageable);
+            } else {
+                truckPage = service.getAllWithPageable(pageable);
+            }
 
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
-        }
-
-        if ("excel".equalsIgnoreCase(export)) {
-            exportCompanyTrucksReportToExcel(trucks, response);
-            return null;
         }
 
         model.addAttribute("trucks", trucks);
@@ -712,18 +664,14 @@ public class CompanyTruckController {
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("pageSizeNumber", size);
         model.addAttribute("showAll", showAll);
-        model.addAttribute("query", query);
-        model.addAttribute("startDate", startDate);
-        model.addAttribute("endDate", endDate);
-        model.addAttribute("statuses", Status.values());
-        model.addAttribute("status", status);
-        return "company-trucks/deduction_status";
+        model.addAttribute("licensePlate", licensePlate);  
+        return "company-small-trucks/deduction_status";
     }
 
 
     // for user's records
     @GetMapping("/user-record")
-    public Object companyTrucksForUser(Model model,
+    public Object companySmallTrucksForUser(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
@@ -736,13 +684,13 @@ public class CompanyTruckController {
         RedirectAttributes redirectAttributes
     ) throws IOException {
 
-        List<CompanyTruck> trucks;
+        List<CompanySmallTruck> trucks;
         int totalPages = 1;
         int size;
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
-            return "redirect:/company-trucks/user-record";
+            return "redirect:/company-small-trucks/user-record";
         }
 
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -751,7 +699,7 @@ public class CompanyTruckController {
             size = Integer.parseInt(sizeParam);
         }
 
-        List<CompanyTruck> allTrucks;
+        List<CompanySmallTruck> allTrucks;
         Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
 
         allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, Status.PENDING);
@@ -760,7 +708,7 @@ public class CompanyTruckController {
             trucks = allTrucks;
         } else {
             Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.PENDING);
+            Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.PENDING);
 
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
@@ -776,11 +724,11 @@ public class CompanyTruckController {
         model.addAttribute("query", query);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
-        return "company-trucks/trucks_for_users_mark";
+        return "company-small-trucks/trucks_for_users_mark";
     }
 
     @GetMapping("/user-record/report")
-    public Object companyTrucksForUserReport(Model model,
+    public Object companySmallTrucksForUserReport(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
@@ -793,13 +741,13 @@ public class CompanyTruckController {
         RedirectAttributes redirectAttributes
     ) throws IOException {
 
-        List<CompanyTruck> trucks;
+        List<CompanySmallTruck> trucks;
         int totalPages = 1;
         int size;
 
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
-            return "redirect:/company-trucks/user-record";
+            return "redirect:/company-small-trucks/user-record";
         }
 
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -808,7 +756,7 @@ public class CompanyTruckController {
             size = Integer.parseInt(sizeParam);
         }
 
-        List<CompanyTruck> allTrucks;
+        List<CompanySmallTruck> allTrucks;
         Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
 
         allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, Status.DEDUCTED);
@@ -817,7 +765,7 @@ public class CompanyTruckController {
             trucks = allTrucks;
         } else {
             Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.DEDUCTED);
+            Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, Status.DEDUCTED);
 
             trucks = truckPage.getContent();
             totalPages = truckPage.getTotalPages();
@@ -833,7 +781,7 @@ public class CompanyTruckController {
         model.addAttribute("query", query);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
-        return "company-trucks/trucks_for_users_mark_report";
+        return "company-small-trucks/trucks_for_users_mark_report";
     }
 
 

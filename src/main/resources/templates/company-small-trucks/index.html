@@ -48,26 +48,25 @@
                     <span class="block sm:inline" th:text="${error}"></span>
                 </div>
 
+
                 <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Company Big Trucks Reports Histories</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Company Small Trucks</h1>
 
                 <div class="flex gap-2 items-center mb-6">
-                    <a th:href="@{/company-trucks/create}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                    <a th:href="@{/company-small-trucks/create}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
                         <i class="fa fa-plus mr-1"></i>
                         Add New Entry
                     </a>
-                    <a th:href="@{/company-trucks/import}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
+                    <a th:href="@{/company-small-trucks/import}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
                         <i class="fa fa-file-text mr-1"></i>
                         Import Entries
                     </a>
 
-                    <a th:href="@{/company-trucks(
+                    <a th:href="@{/company-small-trucks(
                         page=${currentPage},
                         size=${pageSize},
                         all=${showAll},
-                        query=${query != null ? query : ''},
-                        startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
-                        endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                        licensePlate=${licensePlate != null ? licensePlate : ''},
                         status=${status != null ? status.name() : ''},
                         export='excel'
                     )}" 
@@ -132,7 +131,7 @@
                                 class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
                                 Apply Filters
                             </button>
-                            <a href="/company-trucks"
+                            <a href="/company-small-trucks"
                                 th:text="#{reset}"
                                 class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
                                 Reset
@@ -144,7 +143,18 @@
 
             <div class="">
                 <div class="flex justify-between items-center">
-                    <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                    <form method="get" 
+                        th:action="@{/company-small-trucks(
+                            page=${i},
+                            size=${pageSize},
+                            all=${showAll},
+                            query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
+                            status=${status != null ? status.name() : ''},
+                        )}"
+                     
+                        class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
                         <!-- Page size selector -->
                         <div class="flex items-center">
                             <label for="size">Size:</label>
@@ -165,21 +175,22 @@
                     <thead>
                         <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
-                            <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">កាលបរិច្ឆេទ</th>
-                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">លេខឡាន</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">គោលដៅសរុប</th>
-                            <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_distance}">ចម្ងាយសរុប</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{average}">មធ្យមភាគ</th>
+                            <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{date}">កាលបរិច្ឆេទ</th>
+                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{license_plate}">លេខឡាន</th>
+                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{truck_size}"></th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_destination}">គោលដៅសរុប</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_km}"></th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}"></th>
                             <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_quantity}">ចំនួនប្រេង</th>
-                            <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ប្រេងផ្សេងៗ</th>
-                            <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សរុបប្រេងចាក់អោយឡាន</th>
-                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">បង្កើតនៅ</th>
-                            <th style="width: 120px;"  class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500">ស្ថានភាពចាក់ប្រេង</th>
-                            
-                            <th style="width: 150px;"class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">អ្នកចាក់</th>
-                            <th  style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">ចាក់នៅម៉ោង</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">សកម្មភាព</th>
+                            <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_fuel}">សរុបប្រេងចាក់អោយឡាន</th>
+                                <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">ស្ថានភាព</th>
+
+                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{deducted_by}">ចាក់ប្រេងដោយ</th>
+                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{deducted_at}">ចាក់ប្រេងនៅ</th>
+                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{created_at}">បង្កើតនៅ</th>
+
+                            <th style="width: 250px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_actions}"></th>
+                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">សកម្មភាព</th>
                         </tr>
                     </thead>
 
@@ -190,16 +201,12 @@
                             </td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.sizeOfTruck}"></td>
                             <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getLitreQuantityFormat()}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalOilsChangeFormat()}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
-                            
-
                             <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:class="${data.status.name == 'PENDING' ? 
                                     'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
@@ -210,6 +217,31 @@
 
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.deductedBy?.fullName}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.deductedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
+                                
+                                <div class="flex gap-2 items-center justify-center">
+
+                                    <a 
+                                        th:if="${data.status.name == 'PENDING'}"
+                                        th:href="@{/company-small-trucks/status/update(id=${data.id}, action='DEDUCTED', isByAdmin=true, backUrl=${requestPathWithParams})}"
+                                        class="cursor-pointer bg-green-600 text-white px-3 py-1 rounded-lg shadow">
+                                        <i class="fa fa-arrow-alt-circle-right"></i> Mark as Deducted
+                                    </a>
+
+                                    <a 
+                                        th:if="${
+                                            data.status.name == 'DEDUCTED'
+                                        }"
+                                        th:href="@{/company-small-trucks/status/update(id=${data.id}, action='PENDING', isByAdmin=true, backUrl=${requestPathWithParams})}"
+                                        class="!cursor-pointer bg-red-600 text-white px-3 py-1 rounded-lg shadow">
+                                        <i class="fa fa-arrow-alt-circle-left"></i> Change to Pending
+                                    </a>
+
+                                </div>
+
+                            </td>
 
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
                                 <div x-data="{ open: false }" class="relative">
@@ -229,13 +261,13 @@
                                         x-transition 
                                         class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
 
-                                        <a th:href="@{/company-trucks/edit/{id}(id=${data.id})}" 
+                                        <a th:href="@{/company-small-trucks/edit/{id}(id=${data.id})}" 
                                             class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
                                             <i class="fas fa-edit text-green-500"></i>
                                             <span th:text="#{edit}"></span>
                                         </a>
 
-                                        <a th:href="@{/company-trucks/delete/{id}(id=${data.id})}" 
+                                        <a th:href="@{/company-small-trucks/delete/{id}(id=${data.id})}" 
                                             class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-100 space-x-2"
                                             onclick="return confirm('Are you sure, delete this record?')">
                                             <i class="fas fa-trash-alt text-red-500"></i>
@@ -258,7 +290,7 @@
             <div class="flex justify-start mt-4 items-center">
                 <ul class="inline-flex -space-x-px mr-4">
                     <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/company-trucks(
+                        <a th:href="@{/company-small-trucks(
                             page=${i},
                             size=${pageSize},
                             all=${showAll},
@@ -276,7 +308,7 @@
                 </ul>
 
                 <!-- Show All button -->
-                <a th:href="@{/company-trucks(all=true)}"
+                <a th:href="@{/company-small-trucks(all=true)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>
