@@ -47,14 +47,14 @@
                             <span th:text="#{company_trucks}"></span>
                         </a>
                     </li>
-                    <li>
+                    <!-- <li>
                         <a href="/company-trucks/deduction/status"
                             th:classappend="${requestURI == '/company-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks_status}"></span>
                         </a>
-                    </li>
+                    </li> -->
                     <li>
                         <a href="/company-small-trucks"
                             th:classappend="${requestURI.startsWith('/company-small-trucks') and requestURI != '/company-small-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -65,7 +65,10 @@
                     </li>
                     <li>
                         <a href="/sub-trucks"
-                            th:classappend="${requestURI.startsWith('/sub-trucks')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${
+                                    #strings.startsWith(requestURI, '/sub-trucks') 
+                                    && !#strings.startsWith(requestURI, '/sub-trucks/reports')
+                                } ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-sitemap"></i>
                             <span th:text="#{sub_trucks}">Sub Trucks</span>
@@ -89,7 +92,7 @@
                 <ul sec:authorize="hasRole('USER')">
                     <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
                         <a href="/destinations/u"
-                            th:classappend="${requestURI == '/destinations/u' || requestURI == '/destinations/u/import'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/destinations/u' || requestURI == '/destinations/import'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-exchange"></i>
                             <span th:text="#{destinations}"></span>
@@ -120,7 +123,7 @@
                             <span th:text="#{company_small_trucks}"></span>
                         </a>
                     </li>
-                    <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
+                    <li sec:authorize="hasAuthority('SUB_TRUCK_Fill')">
                         <a href="/sub-trucks/user-record"
                             th:classappend="${requestURI == '/sub-trucks/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
@@ -128,6 +131,19 @@
                             <span th:text="#{sub_trucks}">Sub Trucks</span>
                         </a>
                     </li>
+
+
+                    <li sec:authorize="hasAuthority('SUB_TRUCK_CREATE')">
+                        <a href="/sub-trucks"
+                            th:classappend="${requestURI.startsWith('/sub-trucks')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sitemap"></i>
+                            <span th:text="#{sub_trucks}">Sub Trucks</span>
+                        </a>
+                    </li>
+
+
+
                     <li sec:authorize="hasAuthority('FUEL_REQUEST_VIEW')">
                         <a href="/fuel-requests/user-record"
                             th:classappend="${requestURI == '/fuel-requests/user-record'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -142,7 +158,7 @@
             </div>
 
             <!-- Destinations Group -->
-            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_VIEW') || hasAuthority('FUEL_REQUEST_USER_RECORD'))">
+            <!-- <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_VIEW') || hasAuthority('FUEL_REQUEST_USER_RECORD'))">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
                     <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
@@ -154,10 +170,10 @@
                         </a>
                     </li>
                 </ul>
-            </div>
+            </div> -->
 
             <!-- Fuel Group -->
-            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('COMPANY_TRUCK_VIEW') || hasAuthority('SUB_TRUCK_VIEW') || hasAuthority('FUEL_REQUEST_VIEW'))">
+            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('COMPANY_TRUCK_VIEW') || hasAuthority('SUB_TRUCK_Fill') || hasAuthority('FUEL_REQUEST_VIEW'))">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
                     <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
@@ -178,7 +194,7 @@
                         </a>
                     </li>
 
-                    <li sec:authorize="hasAuthority('SUB_TRUCK_VIEW')">
+                    <li sec:authorize="hasAuthority('SUB_TRUCK_Fill')">
                         <a href="/sub-trucks/user-record/report"
                             th:classappend="${requestURI == '/sub-trucks/user-record/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
@@ -213,7 +229,7 @@
 
                     <li>
                         <a href="/sub-trucks/reports?reportPage=true"
-                            th:classappend="${requestURI == '/sub-trucks/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/sub-trucks/reports' && requestURI != '/sub-trucks'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-sitemap"></i>
                             <span th:text="#{sub_trucks_reports}"></span>
@@ -283,6 +299,15 @@
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-user-clock"></i>
                             <span >Session Management</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/telegram-settings"
+                            th:classappend="${requestURI.startsWith('/telegram-settings')} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fi fi-brands-telegram"></i>
+                            <span th:text="#{telegram_bot_settings}"></span>
                         </a>
                     </li>
                     

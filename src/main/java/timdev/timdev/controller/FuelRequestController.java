@@ -429,7 +429,8 @@ public class FuelRequestController {
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes,
-            @RequestParam(value = "action", required = false) String action
+            @RequestParam(value = "action", required = false) String action,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (result.hasErrors()) {
             model.addAttribute("truckDto", fuelRequest);
@@ -480,6 +481,43 @@ public class FuelRequestController {
         try {
             boolean isNew = fuelRequest.getId() == null;
             service.saveFromDto(fuelRequest);
+
+            User user = userDetails.getUser();
+            String dateString = fuelRequest.getDate()
+                    .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+
+
+            String message = String.format(
+                """
+                ⚙️ *Action Details*
+                • Record Date: `%s`
+                • Requester: `%s`
+                • Position: `%s`
+                • Fuel Quantity: *%s L*
+                • Operation: *%s*
+                • Performed By: `%s`
+                • Purpose: %s
+                • Note: %s
+                """,
+                dateString,
+                fuelRequest.getRequester(),
+                fuelRequest.getPosition() != null ? fuelRequest.getPosition() : "N/A",
+                fuelRequest.getOilsQuantity() != null ? fuelRequest.getOilsQuantity() : 0,
+                isNew ? "CREATED" : "UPDATED",
+                user.fullName(),
+                fuelRequest.getPurpose() != null && !fuelRequest.getPurpose().isBlank()
+                        ? "_" + fuelRequest.getPurpose() + "_"
+                        : "_No purpose provided_",
+                fuelRequest.getNote() != null && !fuelRequest.getNote().isBlank()
+                        ? "_" + fuelRequest.getNote() + "_"
+                        : "_No note provided_"
+            );
+
+
+            notificationService.sendMarkdownNotification(
+                "⛽ Fuel Request Notify",
+                message
+            );
 
             String plate = (truck != null) ? truck.getLicensePlate() : "No Truck";
 
@@ -936,8 +974,27 @@ public class FuelRequestController {
 
         service.save(fuelRequest);
 
+        String message = String.format(
+            """
+            📌 *Transaction Information*
+            • Record Date: `%s`
+            • Requester: `%s`
+
+            ⚙️ *Action Performed*
+            • Fuel Filled Quantity: *%s L*
+            • Performed By: `%s`
+            """,
+            dateString,
+            fuelRequest.getRequester(),
+            oilsQuantity,
+            user.fullName()
+        );
+
         redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + fuelRequest.getRequester() + " fuel quantity updated to "+ oilsQuantity);
-        
+        notificationService.sendMarkdownNotification(
+            "🔔 Fuel Request Notify",
+            message
+        );
         return "redirect:"+backUrl;
     }
 }

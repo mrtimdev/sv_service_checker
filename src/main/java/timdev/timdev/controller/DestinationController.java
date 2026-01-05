@@ -2,6 +2,8 @@ package timdev.timdev.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
+import timdev.timdev.service.NotificationService;
 import timdev.timdev.service.TruckService;
 
 
@@ -45,6 +48,8 @@ public class DestinationController {
     private DestinationService service;
     private DestinationSettingService destinationSettingService;
     private TruckService truckService;
+
+    private NotificationService notificationService;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -436,10 +441,69 @@ public class DestinationController {
         return "destinations/import"; 
     }
 
+    // @PostMapping("/import")
+    // public String importExcel(@RequestParam("file") MultipartFile file,
+    //                         RedirectAttributes redirectAttributes,
+    //                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+    //     // Validate file type
+    //     if (file.isEmpty()) {
+    //         redirectAttributes.addFlashAttribute("error", "Please select a file to import");
+    //         return "redirect:/destinations/import";
+    //     }
+
+    //     if (!file.getOriginalFilename().endsWith(".xlsx") &&
+    //         !file.getOriginalFilename().endsWith(".xls")) {
+
+    //         redirectAttributes.addFlashAttribute("error",
+    //                 "Please upload an Excel file (.xlsx or .xls)");
+    //         return "redirect:/destinations/import";
+    //     }
+
+    //     try {
+    //         // Step 1: Read Excel (includes excel errors)
+    //         ExcelImportResult excelResult = service.readExcelFile(file);
+
+    //         // Step 2: Validate & Save to DB (NO error merging)
+    //         List<String> dbErrors = service.validateAndSaveDestinations(excelResult, userDetails);
+
+    //         int totalRows = excelResult.getDestinations().size();
+    //         int successCount = totalRows - dbErrors.size();
+
+    //         int errorCount = 0;
+    //         if(successCount > 0) {
+    //             redirectAttributes.addFlashAttribute("success",
+    //                 "Imported successfully: " + successCount + " rows");
+    //         }
+            
+
+    //         // Collect Excel + DB errors separately (NOT merged)
+    //         List<String> allErrors = new ArrayList<>();
+    //         allErrors.addAll(excelResult.getErrorMessages()); // Excel errors
+    //         allErrors.addAll(dbErrors);                       // DB errors only
+
+    //         if (!allErrors.isEmpty()) {
+    //             redirectAttributes.addFlashAttribute("errorCount", allErrors.size());
+    //             redirectAttributes.addFlashAttribute("errorDetails", allErrors);
+    //         }
+
+    //     } catch (Exception e) {
+    //         redirectAttributes.addFlashAttribute("error",
+    //                 "Import failed: " + e.getMessage());
+    //     }
+
+    //     return "redirect:/destinations/import";
+    // }
+
+
+
     @PostMapping("/import")
     public String importExcel(@RequestParam("file") MultipartFile file,
                             RedirectAttributes redirectAttributes,
                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String username = userDetails != null ? userDetails.getUsername() : "System";
+        String fileName = file.getOriginalFilename();
 
         // Validate file type
         if (file.isEmpty()) {
@@ -447,42 +511,61 @@ public class DestinationController {
             return "redirect:/destinations/import";
         }
 
-        if (!file.getOriginalFilename().endsWith(".xlsx") &&
-            !file.getOriginalFilename().endsWith(".xls")) {
-
-            redirectAttributes.addFlashAttribute("error",
-                    "Please upload an Excel file (.xlsx or .xls)");
+        if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls")) {
+            redirectAttributes.addFlashAttribute(
+                "error", "Please upload an Excel file (.xlsx or .xls)"
+            );
             return "redirect:/destinations/import";
         }
 
         try {
-            // Step 1: Read Excel (includes excel errors)
+            // Step 1: Read Excel
             ExcelImportResult excelResult = service.readExcelFile(file);
 
-            // Step 2: Validate & Save to DB (NO error merging)
-            List<String> dbErrors = service.validateAndSaveDestinations(excelResult, userDetails);
+            // Step 2: Validate & Save to DB
+            List<String> dbErrors =
+                service.validateAndSaveDestinations(excelResult, userDetails);
 
             int totalRows = excelResult.getDestinations().size();
-            int successCount = totalRows - dbErrors.size();
-            if(successCount > 0) {
-                redirectAttributes.addFlashAttribute("success",
-                    "Imported successfully: " + successCount + " rows");
+            int excelErrorCount = excelResult.getErrorMessages().size();
+            int dbErrorCount = dbErrors.size();
+
+            int successCount = totalRows - dbErrorCount;
+            int errorCount = excelErrorCount + dbErrorCount;
+
+            // UI messages
+            if (successCount > 0) {
+                redirectAttributes.addFlashAttribute(
+                    "success", "Imported successfully: " + successCount + " rows"
+                );
             }
-            
 
-            // Collect Excel + DB errors separately (NOT merged)
-            List<String> allErrors = new ArrayList<>();
-            allErrors.addAll(excelResult.getErrorMessages()); // Excel errors
-            allErrors.addAll(dbErrors);                       // DB errors only
+            if (errorCount > 0) {
+                List<String> allErrors = new ArrayList<>();
+                allErrors.addAll(excelResult.getErrorMessages());
+                allErrors.addAll(dbErrors);
 
-            if (!allErrors.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorCount", allErrors.size());
+                redirectAttributes.addFlashAttribute("errorCount", errorCount);
                 redirectAttributes.addFlashAttribute("errorDetails", allErrors);
             }
 
+            // ✅ ALWAYS send summary Telegram message
+            sendImportNotification(
+                successCount,
+                errorCount,
+                fileName,
+                username,
+                "Import Notification",
+                "Destinations Import Completed"
+            );
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Import failed: " + e.getMessage());
+
+            String errorMsg = "Import failed: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+
+            // 🚨 Only system-level failure
+            sendErrorNotification(fileName, username, errorMsg);
         }
 
         return "redirect:/destinations/import";
@@ -491,5 +574,63 @@ public class DestinationController {
 
 
 
+    private void sendImportNotification(int successCount, int errorCount, 
+                                       String fileName, String username, String title, String subTitle) {
+        try {
+            String statusEmoji = errorCount > 0 ? "⚠️" : "✅";
+            String subTitle_ = statusEmoji + " *"+subTitle+"*";
+            
+            String currentTime = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"));
+            
+            String message = String.format(
+                "%s\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "📊 *Results:*\n\n" +
+                "✅ Success: %d rows\n" +
+                "❌ Errors: %d rows\n\n" +
+                "_Import completed via Excel upload_",
+                subTitle_,
+                fileName,
+                username,
+                currentTime,
+                successCount,
+                errorCount
+            );
+            
+            notificationService.sendMarkdownNotification(title, message);
+            
+        } catch (Exception e) {
+            // Log error but don't break the import process
+            System.err.println("Failed to send Telegram notification: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send error notification
+     */
+    private void sendErrorNotification(String fileName, String username, String errorMessage) {
+        try {
+            String message = String.format(
+                "🚨 *Import Failed*\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "❌ *Error:* %s\n\n" +
+                "_Please check the file and try again_",
+                fileName,
+                username,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")),
+                errorMessage
+            );
+            
+            notificationService.sendErrorNotification("Import failed", message);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send error notification: " + e.getMessage());
+        }
+    }
     
 }

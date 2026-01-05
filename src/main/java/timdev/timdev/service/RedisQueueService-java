@@ -1,0 +1,43 @@
+// RedisQueueService.java
+package timdev.timdev.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+
+import timdev.timdev.dto.ImportNotificationDTO;
+
+@Service
+public class RedisQueueService {
+    
+    private static final String IMPORT_NOTIFICATION_QUEUE = "queue:import:notifications";
+    private static final long QUEUE_RETENTION_DAYS = 7;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    /**
+     * Push import result to Redis queue
+     */
+    public void pushImportNotification(ImportNotificationDTO notification) {
+        redisTemplate.opsForList().leftPush(IMPORT_NOTIFICATION_QUEUE, notification);
+        // Set expiry for the queue (clean old messages)
+        redisTemplate.expire(IMPORT_NOTIFICATION_QUEUE, QUEUE_RETENTION_DAYS, TimeUnit.DAYS);
+    }
+    
+    /**
+     * Get next import notification from queue
+     */
+    public ImportNotificationDTO popImportNotification() {
+        return (ImportNotificationDTO) redisTemplate.opsForList().rightPop(IMPORT_NOTIFICATION_QUEUE);
+    }
+    
+    /**
+     * Get queue size
+     */
+    public Long getQueueSize() {
+        return redisTemplate.opsForList().size(IMPORT_NOTIFICATION_QUEUE);
+    }
+}

@@ -53,6 +53,7 @@ import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanySmallTruckService;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
+import timdev.timdev.service.NotificationService;
 import timdev.timdev.service.TruckService;
 
 
@@ -63,6 +64,8 @@ public class CompanySmallTruckController {
     
     private CompanySmallTruckService service;
     private TruckService truckService;
+
+    private NotificationService notificationService;
 
     private  DestinationService destinationService;
     private  DestinationSettingService destinationSettingService;
@@ -246,15 +249,72 @@ public class CompanySmallTruckController {
     }
 
     @PostMapping("/import")
+    // @PostMapping("/import")
     public String importExcel(@RequestParam("file") MultipartFile file,
+                            RedirectAttributes redirectAttributes,
+                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        int successCount = 0;
+        int errorCount = 0;
+        List<String> errorMessages = new ArrayList<>();
+        String fileName = file.getOriginalFilename();
+        String username = userDetails != null ? userDetails.getUsername() : "System";
+
+        try {
+            List<CompanySmallTruckRequestDTO> list = service.readExcel(file);
+
+            for (int i = 0; i < list.size(); i++) {
+                CompanySmallTruckRequestDTO dto = list.get(i);
+                try {
+                    service.saveTruckFromExcel(dto, userDetails.getUser());
+                    successCount++;
+                } catch (Exception e) {
+                    errorCount++;
+                    errorMessages.add("Row " + (i + 1) + " (" + 
+                        (dto.getLicensePlate() != null ? dto.getLicensePlate() : "N/A") + 
+                        "): " + e.getMessage());
+                }
+            }
+
+            // Send success message
+            if (successCount > 0) {
+                String successMsg = "Imported successfully: " + successCount + " rows";
+                redirectAttributes.addFlashAttribute("success", successMsg);
+            }
+            
+            // Send error messages if any
+            if (!errorMessages.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorCount", errorMessages.size());
+                redirectAttributes.addFlashAttribute("errorDetails", errorMessages);
+            }
+
+            // Send Telegram notification
+            sendImportNotification(successCount, errorCount, fileName, username, "Import Notification", "Company Small Trucks Import Completed");
+
+        } catch (Exception e) {
+            String errorMsg = "Import failed: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            
+            // Send error notification
+            sendErrorNotification(fileName, username, errorMsg);
+        }
+
+        return "redirect:/company-small-trucks/import";
+    }
+    
+    public String importExcelOld(@RequestParam("file") MultipartFile file,
                             RedirectAttributes redirectAttributes,
                             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         try {
             List<CompanySmallTruckRequestDTO> list = service.readExcel(file);
 
+
             int successCount = 0;
+            int errorCount = 0;
             List<String> errorMessages = new ArrayList<>();
+            String fileName = file.getOriginalFilename();
+            String username = userDetails != null ? userDetails.getUsername() : "System";
 
             for (int i = 0; i < list.size(); i++) {
                 CompanySmallTruckRequestDTO dto = list.get(i);
@@ -536,8 +596,28 @@ public class CompanySmallTruckController {
                     truck.setDeductedBy(user);
                     truck.setDeductedAt(LocalDateTime.now());
                 }
+
+                String message = String.format(
+                    """
+                        📌 *Transaction Information*
+                        • License Plate: `%s`
+                        • Record Date: `%s`
+                        • Destination: `%s`
+                        
+                        ⚙️ *Action Performed*
+                        • Status Changed To: *DEDUCTED*
+                        • Performed By: `%s`""",
+                    truck.getTruck().getLicensePlate(),
+                    dateString,
+                    truck.getTotalDestination(),
+                    user.fullName()
+                );
                 
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
+                notificationService.sendMarkdownNotification(
+                    "🔔 Small Truck Deduction Notify",
+                    message
+                );
             }
             case "PENDING" -> {
                 truck.setStatus(Status.PENDING);
@@ -782,6 +862,112 @@ public class CompanySmallTruckController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         return "company-small-trucks/trucks_for_users_mark_report";
+    }
+
+
+    /**
+     * Send import completion notification
+     */
+    private void sendImportNotification(int successCount, int errorCount, 
+                                       String fileName, String username, String title, String subTitle) {
+        try {
+            String statusEmoji = errorCount > 0 ? "⚠️" : "✅";
+            String subTitle_ = statusEmoji + " *"+subTitle+"*";
+            
+            String currentTime = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"));
+            
+            String message = String.format(
+                "%s\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "📊 *Results:*\n\n" +
+                "✅ Success: %d rows\n" +
+                "❌ Errors: %d rows\n\n" +
+                "_Import completed via Excel upload_",
+                subTitle_,
+                fileName,
+                username,
+                currentTime,
+                successCount,
+                errorCount
+            );
+            
+            notificationService.sendMarkdownNotification(title, message);
+            
+        } catch (Exception e) {
+            // Log error but don't break the import process
+            System.err.println("Failed to send Telegram notification: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send error notification
+     */
+    private void sendErrorNotification(String fileName, String username, String errorMessage) {
+        try {
+            String message = String.format(
+                "🚨 *Import Failed*\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "❌ *Error:* %s\n\n" +
+                "_Please check the file and try again_",
+                fileName,
+                username,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")),
+                errorMessage
+            );
+            
+            notificationService.sendErrorNotification("Import failed", message);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send error notification: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send detailed error notification with error list
+     */
+    private void sendDetailedErrorNotification(int successCount, int errorCount, 
+                                              String fileName, String username,
+                                              List<String> errorMessages) {
+        try {
+            StringBuilder errors = new StringBuilder();
+            int maxErrors = 5; // Limit to show only first 5 errors
+            
+            for (int i = 0; i < Math.min(errorMessages.size(), maxErrors); i++) {
+                errors.append("• ").append(errorMessages.get(i)).append("\n");
+            }
+            
+            if (errorMessages.size() > maxErrors) {
+                errors.append("• ... and ").append(errorMessages.size() - maxErrors)
+                      .append(" more errors\n");
+            }
+            
+            String message = String.format(
+                "⚠️ *Import Completed with Errors*\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n\n" +
+                "📊 *Results:*\n" +
+                "✅ Success: %d rows\n" +
+                "❌ Errors: %d rows\n\n" +
+                "🔍 *Error Details:*\n" +
+                "%s\n" +
+                "_Some rows failed to import. Please check the errors above._",
+                fileName,
+                username,
+                successCount,
+                errorCount,
+                errors.toString()
+            );
+            
+            notificationService.sendMarkdownNotification("Import Results", message);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send detailed notification: " + e.getMessage());
+        }
     }
 
 

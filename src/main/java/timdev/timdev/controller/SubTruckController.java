@@ -47,6 +47,8 @@ import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.SubTruck;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
+import timdev.timdev.service.NotificationService;
+import timdev.timdev.service.PermissionChecker;
 import timdev.timdev.service.SubTruckService;
 import timdev.timdev.service.TruckService;
 import timdev.timdev.service.UserService;
@@ -59,6 +61,10 @@ public class SubTruckController {
     private SubTruckService service;
     private TruckService truckService;
     private UserService userService;
+
+    private PermissionChecker permissionChecker;
+
+    private NotificationService notificationService;
 
     @GetMapping({"", "/reports"})
     public Object list(
@@ -123,18 +129,15 @@ public class SubTruckController {
 
     // --- Create Form ---
     @GetMapping("/form")
-    public String createForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model, Authentication authentication) {
+    public String createForm(@RequestParam(name = "truck_id", required = false) Long truckId, Model model, RedirectAttributes redirectAttributes) {
         SubTruckRequestDTO subTruck = new SubTruckRequestDTO();
         if (truckId != null) {
             subTruck.setTruckId(truckId);
         }
 
-        boolean isUser = authentication.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
-
-        if (isUser) {
-            // Same as !hasRole('USER')
-            return "settings";
+        if (!permissionChecker.has("SUB_TRUCK_CREATE")) {
+            redirectAttributes.addFlashAttribute("error", "Oop!, You do not have permission to create a new of Sub Truck.");
+            return "redirect:/";
         }
 
         model.addAttribute("truckDto", subTruck);
@@ -193,7 +196,8 @@ public class SubTruckController {
     public String save(@ModelAttribute SubTruckRequestDTO subTruck, 
         BindingResult result, Model model, 
         RedirectAttributes redirectAttributes,
-        @RequestParam(value = "action", required = false) String action
+        @RequestParam(value = "action", required = false) String action,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         if (result.hasErrors()) {
             model.addAttribute("truckDto", subTruck);
@@ -247,6 +251,38 @@ public class SubTruckController {
             boolean isNew = subTruck.getId() == null; 
             service.saveFromDto(subTruck);
 
+            User user = userDetails.getUser();
+            String dateString = subTruck.getDate()
+                    .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+
+            String message = String.format(
+                """
+                ⚙️ *Action Details*
+                • Record Date: `%s`
+                • License Plate: `%s`
+                • Truck Owner: `%s`
+                • Fuel Quantity: *%s L*
+                • Operation: *%s*
+                • Performed By: `%s`
+                • Note: %s
+                """,
+                dateString,
+                truck.getLicensePlate(),
+                subTruck.getTruckOwner() != null ? subTruck.getTruckOwner() : "N/A",
+                subTruck.getOilsQuantity() != null ? subTruck.getOilsQuantity() : 0,
+                isNew ? "CREATED" : "UPDATED",
+                user.fullName(),
+                subTruck.getNote() != null && !subTruck.getNote().isBlank()
+                        ? "_" + subTruck.getNote() + "_"
+                        : "_No note provided_"
+            );
+
+
+            notificationService.sendMarkdownNotification(
+                "⛽ Sub Truck Request Notify",
+                message
+            );
+
             if (isNew) {
                 redirectAttributes.addFlashAttribute("success", "Sub Truck successfully created!");
             } else {
@@ -286,7 +322,9 @@ public class SubTruckController {
 
     // --- Delete ---
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable Long id,
+        @AuthenticationPrincipal CustomUserDetails userDetails, 
+        RedirectAttributes redirectAttributes) {
         SubTruck subTruck = service.findById(id);
         if (subTruck == null) {
             redirectAttributes.addFlashAttribute("error", "SubTruck not found!");
@@ -298,6 +336,37 @@ public class SubTruckController {
             }
         }
         service.deleteById(id);
+
+        User user = userDetails.getUser();
+        String dateString = subTruck.getDate()
+                .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"));
+
+        String message = String.format(
+            """
+            ⚙️ *Action: DELETED*
+            • Record Date: `%s`
+            • License Plate: `%s`
+            • Truck Owner: `%s`
+            • Fuel Quantity: *%s L*
+            • Performed By: `%s`
+            • Note: %s
+            """,
+            dateString,
+            subTruck.getTruck().getLicensePlate(),
+            subTruck.getTruckOwner() != null ? subTruck.getTruckOwner() : "N/A",
+            subTruck.getOilsQuantity() != null ? subTruck.getOilsQuantity() : 0,
+            user.fullName(),
+            subTruck.getNote() != null && !subTruck.getNote().isBlank()
+                    ? "_" + subTruck.getNote() + "_"
+                    : "_No note provided_"
+        );
+
+
+        notificationService.sendMarkdownNotification(
+            "⛔ Sub Truck Request Deletion Notify",
+            message
+        );
+
         redirectAttributes.addFlashAttribute("success", "SubTruck successfully deleted!");
         return "redirect:/sub-trucks";
     }
@@ -338,7 +407,7 @@ public class SubTruckController {
 
             // Create header row
             Row header = sheet.createRow(0);
-            String[] columns = {"No", "Date", "License Plate", "Truck Owner", "Oil Qty", "Status", "Approved By", "Approved At", "Note"};
+            String[] columns = {"No", "Date", "License Plate", "Truck Owner", "Oil Qty", "Status", "Approved By", "Approved At", "Note", "Changed At", "Changed By"};
 
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = header.createCell(i);
@@ -386,7 +455,7 @@ public class SubTruckController {
                 }
 
                 // Approved By
-                createCell(row, 6, st.getApprovedBy() != null ? st.getApprovedBy() : "", defaultStyle);
+                createCell(row, 6, st.getApprovedBy() != null ? st.getApprovedBy().fullName() : "", defaultStyle);
 
                 // Approved At
                 if (st.getApprovedAt() != null) {
@@ -399,6 +468,16 @@ public class SubTruckController {
 
                 // Note
                 createCell(row, 8, st.getNote() != null ? st.getNote() : "", defaultStyle);
+
+                if (st.getChangedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getChangedAt().format(formatter);
+                    createCell(row, 9, formatted, dateStyle);
+                } else {
+                    createCell(row, 9, "", defaultStyle);
+                }
+                createCell(row, 10, st.getChangedBy() != null ? st.getChangedBy().fullName() : "", defaultStyle);
+
             }
 
             // Auto-size all columns
@@ -679,8 +758,29 @@ public class SubTruckController {
 
         service.save(subTruck);
 
-        redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + subTruck.getTruck().getLicensePlate() + " fuel quantity updated to "+ oilsQuantity);
+        String message = String.format(
+            """
+            📌 *Transaction Information*
+            • License Plate: `%s`
+            • Record Date: `%s`
+
+            ⚙️ *Action Performed*
+            • Fuel Filled Quantity: *%s L*
+            • Performed By: `%s`
+            """,
+            subTruck.getTruck().getLicensePlate(),
+            dateString,
+            oilsQuantity,
+            user.fullName()
+        );
+
         
+
+        redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + subTruck.getTruck().getLicensePlate() + " fuel quantity updated to "+ oilsQuantity);
+        notificationService.sendMarkdownNotification(
+            "🔔 Sub Truck Fuel Fill Notify",
+            message
+        );
         return "redirect:"+backUrl;
     }
 

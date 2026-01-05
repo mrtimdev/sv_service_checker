@@ -53,6 +53,7 @@ import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanyTruckService;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
+import timdev.timdev.service.NotificationService;
 import timdev.timdev.service.TruckService;
 
 
@@ -66,6 +67,8 @@ public class CompanyTruckController {
 
     private  DestinationService destinationService;
     private  DestinationSettingService destinationSettingService;
+
+    private NotificationService notificationService;
 
     @GetMapping
     public Object index(Model model,
@@ -295,11 +298,16 @@ public class CompanyTruckController {
                             RedirectAttributes redirectAttributes,
                             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
+        String fileName = file.getOriginalFilename();
+        String username = userDetails != null ? userDetails.getUsername() : "System";
+
         try {
             List<CompanyTruckRequestDTO> list = service.readExcel(file);
 
             int successCount = 0;
+            int errorCount = 0;
             List<String> errorMessages = new ArrayList<>();
+            
 
             for (int i = 0; i < list.size(); i++) {
                 CompanyTruckRequestDTO dto = list.get(i);
@@ -307,6 +315,7 @@ public class CompanyTruckController {
                     service.saveTruckFromExcel(dto, userDetails.getUser());
                     successCount++;
                 } catch (Exception e) {
+                    errorCount++;
                     errorMessages.add("Row " + (i + 1) + " (" + dto.getLicensePlate() + "): " + e.getMessage());
                 }
             }
@@ -321,8 +330,13 @@ public class CompanyTruckController {
                 redirectAttributes.addFlashAttribute("errorDetails", errorMessages);
             }
 
+            sendImportNotification(successCount, errorCount, fileName, username, "Import Notification", "Company Big Trucks Import Completed");
+
+
         } catch (Exception e) {
+            String errorMsg = "Import failed: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", "Import failed: " + e.getMessage());
+            sendErrorNotification(fileName, username, errorMsg);
         }
 
         return "redirect:/company-trucks/import";
@@ -575,6 +589,7 @@ public class CompanyTruckController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         String dateString = truck.getDate().format(formatter);
 
+        
 
         switch (action.toUpperCase()) {
             case "DEDUCTED" -> {
@@ -584,8 +599,26 @@ public class CompanyTruckController {
                     truck.setDeductedBy(user);
                     truck.setDeductedAt(LocalDateTime.now());
                 }
-                
+                String message = String.format(
+                    """
+                        📌 *Transaction Information*
+                        • License Plate: `%s`
+                        • Record Date: `%s`
+                        • Destination: `%s`
+                        
+                        ⚙️ *Action Performed*
+                        • Status Changed To: *DEDUCTED*
+                        • Performed By: `%s`""",
+                    truck.getTruck().getLicensePlate(),
+                    dateString,
+                    truck.getTotalDestination(),
+                    user.fullName()
+                );
                 redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + truck.getTruck().getLicensePlate() + " update status to " + action.toUpperCase());
+                notificationService.sendMarkdownNotification(
+                    "🔔 Big Truck Deduction Notify",
+                    message
+                );
             }
             case "PENDING" -> {
                 truck.setStatus(Status.PENDING);
@@ -834,6 +867,66 @@ public class CompanyTruckController {
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         return "company-trucks/trucks_for_users_mark_report";
+    }
+
+
+    private void sendImportNotification(int successCount, int errorCount, 
+                                       String fileName, String username, String title, String subTitle) {
+        try {
+            String statusEmoji = errorCount > 0 ? "⚠️" : "✅";
+            String subTitle_ = statusEmoji + " *"+subTitle+"*";
+            
+            String currentTime = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"));
+            
+            String message = String.format(
+                "%s\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "📊 *Results:*\n\n" +
+                "✅ Success: %d rows\n" +
+                "❌ Errors: %d rows\n\n" +
+                "_Import completed via Excel upload_",
+                subTitle_,
+                fileName,
+                username,
+                currentTime,
+                successCount,
+                errorCount
+            );
+            
+            notificationService.sendMarkdownNotification(title, message);
+            
+        } catch (Exception e) {
+            // Log error but don't break the import process
+            System.err.println("Failed to send Telegram notification: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send error notification
+     */
+    private void sendErrorNotification(String fileName, String username, String errorMessage) {
+        try {
+            String message = String.format(
+                "🚨 *Import Failed*\n\n" +
+                "📄 *File:* %s\n" +
+                "👤 *User:* %s\n" +
+                "⏰ *Time:* %s\n\n" +
+                "❌ *Error:* %s\n\n" +
+                "_Please check the file and try again_",
+                fileName,
+                username,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")),
+                errorMessage
+            );
+            
+            notificationService.sendErrorNotification("Import failed", message);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send error notification: " + e.getMessage());
+        }
     }
 
 

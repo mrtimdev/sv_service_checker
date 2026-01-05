@@ -36,6 +36,7 @@
                                     size=${pageSize},
                                     all=${showAll},
                                     licensePlate=${licensePlate != null ? licensePlate : ''},
+                                    truckId=${truckId != null ? truckId : ''},
                                     truckOwner=${truckOwner != null ? truckOwner : ''},
                                     status=${status != null ? status : ''},
                                     startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
@@ -250,20 +251,26 @@
                                                 <div class="py-1">
 
                                                     <!-- Edit -->
-                                                    <a th:href="@{'/sub-trucks/edit/' + ${st.id}}" 
+                                                    <a 
+                                                        th:if="${st.status.name() == 'APPROVED'} ? (${#authorization.expression('hasAuthority(''SUB_TRUCK_EDIT_AFTER_APPROVED'')')}) : ${#authorization.expression('hasAuthority(''SUB_TRUCK_UPDATE'')')}"
+                                                        th:href="@{'/sub-trucks/edit/' + ${st.id}}" 
                                                         class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                                                         <i class="fas fa-edit w-5 text-blue-600"></i>
                                                         <span th:text="#{edit}"></span>
                                                     </a>
 
-                                                    <a target="_blank" th:href="@{'/sub-trucks/clone/' + ${st.id}}" 
+                                                    <a 
+                                                        sec:authorize="hasAuthority('SUB_TRUCK_CREATE')"
+                                                        target="_blank" th:href="@{'/sub-trucks/clone/' + ${st.id}}" 
                                                         class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                                                         <i class="fas fa-plus-circle w-5 text-blue-600"></i>
                                                         <span th:text="#{clone}"></span>
                                                     </a>
 
                                                     <!-- Approve -->
-                                                    <div th:if="${st.status.toString() == 'PENDING'}">
+                                                    <div 
+                                                        sec:authorize="hasAuthority('SUB_TRUCK_APPROVE')"
+                                                        th:if="${st.status.toString() == 'PENDING'}" >
                                                         <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
                                                             onsubmit="return confirm('Are you sure you want to approve this truck?')">
                                                             <input type="hidden" name="status" value="APPROVED" />
@@ -276,7 +283,7 @@
                                                     </div>
 
                                                     <!-- Unapprove -->
-                                                    <div th:if="${st.status.toString() == 'APPROVED'}">
+                                                    <div sec:authorize="hasAuthority('SUB_TRUCK_APPROVE')" th:if="${st.status.toString() == 'APPROVED'}">
                                                         <form th:action="@{'/sub-trucks/approve/' + ${st.id}}" method="post"
                                                             onsubmit="return confirm('Are you sure you want to unapprove this truck?')">
                                                             <input type="hidden" name="status" value="PENDING" />
@@ -289,7 +296,7 @@
                                                     </div>
 
                                                     <!-- Delete -->
-                                                    <div th:if="${st.status.toString() == 'PENDING'}">
+                                                    <div sec:authorize="hasAuthority('SUB_TRUCK_DELETE')" th:if="${st.status.toString() == 'PENDING'}">
                                                         <form th:action="@{'/sub-trucks/delete/' + ${st.id}}" method="get"
                                                             onsubmit="return confirm('Are you sure you want to delete this truck?')">
                                                             <button type="submit"
