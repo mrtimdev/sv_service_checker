@@ -46,8 +46,6 @@ import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanySmallTruck;
-import timdev.timdev.entity.Destination;
-import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.CompanySmallTruckService;
@@ -70,70 +68,150 @@ public class CompanySmallTruckController {
     private  DestinationService destinationService;
     private  DestinationSettingService destinationSettingService;
 
+    // @GetMapping
+    // public Object index(Model model,
+    //     @RequestParam(value = "page", defaultValue = "0") int page,
+    //     @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+    //     @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+    //     @RequestParam(value = "query", required = false) String query,
+    //     @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+    //     @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+    //     @RequestParam(value = "status", required = false) Status status,
+    //     @RequestParam(value = "export", required = false) String export,
+    //     HttpServletResponse response,
+    //     RedirectAttributes redirectAttributes
+    // ) throws IOException {
+
+    //     List<CompanySmallTruck> trucks;
+    //     int totalPages = 1;
+    //     int size;
+
+    //     if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+    //         redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+    //         return "redirect:/company-small-trucks";
+    //     }
+
+    //     if ("all".equalsIgnoreCase(sizeParam)) {
+    //         size = Integer.MAX_VALUE;
+    //     } else {
+    //         size = Integer.parseInt(sizeParam);
+    //     }
+
+    //     List<CompanySmallTruck> allTrucks;
+    //     Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+
+    //     // allTrucks = service.findByFilterQueriesListAndSort(startDate, endDate, query, sortByIdDesc);
+    //     allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, status);
+
+    //     if (showAll) {
+    //         trucks = allTrucks;
+    //     } else {
+    //         Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
+    //         // Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
+    //         Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+
+    //         trucks = truckPage.getContent();
+    //         totalPages = truckPage.getTotalPages();
+    //     }
+
+    //     if ("excel".equalsIgnoreCase(export)) {
+    //         exportCompanySmallTrucksReportToExcel(trucks, response);
+    //         return null;
+    //     }
+
+    //     model.addAttribute("trucks", trucks);
+    //     model.addAttribute("currentPage", page);
+    //     model.addAttribute("totalPages", totalPages);
+    //     model.addAttribute("pageSize", sizeParam);
+    //     model.addAttribute("pageSizeNumber", size);
+    //     model.addAttribute("showAll", showAll);
+    //     model.addAttribute("query", query);
+    //     model.addAttribute("startDate", startDate);
+    //     model.addAttribute("endDate", endDate);
+    //     model.addAttribute("statuses", Status.values());
+    //     model.addAttribute("status", status);
+
+    //     return "company-small-trucks/index";
+    // }
+
     @GetMapping
     public Object index(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "20") String sizeParam,
-        @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "query", required = false) String query,
-        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
-        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "startDate", required = false)
+            @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false)
+            @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
         @RequestParam(value = "status", required = false) Status status,
         @RequestParam(value = "export", required = false) String export,
         HttpServletResponse response,
         RedirectAttributes redirectAttributes
     ) throws IOException {
 
-        List<CompanySmallTruck> trucks;
-        int totalPages = 1;
-        int size;
-
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
             return "redirect:/company-small-trucks";
         }
 
-        if ("all".equalsIgnoreCase(sizeParam)) {
-            size = Integer.MAX_VALUE;
-        } else {
-            size = Integer.parseInt(sizeParam);
-        }
+        // ===== SIZE / ALL =====
+        boolean fetchAll = "all".equalsIgnoreCase(sizeParam);
+        int size = fetchAll ? Integer.MAX_VALUE : Integer.parseInt(sizeParam);
 
-        List<CompanySmallTruck> allTrucks;
-        Sort sortByIdDesc = Sort.by(Sort.Direction.DESC, "id");
+        // ===== SORT =====
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
 
-        // allTrucks = service.findByFilterQueriesListAndSort(startDate, endDate, query, sortByIdDesc);
-        allTrucks = service.findByFilterQueriesListAndSortAndStatus(startDate, endDate, query, sortByIdDesc, status);
+        Pageable pageable = fetchAll
+                ? Pageable.unpaged()
+                : PageRequest.of(page, size, sort);
 
-        if (showAll) {
-            trucks = allTrucks;
-        } else {
-            Pageable pageable = PageRequest.of(page, size, sortByIdDesc);
-            // Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPage(startDate, endDate, query, pageable);
-            Page<CompanySmallTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+        // ===== QUERY =====
+        Page<CompanySmallTruck> resultPage =
+                service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
 
-            trucks = truckPage.getContent();
-            totalPages = truckPage.getTotalPages();
-        }
+        List<CompanySmallTruck> trucks = resultPage.getContent();
 
+        int totalPages = fetchAll ? 1 : resultPage.getTotalPages();
+
+        long totalElements = fetchAll
+                ? trucks.size()
+                : resultPage.getTotalElements();
+
+        // ===== EXPORT =====
         if ("excel".equalsIgnoreCase(export)) {
             exportCompanySmallTrucksReportToExcel(trucks, response);
             return null;
         }
 
+        // ===== INDEX =====
+        long startIndex = fetchAll ? 1 : (long) page * size + 1;
+
+        long endIndex = fetchAll
+                ? totalElements
+                : calculateEndIndex(page, size, totalElements);
+
+        // ===== MODEL =====
         model.addAttribute("trucks", trucks);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("pageSizeNumber", size);
-        model.addAttribute("showAll", showAll);
         model.addAttribute("query", query);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("statuses", Status.values());
         model.addAttribute("status", status);
+        model.addAttribute("startIndex", startIndex);
+        model.addAttribute("endIndex", endIndex);
+        model.addAttribute("totalElements", totalElements);
 
         return "company-small-trucks/index";
+    }
+
+
+    private long calculateEndIndex(int currentPage, int pageSizeNumber, long totalElements) {
+        long endIndex = (long) currentPage * pageSizeNumber + pageSizeNumber;
+        return Math.min(endIndex, totalElements);
     }
 
 

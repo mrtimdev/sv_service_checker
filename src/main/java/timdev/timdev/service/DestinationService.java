@@ -1104,5 +1104,18 @@ public class DestinationService {
         return repository.findFirstByDateAndTruckIdAndSettingId(date, truckId, settingId);
     }
 
+
+    public Page<Destination> findByFilters(
+        String query,
+        LocalDate startDate,
+        LocalDate endDate,
+        List<Status> statuses,
+        Pageable pageable) {
+
+    return repository.findByFilters(
+            query, startDate, endDate, statuses, pageable);
+    }
+
+
     
 }

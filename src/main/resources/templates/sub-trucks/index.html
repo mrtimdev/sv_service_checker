@@ -148,6 +148,13 @@
                     <div>
                         <div class="flex justify-between items-center">
                             <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                                <!-- ✅ keep filters -->
+                                <input type="hidden" name="startDate" th:value="${startDate}" />
+                                <input type="hidden" name="endDate" th:value="${endDate}" />
+                                <input type="hidden" name="truckId" th:value="${truckId}" />
+                                <input type="hidden" name="truckOwner" th:value="${truckOwner}" />
+                                <input type="hidden" name="page" value="0" /> 
+                                <input type="hidden" name="status" th:value="${status}" />
                                 <div class="flex items-center">
                                     <label for="size">Size:</label>
                                     <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
@@ -339,11 +346,7 @@
                                 </li>
                             </ul>
 
-                            <a th:href="@{/sub-trucks(all=true)}"
-                                class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                th:text="#{show_all}"
-                                >
-                            </a>
+                            
                         </div>
                     </div>
                 </div>

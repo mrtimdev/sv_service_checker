@@ -147,5 +147,24 @@ public interface DestinationRepository extends JpaRepository<Destination, Long>,
             Pageable pageable
     );
 
+        @Query("""
+                SELECT d FROM Destination d
+                WHERE
+                        (:query = '' OR
+                        LOWER(d.name) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                        LOWER(d.code) LIKE LOWER(CONCAT('%', :query, '%'))
+                        )
+                AND (:startDate IS NULL OR d.date >= :startDate)
+                AND (:endDate IS NULL OR d.date <= :endDate)
+                AND d.status IN :statuses
+        """)
+        Page<Destination> findByFilters(
+                @Param("query") String query,
+                @Param("startDate") LocalDate startDate,
+                @Param("endDate") LocalDate endDate,
+                @Param("statuses") List<Status> statuses,
+                Pageable pageable);
+
+
     
 }

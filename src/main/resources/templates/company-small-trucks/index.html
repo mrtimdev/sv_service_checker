@@ -143,18 +143,17 @@
 
             <div class="">
                 <div class="flex justify-between items-center">
-                    <form method="get" 
-                        th:action="@{/company-small-trucks(
-                            page=${i},
-                            size=${pageSize},
-                            all=${showAll},
-                            query=${query != null ? query : ''},
-                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
-                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
-                            status=${status != null ? status.name() : ''},
-                        )}"
-                     
-                        class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                    <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                        <!-- keep filters -->
+                        <input type="hidden" name="query" th:value="${query}" />
+                        <input type="hidden" name="startDate"
+                            th:value="${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''}" />
+                        <input type="hidden" name="endDate"
+                            th:value="${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}" />
+                        <input type="hidden" name="status" th:value="${status}" />
+
+                        <!-- reset page -->
+                        <input type="hidden" name="page" value="0" />
                         <!-- Page size selector -->
                         <div class="flex items-center">
                             <label for="size">Size:</label>
@@ -287,7 +286,7 @@
 
             </div>
 
-            <div class="flex justify-start mt-4 items-center">
+            <!-- <div class="flex justify-start mt-4 items-center">
                 <ul class="inline-flex -space-x-px mr-4">
                     <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
                         <a th:href="@{/company-small-trucks(
@@ -307,12 +306,85 @@
                     </li>
                 </ul>
 
-                <!-- Show All button -->
                 <a th:href="@{/company-small-trucks(all=true)}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>
-            </div>
+            </div> -->
+
+            <!-- Pagination and Info -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+                    <!-- Info -->
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <span th:if="${totalElements > 0}">
+                            Showing 
+                            <span th:text="${startIndex}">1</span> to 
+                            <span th:text="${endIndex}">10</span> of 
+                            <span th:text="${totalElements}">100</span> entries
+                        </span>
+                        <span th:if="${totalElements == 0}">
+                            No entries found
+                        </span>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="flex items-center space-x-2" th:if="${totalPages > 1}">
+                        <!-- First Page -->
+                        <a th:href="@{/company-small-trucks(page=0, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
+                        th:if="${currentPage > 0}"
+                        class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        title="First Page">
+                            <i class="fa fa-angle-double-left"></i>
+                        </a>
+                        
+                        <!-- Previous Page -->
+                        <a th:href="@{/company-small-trucks(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
+                        th:if="${currentPage > 0}"
+                        class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        title="Previous Page">
+                            <i class="fa fa-angle-left"></i>
+                        </a>
+                        
+                        <!-- Page Numbers -->
+                        <div class="flex items-center space-x-1">
+                            <span th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                                <a th:href="@{/company-small-trucks(page=${i}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                                    startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                                    endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
+                                th:text="${i + 1}"
+                                th:classappend="${i == currentPage} ? 
+                                    'bg-blue-500 text-white border-blue-500' : 
+                                    'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                                class="px-3 py-2 border rounded-md text-sm">
+                                </a>
+                            </span>
+                        </div>
+                        
+                        <!-- Next Page -->
+                        <a th:href="@{/company-small-trucks(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''},)}"
+                        th:if="${currentPage < totalPages - 1}"
+                        class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        title="Next Page">
+                            <i class="fa fa-angle-right"></i>
+                        </a>
+                        
+                        <!-- Last Page -->
+                        <a th:href="@{/company-small-trucks(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
+                        th:if="${currentPage < totalPages - 1}"
+                        class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        title="Last Page">
+                            <i class="fa fa-angle-double-right"></i>
+                        </a>
+                    </div>
+                </div>
 
 
                 

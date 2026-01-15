@@ -58,93 +58,77 @@ public class DestinationController {
         @RequestParam(value = "query", defaultValue = "") String query,
         @RequestParam(value = "page", defaultValue = "0") int page,
         @RequestParam(value = "size", defaultValue = "200") String sizeParam,
-        @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
         @RequestParam(value = "sortBy", defaultValue = "distanceDate") String sortBy,
-        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
-        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+        @RequestParam(value = "startDate", required = false)
+            @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+        @RequestParam(value = "endDate", required = false)
+            @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
         @RequestParam(value = "order", defaultValue = "desc") String order,
         @RequestParam(value = "export", required = false) String export,
         HttpServletResponse response,
         RedirectAttributes redirectAttributes,
-        Model model) throws IOException 
+        Model model) throws IOException
     {
-        List<Destination> destinationPage;
-        int totalPages = 1;
-        
-        
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
             return "redirect:/destinations";
         }
 
-        int size;
-        
-        if ("all".equalsIgnoreCase(sizeParam)) {
-            size = Integer.MAX_VALUE;
-        } else {
-            size = Integer.parseInt(sizeParam); 
-        }
+        // ===== SORT =====
+        Sort.Direction direction = "asc".equalsIgnoreCase(order)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
 
-        // build Sort dynamically
-        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortField = switch (sortBy) {
+            case "code" -> "code";
+            case "id" -> "id";
+            case "name" -> "name";
+            case "distance" -> "distance";
+            default -> "id";
+        };
 
-        // map frontend sortBy values to entity fields
-        String sortField;
-        switch (sortBy) {
-            case "code":
-                sortField = "code"; 
-                break;
-            case "id":
-                sortField = "id";
-                break;
-            case "name":
-                sortField = "name";
-                break;
-            case "distance":
-                sortField = "distance";
-                break;
-            default:
-                sortField = "id";
-                break;
-        }
+        Sort sort = Sort.by(direction, sortField);
+
+        // ===== PAGEABLE / ALL =====
+        boolean fetchAll = "all".equalsIgnoreCase(sizeParam);
+        int size = fetchAll ? Integer.MAX_VALUE : Integer.parseInt(sizeParam);
+
+        Pageable pageable = fetchAll
+                ? Pageable.unpaged()
+                : PageRequest.of(page, size, sort);
 
         List<Status> statuses = List.of(Status.PENDING);
-        Sort sort = Sort.by(direction, sortField);
-        destinationPage = service.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
-        
-        if (showAll) {
-            // fetch all reports with filter
-            destinationPage = service.getAllFiltered(query, sort);
-        } else {
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Destination> withPage = service.findByFilterQueriesWithStatusAndPage(query, startDate, endDate, pageable, statuses);
-            destinationPage = withPage.getContent();
-            totalPages = withPage.getTotalPages();
-        }
 
-        // Sort sort = Sort.by(direction, sortField);
-        // destinationPage = service.findByFilterQueriesWithList(query, startDate, endDate, sort);
-        
-        // if (showAll) {
-        //     // fetch all reports with filter
-        //     destinationPage = service.getAllFiltered(query, sort);
-        // } else {
-        //     Pageable pageable = PageRequest.of(page, size, sort);
-        //     Page<Destination> withPage = service.findByFilterQueriesWithPage(query, startDate, endDate, pageable);
-        //     destinationPage = withPage.getContent();
-        //     totalPages = withPage.getTotalPages();
-        // }
+        Page<Destination> resultPage =
+                service.findByFilters(query, startDate, endDate, statuses, pageable);
 
+        List<Destination> destinationPage = resultPage.getContent();
+        int totalPages = fetchAll ? 1 : resultPage.getTotalPages();
+
+        long totalElements = fetchAll
+        ? destinationPage.size()
+        : resultPage.getTotalElements();
+
+        long startIndex = fetchAll ? 1 : (long) page * size + 1;
+
+        long endIndex = fetchAll
+                ? totalElements
+                : calculateEndIndex(page, size, totalElements);
+
+
+
+        // ===== EXPORT =====
         if ("excel".equalsIgnoreCase(export)) {
             service.exportExcel(destinationPage, response);
             return null;
         }
+
         if ("excel-for-company-truck".equalsIgnoreCase(export)) {
             service.exportExcelForImportCompanyTruck(destinationPage, response);
             return null;
         }
 
-        // put everything into model
+        // ===== MODEL =====
         model.addAttribute("data", destinationPage);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
@@ -152,16 +136,23 @@ public class DestinationController {
         model.addAttribute("pageSizeNumber", size);
         model.addAttribute("query", query);
 
-        model.addAttribute("showAll", showAll);
-
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("order", order);
-
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
 
+        model.addAttribute("startIndex", startIndex);
+        model.addAttribute("endIndex", endIndex);
+        model.addAttribute("totalElements", totalElements); 
+
         return "destinations/index";
     }
+
+    private long calculateEndIndex(int currentPage, int pageSizeNumber, long totalElements) {
+        long endIndex = (long) currentPage * pageSizeNumber + pageSizeNumber;
+        return Math.min(endIndex, totalElements);
+    }
+
 
     // own record for user destinations
     @PreAuthorize("hasAuthority('DESTINATION_VIEW')")
