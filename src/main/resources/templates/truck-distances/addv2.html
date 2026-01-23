@@ -50,13 +50,13 @@
                             <div>
                                 <label for="distanceDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
                                 <input type="text" id="distanceDate" name="distanceDate"
-                                    class="datepicker w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100"
+                                    class="datepicker w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
                                     required>
                             </div>
                             <div>
                                 <label for="distanceNote" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note</label>
                                 <input type="text" id="distanceNote" name="distanceNote"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
                                     placeholder="Note something..."
                                     >
                             </div>
@@ -73,7 +73,7 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Truck</label>
                                     <select th:field="*{distances[__${iterStat.index}__].truckId}" 
-                                            class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100"
+                                            class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
                                             required>
                                         <option value="">Select a truck</option>
                                         <option th:each="truck : ${trucks}" 
@@ -85,7 +85,7 @@
                                     <div class="flex-grow">
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distance (km)</label>
                                         <input type="number" step="0.01" th:field="*{distances[__${iterStat.index}__].distance}" 
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
                                             min="0" required>
                                     </div>
                                     <button type="button" class="remove-entry ml-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2">

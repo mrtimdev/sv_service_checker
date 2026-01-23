@@ -45,11 +45,13 @@ import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.Measurement;
 import timdev.timdev.dto.RequestStatus;
 import timdev.timdev.dto.Status;
+import timdev.timdev.entity.CompanySmallTruck;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.DestinationSetting;
 import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
+import timdev.timdev.service.CompanySmallTruckService;
 import timdev.timdev.service.CompanyTruckService;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
@@ -69,6 +71,8 @@ public class CompanyTruckController {
     private  DestinationSettingService destinationSettingService;
 
     private NotificationService notificationService;
+
+    private CompanySmallTruckService smallTruckService;
 
     // @GetMapping
     // public Object index(Model model,
@@ -1028,6 +1032,268 @@ public class CompanyTruckController {
             System.err.println("Failed to send error notification: " + e.getMessage());
         }
     }
+
+
+    @GetMapping("/main/reports")
+    public String mainReports(Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "startDate", required = false)
+                @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false)
+                @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "status", required = false) Status status,
+            @RequestParam(value = "export", required = false) String export,
+            HttpServletResponse response,
+            RedirectAttributes redirectAttributes
+    ) throws IOException {
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            redirectAttributes.addFlashAttribute("error", "Start date cannot be after end date!");
+            return "redirect:/company-trucks/main/reports";
+        }
+
+        // ===== SIZE / ALL =====
+        boolean fetchAll = "all".equalsIgnoreCase(sizeParam);
+        int size = fetchAll ? Integer.MAX_VALUE : Integer.parseInt(sizeParam);
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = fetchAll ? Pageable.unpaged() : PageRequest.of(page, size, sort);
+
+        // ===== QUERY =====
+        Page<CompanyTruck> truckPage = service.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+        Page<CompanySmallTruck> smallTruckPage = smallTruckService.findByFilterQueriesPageAndStatus(startDate, endDate, query, pageable, status);
+
+        List<CompanyTruck> companyTrucks = truckPage.getContent();
+        List<CompanySmallTruck> companySmallTrucks = smallTruckPage.getContent();
+
+        int totalPages = fetchAll ? 1 : Math.max(truckPage.getTotalPages(), smallTruckPage.getTotalPages());
+        long totalElements = fetchAll 
+                ? companyTrucks.size() + companySmallTrucks.size() 
+                : truckPage.getTotalElements() + smallTruckPage.getTotalElements();
+
+        // ===== EXPORT =====
+        if ("excel".equalsIgnoreCase(export)) {
+            exportCompanySmallAndBigTrucksReportToExcel(companyTrucks, companySmallTrucks, response);
+            return null;
+        }
+
+        // ===== INDEX =====
+        long startIndex = fetchAll ? 1 : (long) page * size + 1;
+        long endIndex = fetchAll ? totalElements : calculateEndIndex(page, size, totalElements);
+
+        // ===== MODEL =====
+        model.addAttribute("companyTrucks", companyTrucks);
+        model.addAttribute("companySmallTrucks", companySmallTrucks);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("pageSizeNumber", size);
+        model.addAttribute("query", query);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("statuses", Status.values());
+        model.addAttribute("status", status);
+        model.addAttribute("startIndex", startIndex);
+        model.addAttribute("endIndex", endIndex);
+        model.addAttribute("totalElements", totalElements);
+
+        return "company-trucks/main_reports";
+    }
+
+
+    private void exportCompanySmallAndBigTrucksReportToExcel(
+        List<CompanyTruck> trucks, 
+        List<CompanySmallTruck> smallTrucks, 
+        HttpServletResponse response) throws IOException {
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"company_trucks_fuel_report.xlsx\"");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("របាយការណ៏តួរលេខចាក់ប្រេងឡាន");
+
+            // --- Create styles ---
+            CellStyle headerStyle = createHeaderStyle(workbook);
+            CellStyle titleStyle = createTitleStyle(workbook);
+            CellStyle dataStyle = createDataStyle(workbook);
+            CellStyle numberStyle = createNumberStyle(workbook);
+            CellStyle dateStyle = createDateStyle(workbook);
+            CellStyle datetimeStyle = createDateTimeStyle(workbook);
+
+            // --- Title row ---
+            Row titleRow = sheet.createRow(0);
+            titleRow.setHeightInPoints(35);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("របាយការណ៏តួរលេខចាក់ប្រេងឡាន");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+
+            // --- Info row (generated at) ---
+            Row infoRow = sheet.createRow(1);
+            infoRow.setHeightInPoints(20);
+            Cell infoCell = infoRow.createCell(0);
+            infoCell.setCellValue("Generated on: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm a")));
+            CellStyle infoStyle = workbook.createCellStyle();
+            Font infoFont = workbook.createFont();
+            infoFont.setItalic(true);
+            infoFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            infoStyle.setFont(infoFont);
+            infoCell.setCellStyle(infoStyle);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 12));
+
+            // --- Header row ---
+            Row headerRow = sheet.createRow(2);
+            headerRow.setHeightInPoints(25);
+            String[] headers = {
+                "កាលបរិច្ឆេទ", "លេខឡាន", "គោលដៅសរុប", "ចម្ងាយសរុប (គីឡូម៉ែត្រ)", 
+                "មធ្យមភាគ (Average)", "ប្រភេទវាស់វែង", "ចំនួនប្រេង", "ប្រេងផ្សេងៗ", 
+                "សរុបប្រេងចាក់អោយឡាន", "ស្ថានភាព", "បង្កើតនៅ", "កែប្រែចុងក្រោយ", "អ្នកបង្កើត"
+            };
+            for (int i = 0; i < headers.length; i++) {
+                createCell(headerRow, i, headers[i], headerStyle);
+            }
+
+            int rowNum = 3;
+
+            // --- Section: Company Trucks ---
+            rowNum = addSectionTitle(sheet, rowNum, "Company Trucks", headerStyle);
+
+            for (CompanyTruck truck : trucks) {
+                Row row = sheet.createRow(rowNum++);
+                row.setHeightInPoints(20);
+                fillTruckRow(row, truck, dataStyle, numberStyle, dateStyle, datetimeStyle);
+            }
+
+            // --- Section: Company Small Trucks ---
+            rowNum = addSectionTitle(sheet, rowNum, "Company Small Trucks", headerStyle);
+
+            for (CompanySmallTruck truck : smallTrucks) {
+                Row row = sheet.createRow(rowNum++);
+                row.setHeightInPoints(20);
+                fillSmallTruckRow(row, truck, dataStyle, numberStyle, dateStyle, datetimeStyle);
+            }
+
+            // --- Auto-size columns ---
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.min(currentWidth + 1024, 256 * 256));
+            }
+
+            // --- Freeze headers and add auto-filter ---
+            sheet.createFreezePane(0, 3);
+            sheet.setAutoFilter(new CellRangeAddress(2, 2, 0, headers.length - 1));
+
+            workbook.write(response.getOutputStream());
+        }
+    }
+
+    private int addSectionTitle(Sheet sheet, int rowNum, String title, CellStyle style) {
+        Row row = sheet.createRow(rowNum++);
+        Cell cell = row.createCell(0);
+        cell.setCellValue(title);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        cell.setCellStyle(style);
+        sheet.addMergedRegion(new CellRangeAddress(row.getRowNum(), row.getRowNum(), 0, 12));
+        return rowNum;
+    }
+
+    private void fillTruckRow(Row row, CompanyTruck truck, CellStyle dataStyle, CellStyle numberStyle, CellStyle dateStyle, CellStyle datetimeStyle) {
+        createCell(row, 0, truck.getDate() != null ? truck.getDate() : LocalDate.now(), dateStyle);
+        createCell(row, 1, truck.getTruck() != null ? truck.getTruck().getLicensePlate() : "", dataStyle);
+        createCell(row, 2, truck.getTotalDestination() != null ? truck.getTotalDestination() : "0", dataStyle);
+        createCell(row, 3, truck.getTotalKm() != null ? truck.getTotalKmFormat() : 0.0, numberStyle);
+        createCell(row, 4, truck.getAverage() != null ? truck.getAverageFormat() : 0.0, numberStyle);
+        createCell(row, 5, truck.getMeasurement() != null ? truck.getMeasurement().name() : "", dataStyle);
+        createCell(row, 6, truck.getLitreQuantity() != null ? truck.getLitreQuantityFormat() : 0.0, numberStyle);
+        createCell(row, 7, truck.getOtherOils() != null ? truck.getOtherOils() : "", dataStyle);
+        createCell(row, 8, truck.getTotalOilsChange() != null ? truck.getTotalOilsChangeFormat() : 0.0, numberStyle);
+        createCell(row, 9, truck.getStatus() != null ? truck.getStatus().name() : "", dataStyle);
+        createCell(row, 10, truck.getCreatedAt() != null ? truck.getCreatedAt() : LocalDateTime.now(), datetimeStyle);
+        createCell(row, 11, truck.getUpdatedAt() != null ? truck.getUpdatedAt() : "", datetimeStyle);
+        createCell(row, 12, truck.getCreatedBy() != null ? truck.getCreatedBy().fullName() : "", dataStyle);
+    }
+
+    private void fillSmallTruckRow(Row row, CompanySmallTruck truck, CellStyle dataStyle, CellStyle numberStyle, CellStyle dateStyle, CellStyle datetimeStyle) {
+        createCell(row, 0, truck.getDate() != null ? truck.getDate() : LocalDate.now(), dateStyle);
+        createCell(row, 1, truck.getTruck().getLicensePlate() != null ? truck.getTruck().getLicensePlate() : "", dataStyle);
+        createCell(row, 2, truck.getTotalDestination() != null ? truck.getTotalDestination() : "0", dataStyle);
+        createCell(row, 3, truck.getTotalKm() != null ? truck.getTotalKmFormat() : 0.0, numberStyle);
+        createCell(row, 4, truck.getAverage() != null ? truck.getAverageFormat() : 0.0, numberStyle);
+        createCell(row, 5, truck.getMeasurement() != null ? truck.getMeasurement() : "", dataStyle);
+        createCell(row, 6, truck.getLitreQuantity() != null ? truck.getLitreQuantityFormat() : 0.0, numberStyle);
+        createCell(row, 7, truck.getOtherOils() != null ? truck.getOtherOils() : "", dataStyle);
+        createCell(row, 8, truck.getTotalOilsChange() != null ? truck.getTotalOilsChangeFormat() : 0.0, numberStyle);
+        createCell(row, 9, truck.getStatus() != null ? truck.getStatus().name() : "", dataStyle);
+        createCell(row, 10, truck.getCreatedAt() != null ? truck.getCreatedAt() : LocalDateTime.now(), datetimeStyle);
+        createCell(row, 11, truck.getUpdatedAt() != null ? truck.getUpdatedAt() : "", datetimeStyle);
+        createCell(row, 12, truck.getCreatedBy() != null ? truck.getCreatedBy().fullName() : "", dataStyle);
+    }
+
+
+
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 12);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createTitleStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 16);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle createDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setWrapText(true);
+        return style;
+    }
+
+    private CellStyle createNumberStyle(Workbook workbook) {
+        CellStyle style = createDataStyle(workbook);
+        style.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00"));
+        return style;
+    }
+
+    private CellStyle createDateStyle(Workbook workbook) {
+        CellStyle style = createDataStyle(workbook);
+        style.setDataFormat(workbook.createDataFormat().getFormat("MMM dd, yyyy"));
+        return style;
+    }
+
+    private CellStyle createDateTimeStyle(Workbook workbook) {
+        CellStyle style = createDataStyle(workbook);
+        style.setDataFormat(workbook.createDataFormat().getFormat("MMM dd, yyyy HH:mm a"));
+        return style;
+    }
+
 
 
 }

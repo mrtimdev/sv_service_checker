@@ -1,0 +1,83 @@
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="empty-state(icon, title, message, buttonText, buttonLink)">
+    <td colspan="50" class="p-8 text-center">
+        <div class="max-w-md mx-auto">
+            <!-- Icon -->
+            <div class="mb-4" th:if="${icon != null}">
+                <i style="font-size: 50px;" class="fa-solid fa-magnifying-glass text-[50px] mx-auto text-gray-400 dark:text-gray-500"></i>
+            </div>
+            
+            <!-- Text -->
+            <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2" th:text="${title}">
+                No data found
+            </h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6" th:text="${message}">
+                No data is currently available.
+            </p>
+            
+            <!-- Optional action button -->
+            <a th:href="${buttonLink}" 
+               th:if="${buttonText != null and buttonLink != null}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span th:text="${buttonText}">Add Data</span>
+            </a>
+        </div>
+    </td>
+</div>
+
+<div th:fragment="empty-state-simple(title, message)">
+    <td colspan="8" class="p-8 text-center">
+        <div class="inline-flex flex-col items-center">
+            <!-- Simple icon -->
+            <div class="w-12 h-12 mb-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+            </div>
+            
+            <!-- Text -->
+            <h4 class="text-gray-700 dark:text-gray-300 font-medium mb-1" th:text="${title}">
+                No records available
+            </h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400" th:text="${message}">
+                Start by adding your first item
+            </p>
+        </div>
+    </td>
+</div>
+
+<!-- Icon definitions for reuse -->
+<div style="display: none;">
+    <!-- Smiley face icon -->
+    <span id="icon-smiley" th:fragment="icon-smiley">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </span>
+    
+    <!-- Document icon -->
+    <span id="icon-document" th:fragment="icon-document">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    </span>
+    
+    <!-- Location icon -->
+    <span id="icon-location" th:fragment="icon-location">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+    </span>
+    
+    <!-- Search icon -->
+    <span id="icon-search" th:fragment="icon-search">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </span>
+    
+    <!-- Truck icon -->
+    <span id="icon-truck" th:fragment="icon-truck">
+        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+    </span>
+</div>

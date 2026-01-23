@@ -4,26 +4,28 @@
     <th:block th:insert="~{layouts/main :: head}"></th:block>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
     <style>
-        .dataTables_filter input {
-            border: 1px solid #d1d5db !important;
-            border-radius: 0.375rem !important;
-            padding: 0.375rem 0.75rem !important;
+        .data-type.sticky
+        {
+            position: sticky;
+            top: 133px;
+            z-index: 51;
+            background: #d8d9dc5c;
+            backdrop-filter: blur(2px);
         }
-        .dataTables_length select {
-            border: 1px solid #d1d5db !important;
-            border-radius: 0.375rem !important;
-            padding: 0.25rem 0.5rem !important;
+        .table-wrapper {
+            max-height: 600px;
+            overflow-y: auto;
         }
-        .dataTables_processing {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+        #main-reports thead.sticky th {
+            position: sticky;
+            top: 72px;
+            z-index: 50;
+            background: #d8d9dc5c;
+            backdrop-filter: blur(2px);
         }
+
+
     </style>
 </head>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard')}">
@@ -48,25 +50,19 @@
                     <span class="block sm:inline" th:text="${error}"></span>
                 </div>
 
-
                 <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Company Small Trucks</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200" th:text="#{company_big_and_small_trucks_reports}"></h1>
 
                 <div class="flex gap-2 items-center">
-                    <a th:href="@{/company-small-trucks/create}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
-                        <i class="fa fa-plus mr-1"></i>
-                        Add New Entry
-                    </a>
-                    <a th:href="@{/company-small-trucks/import}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center space-x-2">
-                        <i class="fa fa-file-text mr-1"></i>
-                        Import Entries
-                    </a>
+                    
 
-                    <a th:href="@{/company-small-trucks(
+                    <a th:href="@{/company-trucks/main/reports(
                         page=${currentPage},
                         size=${pageSize},
                         all=${showAll},
-                        licensePlate=${licensePlate != null ? licensePlate : ''},
+                        query=${query != null ? query : ''},
+                        startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
+                        endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
                         status=${status != null ? status.name() : ''},
                         export='excel'
                     )}" 
@@ -79,9 +75,9 @@
             </div>
 
             <div class="mb-2">
-                <form method="get"
+                <form method="get" 
                     th:class="${startDate != null or endDate != null or query != null or status != null} ? '' : 'hidden'" 
-                    id="filterContent" 
+                    id="filterContent"    
                 >
                     <fieldset class="p-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
                         <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Filters</legend>
@@ -134,7 +130,7 @@
                                 class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
                                 Apply Filters
                             </button>
-                            <a href="/company-small-trucks"
+                            <a href="/company-trucks/main/reports"
                                 th:text="#{reset}"
                                 class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
                                 Reset
@@ -147,6 +143,7 @@
             <div class="">
                 <div class="flex justify-between items-center mb-4">
                     <form method="get" class="flex items-center gap-4 text-gray-800 dark:text-gray-200">
+
                         <!-- keep filters -->
                         <input type="hidden" name="query" th:value="${query}" />
                         <input type="hidden" name="startDate"
@@ -160,7 +157,7 @@
                         <!-- Page size selector -->
                         <div class="flex items-center">
                             <label for="size">Size:</label>
-                            <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
+                            <select id="size" name="size" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
                                 <option th:value="5" th:selected="${pageSize == '5'}">5</option>
                                 <option th:value="10" th:selected="${pageSize == '10'}">10</option>
                                 <option th:value="20" th:selected="${pageSize == '20'}">20</option>
@@ -170,6 +167,7 @@
                             </select>
                         </div>
                     </form>
+
                     <a id="toggleFilter" class="cursor-pointer inline-flex gap-2 items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800">
                         <i class="fa fa-filter"></i>  
                         <span>Toggle Filter</span>
@@ -177,42 +175,69 @@
                 </div>
                 
 
-                <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                <table id="main-reports" class="w-full border-collapse border border-gray-300 dark:border-gray-700">
                     <thead>
-                        <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                        <tr
+                            class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
                             <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{date}">កាលបរិច្ឆេទ</th>
-                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{license_plate}">លេខឡាន</th>
-                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{truck_size}"></th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_destination}">គោលដៅសរុប</th>
-                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_km}"></th>
+                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{truck_no}">លេខឡាន</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{destination}">គោលដៅសរុប</th>
+                            <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_distance}">ចម្ងាយសរុប</th>
+                            <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{average}">មធ្យមភាគ</th>
                             <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}"></th>
                             <th style="width: 120px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_quantity}">ចំនួនប្រេង</th>
-                            <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_fuel}">សរុបប្រេងចាក់អោយឡាន</th>
-                                <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">ស្ថានភាព</th>
+                            <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{other_fuel}">ប្រេងផ្សេងៗ</th>
+                            <th style="width: 150px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{total_fuel_fill_for_truck}">សរុបប្រេងចាក់អោយឡាន</th>
 
-                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{deducted_by}">ចាក់ប្រេងដោយ</th>
-                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{deducted_at}">ចាក់ប្រេងនៅ</th>
+                            <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{request_type}">ប្រភេទសំណើរ</th>
+
                             <th style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{created_at}">បង្កើតនៅ</th>
+                            <th style="width: 120px;"  class="p-3 text-center text-gray-700 border border-gray-300 dark:border-gray-700 bg-yellow-500" th:text="#{fuel_filled_status}">ស្ថានភាពចាក់ប្រេង</th>
+                            
 
-                            <th style="width: 250px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_actions}"></th>
-                            <th style="width: 80px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">សកម្មភាព</th>
+                            
+                            
+                            <th style="width: 150px;"class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{filled_by}">អ្នកចាក់</th>
+                            <th  style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{filled_at}">ចាក់នៅម៉ោង</th>
+                            <th  style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{last_update}"></th>
+                            <th  style="width: 160px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{created_by}"></th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        <tr th:each="data, iterStat : ${trucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                        <tr class="data-type">
+                            <td colspan="17" class="p-1 text-left text-gray-300 border border-gray-300 dark:border-gray-700 bg-gray-500" th:text="#{company_trucks}"></td>
+                        </tr>
+                        <tr colspan="17" th:if="${companyTrucks.empty}" class="text-center">
+                            <th:block th:insert="components/empty-data :: empty-state(
+                                icon=${'fa fa-plus-circle'},
+                                title='No Company Big Trucks found',
+                                message='No data is currently available. Try adjusting your search or add a new Company Big Trucks.',
+                                buttonText=null,
+                                buttonLink=null
+                            )" />
+                        </tr>
+                        <tr th:each="data, iterStat : ${companyTrucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
                                 th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
                             </td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.sizeOfTruck}"></td>
                             <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getLitreQuantityFormat()}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalOilsChangeFormat()}"></td>
+
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="#{company_trucks}"></td>
+
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            
+                            
+
                             <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
                                 <span th:class="${data.status.name == 'PENDING' ? 
                                     'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
@@ -221,105 +246,75 @@
                                 </span>
                             </td>
 
+
+
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.deductedBy?.fullName}"></td>
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.deductedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.updatedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.createdBy?.fullName}"></td>
+
+                            
+
+                            
+                        </tr>
+                        
+                        <tr class="data-type">
+                            <td colspan="17" class="p-1 text-left text-gray-300 border border-gray-300 dark:border-gray-700 bg-gray-500" th:text="#{company_small_trucks}"></td>
+                        </tr>
+                        <tr colspan="17" th:if="${companySmallTrucks.empty}" class="text-center">
+                            <th:block th:insert="components/empty-data :: empty-state(
+                                icon=${'fa fa-plus-circle'},
+                                title='No Company Small Trucks found',
+                                message='No data is currently available. Try adjusting your search or add a new Company Small Trucks.',
+                                buttonText=null,
+                                buttonLink=null
+                            )" />
+                        </tr>
+                        <tr th:each="data, iterStat : ${companySmallTrucks}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                th:text="${(currentPage * pageSizeNumber) + iterStat.index + 1}">1
+                            </td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.date, 'MMM dd, yyyy')}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.truck.licensePlate}"></td>
+                            <td class="text-left p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.totalDestination}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalKmFormat()}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getAverageFormat()}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.measurement}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getLitreQuantityFormat()}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.otherOils}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.getTotalOilsChangeFormat()}"></td>
+
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="#{company_small_trucks}"></td>
+
                             <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
                             
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
-                                
-                                <div class="flex gap-2 items-center justify-center">
+                            
 
-                                    <a 
-                                        th:if="${data.status.name == 'PENDING'}"
-                                        th:href="@{/company-small-trucks/status/update(id=${data.id}, action='DEDUCTED', isByAdmin=true, backUrl=${requestPathWithParams})}"
-                                        class="cursor-pointer bg-green-600 text-white px-3 py-1 rounded-lg shadow">
-                                        <i class="fa fa-arrow-alt-circle-right"></i> Mark as Deducted
-                                    </a>
-
-                                    <a 
-                                        th:if="${
-                                            data.status.name == 'DEDUCTED'
-                                        }"
-                                        th:href="@{/company-small-trucks/status/update(id=${data.id}, action='PENDING', isByAdmin=true, backUrl=${requestPathWithParams})}"
-                                        class="!cursor-pointer bg-red-600 text-white px-3 py-1 rounded-lg shadow">
-                                        <i class="fa fa-arrow-alt-circle-left"></i> Change to Pending
-                                    </a>
-
-                                </div>
-
+                            <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                                <span th:class="${data.status.name == 'PENDING' ? 
+                                    'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                    'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                    th:text="${data.status}">
+                                </span>
                             </td>
 
-                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
-                                <div x-data="{ open: false }" class="relative">
-                                    <!-- Dropdown toggle button -->
-                                    <button 
-                                        @click="open = !open" 
-                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center space-x-2">
-                                        <i class="fas fa-bars"></i>
-                                        <span>សកម្មភាព</span>
-                                    </button>
 
-                                    <!-- Dropdown menu -->
-                                    <div 
-                                        x-show="open" 
-                                        x-cloak
-                                        @click.away="open = false" 
-                                        x-transition 
-                                        class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
 
-                                        <a th:href="@{/company-small-trucks/edit/{id}(id=${data.id})}" 
-                                            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
-                                            <i class="fas fa-edit text-green-500"></i>
-                                            <span th:text="#{edit}"></span>
-                                        </a>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.deductedBy?.fullName}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.deductedAt, 'MMM dd, yyyy HH:mm a')}"></td>
 
-                                        <a th:href="@{/company-small-trucks/delete/{id}(id=${data.id})}" 
-                                            class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-100 space-x-2"
-                                            onclick="return confirm('Are you sure, delete this record?')">
-                                            <i class="fas fa-trash-alt text-red-500"></i>
-                                            <span th:text="#{delete}">លុប</span>
-                                        </a>
-                                    </div>
-                                </div>
-                            </td>
+                            
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(data.updatedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                            <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${data.createdBy?.fullName}"></td>
+                            
                         </tr>
                     </tbody>
                 </table>
 
-
-
-
-                
-
             </div>
 
-            <!-- <div class="flex justify-start mt-4 items-center">
-                <ul class="inline-flex -space-x-px mr-4">
-                    <li th:if="${totalPages > 1}" th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/company-small-trucks(
-                            page=${i},
-                            size=${pageSize},
-                            all=${showAll},
-                            query=${query != null ? query : ''},
-                            startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
-                            endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''},
-                            status=${status != null ? status.name() : ''},
-                        )}"
-                        th:text="${i + 1}"
-                        class="px-3 py-1 border rounded-md mr-1 
-                                text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-700"
-                        th:classappend="${i == currentPage} ? ' bg-blue-500 text-white'">
-                        </a>
-                    </li>
-                </ul>
 
-                <a th:href="@{/company-small-trucks(all=true)}"
-                class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
-                    Show All
-                </a>
-            </div> -->
-
-            <!-- Pagination and Info -->
+                <!-- Pagination and Info -->
                 <div class="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
                     <!-- Info -->
                     <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -337,7 +332,7 @@
                     <!-- Pagination -->
                     <div class="flex items-center space-x-2" th:if="${totalPages > 1}">
                         <!-- First Page -->
-                        <a th:href="@{/company-small-trucks(page=0, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                        <a th:href="@{/company-trucks/main/reports(page=0, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
                             startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
                             endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
                         th:if="${currentPage > 0}"
@@ -347,7 +342,7 @@
                         </a>
                         
                         <!-- Previous Page -->
-                        <a th:href="@{/company-small-trucks(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                        <a th:href="@{/company-trucks/main/reports(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
                             startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
                             endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
                         th:if="${currentPage > 0}"
@@ -359,7 +354,7 @@
                         <!-- Page Numbers -->
                         <div class="flex items-center space-x-1">
                             <span th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                                <a th:href="@{/company-small-trucks(page=${i}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                                <a th:href="@{/company-trucks/main/reports(page=${i}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
                                     startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
                                     endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
                                 th:text="${i + 1}"
@@ -372,7 +367,7 @@
                         </div>
                         
                         <!-- Next Page -->
-                        <a th:href="@{/company-small-trucks(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                        <a th:href="@{/company-trucks/main/reports(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
                             startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
                             endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''},)}"
                         th:if="${currentPage < totalPages - 1}"
@@ -382,7 +377,7 @@
                         </a>
                         
                         <!-- Last Page -->
-                        <a th:href="@{/company-small-trucks(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
+                        <a th:href="@{/company-trucks/main/reports(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, order=${order}, query=${query != null ? query : ''},
                             startDate=${startDate != null ? #temporals.format(startDate, 'MMM dd, yyyy') : ''},
                             endDate=${endDate != null ? #temporals.format(endDate, 'MMM dd, yyyy') : ''}, status=${status != null ? status.name() : ''})}"
                         th:if="${currentPage < totalPages - 1}"
@@ -427,6 +422,18 @@
                 dateFormat: "M d, Y",
                 allowInput: true
             });
+
+            $(window).on("scroll", function () {
+                let offset = $("#main-reports").offset().top;
+
+                if ($(window).scrollTop() > offset - 72) {
+                    $("#main-reports thead, #main-reports .data-type").addClass("sticky");
+                    
+                } else {
+                    $("#main-reports thead, #main-reports .data-type").removeClass("sticky");
+                }
+            });
+
         })
     </script>
         

@@ -8,30 +8,35 @@
     <title th:text="'SV Trucking' + (${pageTitle} ? ' - ' + ${pageTitle} : '')">SV Trucking</title>
 
     <link rel="shortcut icon" type="image/png" href="/images/favicon.ico"/>
+
+    
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flaticon/flaticon-uicons@3.3.1/css/all/all.min.css">
     <!-- In your <head> -->
     <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link th:href="@{/css/admin.css}" rel="stylesheet">
-    
+   
     <style>
-        .dataTables_filter 
-        {
-            padding-bottom: 10px !important;
-        }
-
         [is-show="true"]
         {
             display: block !important;
         }
+        body {
+            font-family: Battambang, "Noto Sans Khmer", "Khmer OS Battambang", "Khmer OS System", "Khmer UI", DaunPenh, sans-serif !important;
+        }
     </style>
 
     <th:block th:fragment="body-scripts"></th:block>
-     <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/output.css}"> 
+
+    
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full" th:classappend="${isMobile} ? 'mobile' : (isTablet ? 'tablet' : 'desktop')">
@@ -100,6 +105,8 @@
     <script src="https://cdn.jsdelivr.net/npm/detect-mobile-browser@5.0.0/detect-browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mobile-detect@1.4.5/mobile-detect.min.js"></script>
 
+
+
     <script>
         dayjs.extend(dayjs_plugin_relativeTime);
     </script>
@@ -108,9 +115,30 @@
 
    
 
-
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        khmer: [
+                        'Battambang',
+                        'Noto Sans Khmer',
+                        'Khmer OS Battambang',
+                        'Khmer OS System',
+                        'Khmer UI',
+                        'DaunPenh',
+                        'sans-serif'
+                        ]
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
 
     <script>
+        
         // On page load or when changing themes, best to add inline in `head` to avoid FOUC
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark')

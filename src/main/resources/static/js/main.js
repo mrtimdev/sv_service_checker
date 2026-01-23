@@ -192,3 +192,11 @@ function formatDate(dateStr, options = { showTime: false, showAgo: false }) {
 
     return formatted;
 }
+
+
+$(function(){
+    // $("#toggleFilter").click(function(e) {
+    //     e.preventDefault();
+    //     $("#filterContent").slideToggle();
+    // })
+})

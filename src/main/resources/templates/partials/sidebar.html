@@ -41,7 +41,7 @@
 
                     <li>
                         <a href="/company-trucks"
-                            th:classappend="${requestURI.startsWith('/company-trucks') and requestURI != '/company-trucks/deduction/status'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI.startsWith('/company-trucks') and requestURI != '/company-trucks/deduction/status' and requestURI != '/company-trucks/main/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-truck"></i>
                             <span th:text="#{company_trucks}"></span>
@@ -157,21 +157,6 @@
 
             </div>
 
-            <!-- Destinations Group -->
-            <!-- <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_VIEW') || hasAuthority('FUEL_REQUEST_USER_RECORD'))">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
-                <ul>
-                    <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
-                        <a href="/destinations/u/report"
-                            th:classappend="${requestURI == '/destinations/u/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-exchange"></i>
-                            <span th:text="#{destinations_report}"></span>
-                        </a>
-                    </li>
-                </ul>
-            </div> -->
-
             <!-- Fuel Group -->
             <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('COMPANY_TRUCK_VIEW') || hasAuthority('SUB_TRUCK_Fill') || hasAuthority('FUEL_REQUEST_VIEW'))">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
@@ -218,12 +203,23 @@
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
 
+                    
+
                     <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
                         <a href="/destinations/u/report"
                             th:classappend="${requestURI == '/destinations/u/report'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-exchange"></i>
                             <span th:text="#{destinations_report}"></span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/company-trucks/main/reports"
+                            th:classappend="${requestURI == '/company-trucks/main/reports'} ? 'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-th"></i>
+                            <span th:text="#{big_and_small_trucks_reports}"></span>
                         </a>
                     </li>
 

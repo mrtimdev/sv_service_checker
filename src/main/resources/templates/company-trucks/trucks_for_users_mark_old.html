@@ -95,7 +95,7 @@
                         <!-- Page size selector -->
                         <div class="flex items-center">
                             <label for="size">Size:</label>
-                            <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
+                            <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
                                 <option th:value="5" th:selected="${pageSize == '5'}">5</option>
                                 <option th:value="10" th:selected="${pageSize == '10'}">10</option>
                                 <option th:value="20" th:selected="${pageSize == '20'}">20</option>

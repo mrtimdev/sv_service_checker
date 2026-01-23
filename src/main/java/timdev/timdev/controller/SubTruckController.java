@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -66,7 +67,7 @@ public class SubTruckController {
 
     private NotificationService notificationService;
 
-    @GetMapping({"", "/reports"})
+    @GetMapping()
     public Object list(
             Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -123,6 +124,66 @@ public class SubTruckController {
         model.addAttribute("showAll", showAll);
 
         return "sub-trucks/index";
+    }
+
+
+    @GetMapping("/reports")
+    public Object report(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        // Fetch filtered list
+        Page<SubTruck> pageResult = service.findFiltered(page, size, licensePlate, truckOwner, truckId, status, startDate, endDate, null);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportReportDetails(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("subTrucks", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+
+        model.addAttribute("pageSizeNumber", size);
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "sub-trucks/report";
     }
 
     
@@ -490,6 +551,199 @@ public class SubTruckController {
 
             workbook.write(response.getOutputStream());
         }
+    }
+
+    private void exportReportDetails(List<SubTruck> list, HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=sub_trucks_report.xlsx");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Sub Trucks");
+            
+            // Create styles
+            CellStyle headerStyle = createCoolHeaderStyle(workbook);
+            CellStyle dateStyle = createDateStyle(workbook);
+            CellStyle numberStyle = createNumberStyle(workbook);
+            CellStyle pendingStyle = createStatusStyle(workbook, IndexedColors.YELLOW1);
+            CellStyle approvedStyle = createStatusStyle(workbook, IndexedColors.GREEN);
+            CellStyle defaultStyle = createDefaultStyle(workbook);
+
+            // Create cool title row
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("SUB TRUCKS REPORT");
+            titleCell.setCellStyle(createTitleStyle(workbook));
+            
+            // Merge cells for title
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 13));
+            
+            // Create header row
+            Row header = sheet.createRow(1);
+            String[] columns = {"No", "Date", "License Plate", "Truck Owner", "Oil Qty", "Status", "Approved By", "Approved At", "Note", "Changed At", "Changed By", "Created At", "Created By", "Latest Update At"};
+
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Create data rows
+            int rowIdx = 2;
+            for (int i = 0; i < list.size(); i++) {
+                SubTruck st = list.get(i);
+                Row row = sheet.createRow(rowIdx++);
+
+                // No
+                createCell(row, 0, i + 1, defaultStyle);
+
+                // Date
+                if (st.getDate() != null) {
+                    createCell(row, 1, st.getDate(), dateStyle);
+                } else {
+                    createCell(row, 1, "", defaultStyle);
+                }
+
+                // License Plate
+                createCell(row, 2, st.getTruck() != null ? st.getTruck().getLicensePlate() : "", defaultStyle);
+
+                // Truck Owner
+                createCell(row, 3, st.getTruckOwner(), defaultStyle);
+
+                // Oil Qty
+                if (st.getOilsQuantity() != null) {
+                    createCell(row, 4, st.getOilsQuantity(), numberStyle);
+                } else {
+                    createCell(row, 4, 0.0, numberStyle);
+                }
+
+                // Status with conditional styling
+                Cell statusCell = row.createCell(5);
+                statusCell.setCellValue(st.getStatus().name());
+                if (st.getStatus() == ApproveStatus.PENDING) {
+                    statusCell.setCellStyle(pendingStyle);
+                } else {
+                    statusCell.setCellStyle(approvedStyle);
+                }
+
+                // Approved By
+                createCell(row, 6, st.getApprovedBy() != null ? st.getApprovedBy().fullName() : "", defaultStyle);
+
+                // Approved At
+                if (st.getApprovedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getApprovedAt().format(formatter);
+                    createCell(row, 7, formatted, dateStyle);
+                } else {
+                    createCell(row, 7, "", defaultStyle);
+                }
+
+                // Note
+                createCell(row, 8, st.getNote() != null ? st.getNote() : "", defaultStyle);
+
+                if (st.getChangedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getChangedAt().format(formatter);
+                    createCell(row, 9, formatted, dateStyle);
+                } else {
+                    createCell(row, 9, "", defaultStyle);
+                }
+
+                createCell(row, 10, st.getChangedBy() != null ? st.getChangedBy().fullName() : "", defaultStyle);
+
+                if (st.getCreatedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getCreatedAt().format(formatter);
+                    createCell(row, 11, formatted, dateStyle);
+                } else {
+                    createCell(row, 11, "", defaultStyle);
+                }
+                createCell(row, 12, st.getCreatedBy() != null ? st.getCreatedBy().fullName() : "", defaultStyle);
+                
+                if (st.getUpdatedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getUpdatedAt().format(formatter);
+                    createCell(row, 13, formatted, dateStyle);
+                } else {
+                    createCell(row, 13, "", defaultStyle);
+                }
+            }
+
+            // Auto-size all columns
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Add some additional formatting
+            sheet.setColumnWidth(8, 50 * 256); // Make note column wider
+            
+            // Set row height for title
+            titleRow.setHeightInPoints(30);
+            
+            // Freeze header row (title + column headers)
+            sheet.createFreezePane(0, 2);
+
+            workbook.write(response.getOutputStream());
+        }
+    }
+
+    private CellStyle createCoolHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        
+        // Create font
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        font.setFontHeightInPoints((short) 11);
+        
+        // Set background color
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        
+        // Set borders
+        style.setBorderTop(BorderStyle.MEDIUM);
+        style.setBorderBottom(BorderStyle.MEDIUM);
+        style.setBorderLeft(BorderStyle.MEDIUM);
+        style.setBorderRight(BorderStyle.MEDIUM);
+        style.setTopBorderColor(IndexedColors.BLACK.getIndex());
+        style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+        style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+        style.setRightBorderColor(IndexedColors.BLACK.getIndex());
+        
+        // Center alignment
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        
+        // Set font
+        style.setFont(font);
+        
+        return style;
+    }
+
+    private CellStyle createTitleStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        
+        // Create font
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex());
+        font.setFontHeightInPoints((short) 16);
+        
+        // Set background color with gradient effect (light blue)
+        style.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        
+        // Center alignment
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        
+        // Set font
+        style.setFont(font);
+        
+        // Add bottom border
+        style.setBorderBottom(BorderStyle.THICK);
+        style.setBottomBorderColor(IndexedColors.DARK_BLUE.getIndex());
+        
+        return style;
     }
 
     // Helper method to create cells with proper typing
