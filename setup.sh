@@ -18,9 +18,11 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 
-scp ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_truck_fats/
+scp -P 2236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_truck_fats/
 scp ./messages_km.properties deverloper@154.26.134.117:~/sv_truck_fats/
 scp ./messages.properties deverloper@154.26.134.117:~/sv_truck_fats/
+
+D!$$&3949acq
 
 # Repairman Request
 server.port=8083

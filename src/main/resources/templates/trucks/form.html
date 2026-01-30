@@ -61,7 +61,7 @@
                             </select>
                             <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('model')}" th:errors="*{truck}"></p>
                         </div> -->
-                         <div>
+                         <!-- <div>
                             <label for="modelId" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">
                                 Select Model
                             </label>
@@ -76,7 +76,24 @@
                             </select>
                             <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('modelId')}" 
                             th:errors="*{modelId}"></p>
+                        </div> -->
+
+                        <div>
+                            <label class="block mb-1 font-medium">Truck Size</label>
+                            <select th:field="*{size}" class="border p-2 rounded w-full">
+                                <option value="">-- Select Size --</option>
+                                <option th:each="s : ${sizes}"
+                                        th:value="${s}"
+                                        th:text="${s}">
+                                </option>
+                            </select>
+
+                            <p class="text-red-500 text-sm"
+                            th:if="${#fields.hasErrors('size')}"
+                            th:errors="*{size}">
+                            </p>
                         </div>
+
                     </div>
 
                     <div class="grid grid-cols-2 gap-6 mb-8">
@@ -90,10 +107,17 @@
 
                         <!-- KM For Change Fats -->
                         <div>
-                            <label for="kmForFatsShoot" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">KM For Change Fats</label>
+                            <label for="kmForFatsShoot" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">គីឡូកំណត់បាញ់ខ្លាញ់</label>
                             <input type="text" th:field="*{kmForFatsShoot}" id="kmForFatsShoot"
                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                             <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('kmForFatsShoot')}" th:errors="*{kmForFatsShoot}"></p>
+                        </div>
+
+                        <div>
+                            <label for="kmForOilsChange" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">គីឡូកំណត់ប្ដូរប្រេង</label>
+                            <input type="text" th:field="*{kmForOilsChange}" id="kmForOilsChange"
+                                   class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                            <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('kmForOilsChange')}" th:errors="*{kmForOilsChange}"></p>
                         </div>
                     </div>
 

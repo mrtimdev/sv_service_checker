@@ -57,6 +57,7 @@ import timdev.timdev.entity.TruckFatsReport;
 import timdev.timdev.entity.TruckOilsReport;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.OilStatus;
+import timdev.timdev.enums.TruckSize;
 import timdev.timdev.service.ModelService;
 import timdev.timdev.service.TruckDistanceService;
 import timdev.timdev.service.TruckFatsReportService;
@@ -129,6 +130,8 @@ public class TruckWebController {
 
     @GetMapping("/form")
     public String showForm(Model model) {
+        
+        model.addAttribute("sizes", TruckSize.values());
         model.addAttribute("truck", new TruckRequestDTO());
         model.addAttribute("models", modelService.getAll());
         return "trucks/form";
@@ -149,7 +152,9 @@ public class TruckWebController {
         dto.setModelId(t.getModel().getId());
         dto.setYear(t.getYear());
         dto.setKmForFatsShoot(t.getKmForFatsShoot());
-
+        dto.setKmForOilsChange(t.getKmForOilsChange());
+        dto.setSize(t.getSize());
+        model.addAttribute("sizes", TruckSize.values());
         model.addAttribute("truck", dto);
         model.addAttribute("models", modelService.getAll());
         return "trucks/form";
@@ -162,6 +167,7 @@ public class TruckWebController {
                                     Model model, RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
+            model.addAttribute("sizes", TruckSize.values());
             model.addAttribute("models", modelService.getAll());
             return "trucks/form";
         }
@@ -178,9 +184,10 @@ public class TruckWebController {
             truck.setLicensePlate(truckDTO.getLicensePlate());
             truck.setYear(truckDTO.getYear());
             truck.setKmForFatsShoot(truckDTO.getKmForFatsShoot());
-
+            truck.setKmForOilsChange(truckDTO.getKmForOilsChange());
+            truck.setSize(truckDTO.getSize());
             // Set the model
-            modelService.findById(truckDTO.getModelId()).ifPresent(truck::setModel);
+            modelService.findById(1L).ifPresent(truck::setModel);
 
             truckService.save(truck);
             redirectAttributes.addFlashAttribute("success", (id == null ? "Truck created successfully!" : "Truck updated successfully!"));
@@ -199,6 +206,7 @@ public class TruckWebController {
                             BindingResult result,
                             Model model, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
+            model.addAttribute("sizes", TruckSize.values());
             model.addAttribute("models", modelService.getAll());
             return "trucks/form";
         }
@@ -208,9 +216,11 @@ public class TruckWebController {
             truck.setLicensePlate(truckDTO.getLicensePlate());
             truck.setYear(truckDTO.getYear());
             truck.setKmForFatsShoot(truckDTO.getKmForFatsShoot());
+            truck.setKmForOilsChange(truckDTO.getKmForOilsChange());
+            truck.setSize(truckDTO.getSize());
 
             // Set the model
-            modelService.findById(truckDTO.getModelId()).ifPresent(truck::setModel);
+            modelService.findById(1L).ifPresent(truck::setModel);
 
             truckService.save(truck);
             redirectAttributes.addFlashAttribute("success", "Truck created successfully!");
@@ -945,6 +955,94 @@ public class TruckWebController {
 
         return "redirect:/admin/trucks/change/oils";
     }
+
+    @GetMapping("/oils/change/edit/{reportId}")
+    public String editChangeOil(
+            @PathVariable("reportId") Long reportId,
+            Model model
+    ) {
+        TruckOilsReport report = oilsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Oil report not found"));
+
+        Truck truck = report.getTruck();
+
+        model.addAttribute("truck", truck);
+        model.addAttribute("truckOilsReport", report);
+        model.addAttribute("statuses", OilStatus.values());
+        model.addAttribute("currentDate", report.getDate()); // show existing date
+
+        return "oils_change/edit";
+    }
+
+    @PostMapping("/oils/change/update/{reportId}")
+    public String updateChangeOil(
+            @PathVariable("reportId") Long reportId,
+            @Valid @ModelAttribute("truckOilsReport") TruckOilsReport formReport,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        TruckOilsReport existing = oilsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Oil report not found"));
+
+        Truck truck = existing.getTruck();
+
+        if (result.hasErrors()) {
+            model.addAttribute("truck", truck);
+            model.addAttribute("statuses", OilStatus.values());
+            return "oils_change/edit";
+        }
+
+        // Calculate next range
+        Double nextKmForOilsChange =
+                truck.getKmForOilsChange() + formReport.getDistanceKm();
+
+        User user = userDetails.getUser();
+
+        // Update fields
+        existing.setDate(formReport.getDate());
+        existing.setDistanceKm(formReport.getDistanceKm());
+        existing.setLiterQuantityOfOils(formReport.getLiterQuantityOfOils());
+        existing.setNote(formReport.getNote());
+        existing.setUpdatedAt(LocalDateTime.now());
+        existing.setUpdatedBy(user);
+
+        // Reset statuses
+        existing.setNextRange(nextKmForOilsChange);
+        existing.setStatus(OilStatus.COMPLETED);
+
+        oilsReportService.save(existing);
+
+        // Update truck
+        truck.setNextOilsRange(nextKmForOilsChange);
+        truck.setStatus(existing.getStatus());
+
+        truckService.save(truck);
+
+        redirectAttributes.addFlashAttribute("success",
+                "បានកែប្រែការប្ដូរប្រេងរបស់ឡាន " + truck.getLicensePlate() + " ដោយជោគជ័យ!");
+
+        return "redirect:/admin/trucks/change/oils";
+    }
+
+
+
+    @GetMapping("/oils/delete/{id}")
+        public String deleteOilReport(
+                @PathVariable("id") Long reportId,
+                RedirectAttributes redirectAttributes
+        ) {
+            try {
+                oilsReportService.deleteById(reportId);
+                redirectAttributes.addFlashAttribute("success", "បានលុបរបាយការណ៍បាញ់ខ្លាញ់ដោយជោគជ័យ!");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "មានបញ្ហាក្នុងការលុបរបាយការណ៍!");
+            }
+
+            return "redirect:/admin/trucks/change/oils";
+        }
+
 
     @GetMapping("/oils/reports")
     public String oilsReports(

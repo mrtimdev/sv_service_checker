@@ -3,6 +3,7 @@ package timdev.timdev.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import timdev.timdev.enums.TruckSize;
 
 public class TruckRequestDTO {
     
@@ -11,7 +12,10 @@ public class TruckRequestDTO {
     @NotBlank(message = "License plate is required")
     private String licensePlate;
 
-    @NotNull(message = "Model is required")
+    @NotNull(message = "Truck size is required")
+    private TruckSize size;   // ✅ ADD THIS FIELD
+
+    // @NotNull(message = "Model is required")
     private Long modelId; 
 
     @NotNull(message = "Year is required")
@@ -21,6 +25,10 @@ public class TruckRequestDTO {
     @NotNull(message = "KM For Change Fats is required")
     @Min(value = 0, message = "KM must be positive")
     private Double kmForFatsShoot;
+
+    @NotNull(message = "KM For Oils is required")
+    @Min(value = 0, message = "KM must be positive")
+    private Double kmForOilsChange;
 
     public Long getId() {
         return id;
@@ -60,5 +68,21 @@ public class TruckRequestDTO {
 
     public void setKmForFatsShoot(Double kmForFatsShoot) {
         this.kmForFatsShoot = kmForFatsShoot;
+    }
+
+    public Double getKmForOilsChange() {
+        return kmForOilsChange;
+    }
+
+    public void setKmForOilsChange(Double kmForOilsChange) {
+        this.kmForOilsChange = kmForOilsChange;
+    }
+
+    public TruckSize getSize() {
+        return size;
+    }
+
+    public void setSize(TruckSize size) {
+        this.size = size;
     }
 }

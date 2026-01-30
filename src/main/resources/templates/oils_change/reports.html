@@ -158,7 +158,7 @@
                             <th class="py-3 px-6 text-center">ចំណាំ</th>
                             <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Created By</th>
                             <th class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600">Created</th>
-                            <th class="py-3 px-6 text-center" style="display: none;">Actions</th>
+                            <th class="py-3 px-6 text-center" >Actions</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-600">
@@ -185,10 +185,11 @@
                                 <span th:text="${report.createdBy?.fullName()}"></span>
                             </td>
                             <td class="px-4 py-2 text-center text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600" >
+                                <span th:text="${#temporals.format(report.createdAt, 'MMM dd, yyyy hh:mm a')}"></span>,
                                 <span th:text="${report.getCreatedAgo()}"></span>
                             </td>
                             
-                            <td class="py-3 px-6 text-center" style="display: none;">
+                            <td class="py-3 px-6 text-center">
                                 <div x-data="{ open: false }" class="relative">
                                     <!-- Dropdown toggle button -->
                                     <button 
@@ -206,7 +207,7 @@
                                         x-transition 
                                         class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                                   
-                                        <a th:href="@{/admin/trucks/oils/edit/{id}(id=${report.id})}" 
+                                        <a th:href="@{/admin/trucks/oils/change/edit/{id}(id=${report.id})}" 
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
                                             <i class="fas fa-edit text-green-500"></i>
                                             <span>Edit</span>

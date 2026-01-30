@@ -16,7 +16,11 @@ import timdev.timdev.repository.TruckOilsReportRepository;
 @Service
 public class TruckOilsReportService {
 
-    private final TruckOilsReportRepository reportRepo;
+    private TruckOilsReportRepository reportRepo;
+
+    public void deleteById(Long id) {
+        reportRepo.deleteById(id);
+    }
 
     public TruckOilsReport save(TruckOilsReport report) {
         return reportRepo.save(report);
