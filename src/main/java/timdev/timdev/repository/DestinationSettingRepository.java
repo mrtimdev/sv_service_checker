@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import timdev.timdev.entity.DestinationSetting;
@@ -35,5 +36,21 @@ public interface DestinationSettingRepository extends JpaRepository<DestinationS
            OR LOWER(d.code) LIKE LOWER(CONCAT('%', :search, '%'))
     """)
     List<DestinationSetting> searchAll(String search, Sort sort);
+
+
+    @Query("""
+        SELECT d FROM DestinationSetting d
+        
+        WHERE (
+                LOWER(d.code) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(d.name) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR CAST(d.distance AS string) LIKE CONCAT('%', :q, '%')
+        )
+        
+        ORDER BY d.code DESC
+        """)
+        List<DestinationSetting> searchSettingsByCodeAndName(
+                @Param("q") String q
+        );
     
 }

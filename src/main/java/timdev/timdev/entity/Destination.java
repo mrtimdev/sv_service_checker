@@ -3,6 +3,8 @@ package timdev.timdev.entity;
 import org.hibernate.envers.Audited;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import timdev.timdev.dto.Status;
@@ -21,7 +23,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "destinations")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Destination {
+public class Destination extends AuditableUser{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +47,9 @@ public class Destination {
     @Column(name = "distance", nullable = false)
     private double distance;
 
+    @Column(columnDefinition = "TEXT")
+    private String note;
+
     // Truck Relationship
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "truck_id")
@@ -53,33 +58,12 @@ public class Destination {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "setting_id")  
+    @JsonManagedReference
     private DestinationSetting setting;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
-
-    // ==========================
-    //   AUDIT FIELDS
-    // ==========================
-
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // @CreatedBy
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-
-    // @LastModifiedBy
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
 
     // ==========================
     //   GETTERS/SETTERS
@@ -121,41 +105,10 @@ public class Destination {
         this.truck = truck;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
     public void setId(Long id) {
         this.id = id;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 
     @Transient
     public String getDistanceFormat() {
@@ -184,6 +137,14 @@ public class Destination {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
 

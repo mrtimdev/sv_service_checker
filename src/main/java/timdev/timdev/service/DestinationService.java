@@ -1112,10 +1112,26 @@ public class DestinationService {
         List<Status> statuses,
         Pageable pageable) {
 
-    return repository.findByFilters(
+        return repository.findByFilters(
             query, startDate, endDate, statuses, pageable);
     }
 
+    public List<Destination> searchPending(String query, Long destinationId) {
+        return repository.searchPending(Status.PENDING, query, destinationId);
+    }
 
+    public List<DestinationSetting> searchSettingsByCodeAndName(String query) {
+        return destinationSettingService.searchSettingsByCodeAndName(query);
+    }
+
+    public boolean existsByDateAndTruckAndSetting(LocalDate destinationDate, Long truckId, Long settingId, Long destinationId) {
+
+        return repository.existsByDateAndTruckAndSetting(
+                destinationDate,
+                truckId,
+                settingId,
+                destinationId
+            );
+    }
     
 }

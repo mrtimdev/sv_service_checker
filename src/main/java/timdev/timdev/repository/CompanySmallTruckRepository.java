@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.CompanySmallTruck;
+import timdev.timdev.entity.Destination;
 import timdev.timdev.entity.Truck;
 
 @Repository
@@ -186,6 +187,26 @@ public interface CompanySmallTruckRepository extends JpaRepository<CompanySmallT
                 String totalDestination,
                 Long id
         );
+
+
+        @Query("""
+                SELECT d FROM CompanySmallTruck d
+                LEFT JOIN d.truck t
+                WHERE d.status = :status
+                AND (
+                :q IS NULL
+                OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(d.totalDestination) LIKE LOWER(CONCAT('%', :q, '%'))
+                )
+                AND (:companySmallTruckId IS NULL OR d.id <> :companySmallTruckId)
+                ORDER BY d.id DESC
+                """)
+        List<CompanySmallTruck> searchPending(
+                @Param("status") Status status,
+                @Param("q") String q,
+                @Param("companySmallTruckId") Long companySmallTruckId
+        );
+
 
 
 

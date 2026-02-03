@@ -2,17 +2,23 @@ package timdev.timdev.entity;
 
 import java.io.Serializable;
 
+import org.hibernate.envers.Audited;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import timdev.timdev.listener.AuditListener;
 
 
 @Entity
 @Table(name = "measurements", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Audited
+@EntityListeners(AuditListener.class)
 public class Measurement implements Serializable {
 
     @Id

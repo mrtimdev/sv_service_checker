@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:insert="~{layouts/main :: head}"></th:block>
+</head>
+<body>
+    <th:block th:fragment="desktop-view">
+        <div>
+            <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                <thead>
+                    <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
+                        <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{date}">Date</th>
+                        <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{requester}"></th>
+                        <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{position}"></th>
+                        <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{km_quantity}">Oil Qty</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">Status</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{purpose}"></th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{note}">Note</th>
+                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
+                        
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr th:each="st,iterStat : ${fuelRequests}" 
+                        class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
+
+                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${iterStat.index + 1}"></td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${#temporals.format(st.date, 'MMM dd, yyyy')}"></td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${st.requester}"></td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${st.position}"></td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${st.kmQuantity}" th:data-quantity="${st.kmQuantity}"></td>
+
+                        <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                            <span th:class="${st.fillingStatus.toString() == 'PENDING' ? 
+                                'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                
+                                th:text="#{${#strings.capitalize(st.fillingStatus.name.toLowerCase())}}"
+                                >
+                            </span>
+                        </td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${st.purpose}"></td>
+
+                        <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                            th:text="${st.note}"></td>
+
+                        <td class="p-3 text-center border border-gray-300 dark:border-gray-700">
+                            <div th:if="${st.filledBy != null}">
+                                <a 
+                                    
+                                    th:data-report-id="${st.id}"
+                                    class="btn-changed cursor-pointer bg-green-500 hover:bg-green-700 text-white font-bold px-3 py-1 rounded">
+                                    <i class="fa fa-check-double"></i> <span th:text="#{km_filled}"></span>
+                                </a>
+                            </div>
+                        </td>
+                        
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </th:block>
+</body>
+</html>

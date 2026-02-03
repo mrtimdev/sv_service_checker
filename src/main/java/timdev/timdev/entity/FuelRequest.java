@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDate;
 
+import timdev.timdev.dto.FillingStatus;
+
 @Entity
 @Table(name = "fuel_requests")
 @Audited
@@ -34,6 +36,7 @@ public class FuelRequest {
 
     private String truckOwner;
     private Double oilsQuantity;
+    private Double kmQuantity;
     private String requester;
     private String position;
     private String purpose;
@@ -47,6 +50,9 @@ public class FuelRequest {
 
     @Enumerated(EnumType.STRING)
     private ApproveStatus status = ApproveStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private FillingStatus fillingStatus = FillingStatus.PENDING;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -64,10 +70,17 @@ public class FuelRequest {
     private User updatedBy;
 
     private LocalDateTime changedAt;
+    
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by", nullable = true)
     private User changedBy;
+
+    private LocalDateTime filledAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "filled_by", nullable = true)
+    private User filledBy; // for fill the km
 
     @PrePersist
     public void onCreate() {
@@ -238,5 +251,37 @@ public class FuelRequest {
 
     public void setChangedBy(User changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public Double getKmQuantity() {
+        return kmQuantity;
+    }
+
+    public void setKmQuantity(Double kmQuantity) {
+        this.kmQuantity = kmQuantity;
+    }
+
+    public FillingStatus getFillingStatus() {
+        return fillingStatus;
+    }
+
+    public void setFillingStatus(FillingStatus fillingStatus) {
+        this.fillingStatus = fillingStatus;
+    }
+
+    public LocalDateTime getFilledAt() {
+        return filledAt;
+    }
+
+    public void setFilledAt(LocalDateTime filledAt) {
+        this.filledAt = filledAt;
+    }
+
+    public User getFilledBy() {
+        return filledBy;
+    }
+
+    public void setFilledBy(User filledBy) {
+        this.filledBy = filledBy;
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.itextpdf.text.pdf.PdfDocument;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +48,11 @@ public class CompanyTruck {
     @JoinColumn(name = "truck_id", nullable = false)
     @JsonBackReference
     private Truck truck; 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id", nullable = true)
+    @JsonBackReference
+    private Destination destination; 
 
     @Column(name = "total_destination")
     private String totalDestination;
@@ -402,6 +408,14 @@ public class CompanyTruck {
     @Transient
     public String getTotalOilsChangeFormat() {
         return String.format("%,.0f L", totalOilsChange); 
+    }
+
+    public Destination getDestination() {
+        return destination;
+    }
+
+    public void setDestination(Destination destination) {
+        this.destination = destination;
     }
 
 }

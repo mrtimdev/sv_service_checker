@@ -266,6 +266,7 @@ public class CompanyTruckController {
         CompanyTruckRequestDTO dto = service.convertToDto(companyTruck);
 
         model.addAttribute("truckDto", dto);
+        model.addAttribute("companyTruck", companyTruck);
         model.addAttribute("trucks", truckService.getAll());
         model.addAttribute("currentDate", dto.getDate());
         model.addAttribute("measurements", Measurement.values());

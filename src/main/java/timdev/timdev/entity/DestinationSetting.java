@@ -8,6 +8,8 @@ import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
@@ -51,6 +53,7 @@ public class DestinationSetting {
     private double distance;
 
     @OneToMany(mappedBy = "setting", cascade = CascadeType.ALL, orphanRemoval = false)
+    @JsonIgnore
     private List<Destination> destinations = new ArrayList<>();
 
 

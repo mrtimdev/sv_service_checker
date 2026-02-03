@@ -41,6 +41,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import timdev.timdev.dto.ApproveStatus;
 import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.dto.FillingStatus;
 import timdev.timdev.dto.FuelRequestRequestDTO;
 import timdev.timdev.entity.CompanyTruck;
 import timdev.timdev.entity.FuelRequest;
@@ -49,6 +50,7 @@ import timdev.timdev.entity.Truck;
 import timdev.timdev.entity.User;
 import timdev.timdev.service.FuelRequestService;
 import timdev.timdev.service.NotificationService;
+import timdev.timdev.service.PermissionChecker;
 import timdev.timdev.service.PusherBeamsService;
 import timdev.timdev.service.TruckService;
 import timdev.timdev.service.UserService;
@@ -61,6 +63,8 @@ public class FuelRequestController {
     private FuelRequestService service;
     private TruckService truckService;
     private UserService userService;
+
+    private PermissionChecker permissionChecker;
 
     @Autowired
     private PusherBeamsService beamsService;
@@ -84,9 +88,15 @@ public class FuelRequestController {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
             @RequestParam(value = "export", required = false) String export,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-            HttpServletResponse response
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails currentUser
     ) throws IOException {
 
+        Long createdBy = null;
+        if (!permissionChecker.hasRole("ADMIN")) {
+            User user = currentUser.getUser();
+            createdBy = user.getId();
+        }
         int size;
         
         if ("all".equalsIgnoreCase(sizeParam)) {
@@ -101,7 +111,7 @@ public class FuelRequestController {
         }
 
         // Fetch filtered list
-        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null, null);
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, createdBy, null);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {
@@ -149,8 +159,15 @@ public class FuelRequestController {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
             @RequestParam(value = "export", required = false) String export,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
-            HttpServletResponse response
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails currentUser
     ) throws IOException {
+
+        Long createdBy = null;
+        if (!permissionChecker.hasRole("ADMIN")) {
+            User user = currentUser.getUser();
+            createdBy = user.getId();
+        }
 
         int size;
         
@@ -166,7 +183,7 @@ public class FuelRequestController {
         }
 
         // Fetch filtered list
-        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null, null);
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, createdBy, null);
 
         // Export to Excel
         if (export != null && export.equalsIgnoreCase("excel")) {
@@ -788,11 +805,11 @@ public class FuelRequestController {
             titleCell.setCellStyle(createTitleStyle(workbook));
             
             // Merge cells for title (14 columns total: 0-13)
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 14));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 18));
             
             // Create header row
             Row header = sheet.createRow(1);
-            String[] columns = {"No", "Date", "Requester", "Position", "Oil Qty", "Status", "Approved By", "Approved At", "Purpose",  "Note", "Changed At", "Changed By", "Created At", "Created By", "Latest Update At"};
+            String[] columns = {"No", "Date", "Requester", "Position", "Oil Qty", "Fuel Status", "KM Qty", "KM Status", "Approved By", "Approved At", "Purpose",  "Note", "Changed At", "Changed By", "Filled At", "Filled By", "Created At", "Created By", "Latest Update At"};
 
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = header.createCell(i);
@@ -838,55 +855,81 @@ public class FuelRequestController {
                     statusCell.setCellStyle(approvedStyle);
                 }
 
+                if (st.getKmQuantity() != null) {
+                    createCell(row, 6, st.getOilsQuantity(), numberStyle);
+                } else {
+                    createCell(row, 6, 0.0, numberStyle);
+                }
+
+                // Status with conditional styling
+                Cell kmStatusCell = row.createCell(7);
+                kmStatusCell.setCellValue(st.getFillingStatus().name());
+                if (st.getFillingStatus() == FillingStatus.PENDING) {
+                    kmStatusCell.setCellStyle(pendingStyle);
+                } else {
+                    kmStatusCell.setCellStyle(approvedStyle);
+                }
+
                 // Approved By
-                createCell(row, 6, st.getApprovedBy() != null ? st.getApprovedBy().fullName() : "", defaultStyle);
+                createCell(row, 8, st.getApprovedBy() != null ? st.getApprovedBy().fullName() : "", defaultStyle);
 
                 // Approved At
                 if (st.getApprovedAt() != null) {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
                     String formatted = st.getApprovedAt().format(formatter);
-                    createCell(row, 7, formatted, dateStyle);
+                    createCell(row, 9, formatted, dateStyle);
                 } else {
-                    createCell(row, 7, "", defaultStyle);
+                    createCell(row, 9, "", defaultStyle);
                 }
 
                 // Purpose
-                createCell(row, 8, st.getPurpose() != null ? st.getPurpose() : "", defaultStyle);
+                createCell(row, 10, st.getPurpose() != null ? st.getPurpose() : "", defaultStyle);
 
                 // Note
-                createCell(row, 9, st.getNote() != null ? st.getNote() : "", defaultStyle);
+                createCell(row, 11, st.getNote() != null ? st.getNote() : "", defaultStyle);
 
                 // Changed At
                 if (st.getChangedAt() != null) {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
                     String formatted = st.getChangedAt().format(formatter);
-                    createCell(row, 10, formatted, dateStyle);
-                } else {
-                    createCell(row, 10, "", defaultStyle);
-                }
-
-                // Changed By
-                createCell(row, 11, st.getChangedBy() != null ? st.getChangedBy().fullName() : "", defaultStyle);
-
-                // Created At
-                if (st.getCreatedAt() != null) {
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
-                    String formatted = st.getCreatedAt().format(formatter);
                     createCell(row, 12, formatted, dateStyle);
                 } else {
                     createCell(row, 12, "", defaultStyle);
                 }
 
+                // Changed By
+                createCell(row, 13, st.getChangedBy() != null ? st.getChangedBy().fullName() : "", defaultStyle);
+
+                if (st.getFilledAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getFilledAt().format(formatter);
+                    createCell(row, 14, formatted, dateStyle);
+                } else {
+                    createCell(row, 14, "", defaultStyle);
+                }
+
+                // Filled By
+                createCell(row, 15, st.getFilledBy() != null ? st.getFilledBy().fullName() : "", defaultStyle);
+
+                // Created At
+                if (st.getCreatedAt() != null) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
+                    String formatted = st.getCreatedAt().format(formatter);
+                    createCell(row, 16, formatted, dateStyle);
+                } else {
+                    createCell(row, 16, "", defaultStyle);
+                }
+
                 // Created By
-                createCell(row, 13, st.getCreatedBy() != null ? st.getCreatedBy().fullName() : "", defaultStyle);
+                createCell(row, 17, st.getCreatedBy() != null ? st.getCreatedBy().fullName() : "", defaultStyle);
 
                 // Latest Update At
                 if (st.getUpdatedAt() != null) {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
                     String formatted = st.getUpdatedAt().format(formatter);
-                    createCell(row, 14, formatted, dateStyle);
+                    createCell(row, 18, formatted, dateStyle);
                 } else {
-                    createCell(row, 14, "", defaultStyle);
+                    createCell(row, 18, "", defaultStyle);
                 }
             }
 
@@ -1219,6 +1262,72 @@ public class FuelRequestController {
         return "fuel-requests/index_for_user_filled";
     }
 
+    // for user km filled
+    @GetMapping({"/user/fill-km/report"})
+    public Object listFuelRequestKMFilledReport(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "requester", required = false) String requester,
+            @RequestParam(value = "purpose", required = false) String purpose,
+            @RequestParam(value = "position", required = false) String position,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        status = ApproveStatus.APPROVED;
+
+        // Fetch filtered list
+        Page<FuelRequest> pageResult = service.findKmQuantityFilledFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null, true);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("fuelRequests", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("requester", requester);
+        model.addAttribute("position", position);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "fuel-requests/fill-km/user_filled";
+    }
+
     @GetMapping("/update-fuel-quantity")
     public String changeOilStatus(
             @RequestParam("id") Long id,
@@ -1266,5 +1375,123 @@ public class FuelRequestController {
             message
         );
         return "redirect:"+backUrl;
+    }
+
+
+    // for user fill or change the Km of truck destination
+
+    @GetMapping("/update-km-quantity")
+    public String changeKmQuantityAndStatus(
+            @RequestParam("id") Long id,
+            @RequestParam("backUrl") String backUrl,
+            @RequestParam(required = true) Double kmQuantity,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+            ) {
+
+        FuelRequest fuelRequest = service.findById(id);
+        if (fuelRequest == null) {
+            redirectAttributes.addFlashAttribute("error", "Request not found");
+            return "redirect:"+backUrl;
+        }
+        User user = userDetails.getUser();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String dateString = fuelRequest.getDate().format(formatter);
+
+        fuelRequest.setKmQuantity(kmQuantity);
+        fuelRequest.setFilledAt(LocalDateTime.now());
+        fuelRequest.setFilledBy(user);
+        fuelRequest.setFillingStatus(FillingStatus.FILLED);
+
+        service.save(fuelRequest);
+
+        String message = String.format(
+            """
+            📌 *Transaction Information*
+            • Record Date: `%s`
+            • Requester: `%s`
+
+            ⚙️ *Action Performed*
+            • KM Quantity Filled: *%s L*
+            • Performed By: `%s`
+            """,
+            dateString,
+            fuelRequest.getRequester(),
+            kmQuantity,
+            user.fullName()
+        );
+
+        redirectAttributes.addFlashAttribute("success", "Record on "+ dateString+ ", " + fuelRequest.getRequester() + "KM quantity updated to "+ kmQuantity);
+        notificationService.sendMarkdownNotification(
+            "🔔 Fuel Request Notify",
+            message
+        );
+        return "redirect:"+backUrl;
+    }
+
+    @GetMapping({"/fill-km"})
+    public Object listFillTheKm(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "licensePlate", required = false) String licensePlate,
+            @RequestParam(value = "truckOwner", required = false) String truckOwner,
+            @RequestParam(value = "requester", required = false) String requester,
+            @RequestParam(value = "purpose", required = false) String purpose,
+            @RequestParam(value = "position", required = false) String position,
+            @RequestParam(value = "truckId", required = false) Long truckId,
+            @RequestParam(value = "status", required = false) ApproveStatus status,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(value = "export", required = false) String export,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response
+    ) throws IOException {
+
+        int size;
+        
+        if ("all".equalsIgnoreCase(sizeParam)) {
+            size = Integer.MAX_VALUE;
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        // Validate date range
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        status = ApproveStatus.APPROVED;
+
+        // Fetch filtered list
+        Page<FuelRequest> pageResult = service.findFiltered(page, size, requester, position, purpose ,truckId, status, startDate, endDate, null, false);
+
+        // Export to Excel
+        if (export != null && export.equalsIgnoreCase("excel")) {
+            exportToExcel(pageResult.getContent(), response);
+            return null;
+        }
+
+        model.addAttribute("fuelRequests", pageResult.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalItems", pageResult.getTotalElements());
+        model.addAttribute("trucks", truckService.getAll());
+        
+        model.addAttribute("licensePlate", licensePlate);
+        model.addAttribute("truckOwner", truckOwner);
+        model.addAttribute("requester", requester);
+        model.addAttribute("position", position);
+        model.addAttribute("purpose", purpose);
+        model.addAttribute("truckId", truckId != null ? truckId : null);
+        model.addAttribute("status", status);
+        model.addAttribute("statuses", ApproveStatus.values());
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("showAll", showAll);
+
+        return "fuel-requests/fill-km/index";
     }
 }

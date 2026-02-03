@@ -47,6 +47,11 @@ public class CompanySmallTruck {
     @JsonBackReference
     private Truck truck; 
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id", nullable = true)
+    @JsonBackReference
+    private Destination destination; 
+
     @Column(name = "total_destination")
     private String totalDestination;
 
@@ -405,6 +410,14 @@ public class CompanySmallTruck {
     @Transient
     public String getTotalOilsChangeFormat() {
         return formatLitre(totalOilsChange);
+    }
+
+    public Destination getDestination() {
+        return destination;
+    }
+
+    public void setDestination(Destination destination) {
+        this.destination = destination;
     }
 
 }

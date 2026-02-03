@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -1046,6 +1049,40 @@ public class CompanySmallTruckController {
         } catch (Exception e) {
             System.err.println("Failed to send detailed notification: " + e.getMessage());
         }
+    }
+
+
+    @ResponseBody
+    @GetMapping(value = "/ajax/pending", produces = "application/json")
+    public List<Map<String, Object>> pendingDestinations(
+        @RequestParam(name = "q", required = false, defaultValue = "") String query,
+        @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
+        @RequestParam(name = "companySmallTruckId", required = false) Long companySmallTruckId
+    ) {
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+        DateTimeFormatter destinationDate = DateTimeFormatter.ofPattern("MMM dd, yyyy"); // for flatpickr();
+
+        return service.searchPending(query, companySmallTruckId)
+            .stream()
+            .limit(limit)
+            .map(d -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", d.getId());
+                map.put("date", d.getDate().format(destinationDate));
+                map.put("truckLicensePlate", d.getTruck().getLicensePlate());
+                map.put("truckId", d.getTruck().getId());
+                map.put("destination", d.getTotalDestination());
+
+                String label =
+                        d.getDate().format(fmt) + "  |  " +
+                        d.getTruck().getLicensePlate() + "  |  " +
+                        d.getTotalDestination();
+
+                map.put("text", label);
+                return map;
+            })
+            .toList();
     }
 
 

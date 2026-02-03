@@ -690,4 +690,8 @@ private String getRegularCellValue(Cell cell, FormulaEvaluator evaluator) {
         return repository.existsByDateAndTruck_IdAndTotalDestinationAndIdNot(date, truckId, totalDestination, excludeId);
     }
 
+    public List<CompanySmallTruck> searchPending(String query, Long destinationId) {
+        return repository.searchPending(Status.PENDING, query, destinationId);
+    }
+
 }

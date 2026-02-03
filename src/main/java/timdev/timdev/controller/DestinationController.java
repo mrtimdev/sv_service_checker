@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +25,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.val;
 import timdev.timdev.dto.CustomUserDetails;
+import timdev.timdev.dto.DestinationAjaxDTO;
 import timdev.timdev.dto.ExcelImportResult;
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.Destination;
@@ -37,6 +42,7 @@ import timdev.timdev.entity.Truck;
 import timdev.timdev.service.DestinationService;
 import timdev.timdev.service.DestinationSettingService;
 import timdev.timdev.service.NotificationService;
+import timdev.timdev.service.PermissionChecker;
 import timdev.timdev.service.TruckService;
 
 
@@ -50,6 +56,7 @@ public class DestinationController {
     private TruckService truckService;
 
     private NotificationService notificationService;
+    private PermissionChecker permissionChecker;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -193,23 +200,13 @@ public class DestinationController {
 
         // map frontend sortBy values to entity fields
         String sortField;
-        switch (sortBy) {
-            case "code":
-                sortField = "code"; 
-                break;
-            case "id":
-                sortField = "id";
-                break;
-            case "name":
-                sortField = "name";
-                break;
-            case "distance":
-                sortField = "distance";
-                break;
-            default:
-                sortField = "id";
-                break;
-        }
+        sortField = switch (sortBy) {
+            case "code" -> "code";
+            case "id" -> "id";
+            case "name" -> "name";
+            case "distance" -> "distance";
+            default -> "id";
+        };
 
         List<Status> statuses = List.of(Status.PENDING);
         Sort sort = Sort.by(direction, sortField);
@@ -367,7 +364,8 @@ public class DestinationController {
             @ModelAttribute Destination destination,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails currentUser
     ) {
 
         Destination existingData = null;
@@ -376,7 +374,7 @@ public class DestinationController {
             existingData = service.findById(destination.getId());
         }
 
-        DestinationSetting setting = destinationSettingService.findByCode(destination.getCode());
+        DestinationSetting setting = destination.getSetting();
         if (setting == null) {
             redirectAttributes.addFlashAttribute("error", "Destination Code '" + destination.getCode() + "' not found in Destination Settings");
             redirectAttributes.addFlashAttribute("destination", destination);
@@ -394,20 +392,74 @@ public class DestinationController {
             model.addAttribute("trucks", truckService.getAll());
             return "redirect:/destinations/form";
         }
-
+        boolean isUpdate = (existingData != null);
         Destination ds = (existingData != null) ? existingData : new Destination();
 
         ds.setDate(destination.getDate());
-        ds.setCode(destination.getCode());
-        ds.setName(destination.getName());
-        ds.setDistance(destination.getDistance());
+        ds.setCode(setting.getCode());
+        ds.setName(setting.getName());
+        ds.setDistance(setting.getDistance());
         ds.setTruck(destination.getTruck());
+        ds.setNote(destination.getNote());
+        ds.setSetting(setting);
 
         service.save(ds);
 
-        redirectAttributes.addFlashAttribute("success", "Destination saved successfully!");
+        sendNotificationDestinationCreateOrUpdate(
+            ds,
+            currentUser.getUsername(),
+            isUpdate
+        );
+
+
+        redirectAttributes.addFlashAttribute("success", setting.getCode() + " | " + setting.getName() + " | "+ setting.getDistanceFormat() +" Destination saved successfully!" + " For " + truck.getLicensePlate());
+        if (!permissionChecker.hasRole("ADMIN")) {
+            return "redirect:/destinations/u";
+        }
         return "redirect:/destinations";
     }
+
+
+    private void sendNotificationDestinationCreateOrUpdate(
+            Destination destination,
+            String username,
+            boolean isUpdate
+    ) {
+        try {
+
+            String action = isUpdate ? "✏️ Destination Updated" : "🆕 Destination Created";
+            String statusEmoji = "🚛";
+
+            String currentTime = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"));
+
+            String message = String.format(
+                    "*%s*\n\n" +
+                    "📅 *Date:* %s\n" +
+                    "🚛 *Truck:* %s\n" +
+                    "📍 *Destination:* %s - %s\n" +
+                    "📏 *Distance:* %d km\n" +
+                    "📝 *Note:* %s\n\n" +
+                    "👤 *User:* %s\n" +
+                    "⏰ *Time:* %s",
+                    action,
+                    destination.getDate(),
+                    destination.getTruck().getLicensePlate(),
+                    destination.getCode(),
+                    destination.getName(),
+                    destination.getDistance(),
+                    destination.getNote() == null ? "-" : destination.getNote(),
+                    username,
+                    currentTime
+            );
+
+            notificationService.sendMarkdownNotification(action, message);
+
+        } catch (Exception e) {
+            System.err.println("Failed to send Destination notification: " + e.getMessage());
+        }
+    }
+
 
 
 
@@ -623,5 +675,124 @@ public class DestinationController {
             System.err.println("Failed to send error notification: " + e.getMessage());
         }
     }
+
+    @ResponseBody
+    @GetMapping(value = "/ajax/pending", produces = "application/json")
+    public List<Map<String, Object>> pendingDestinations(
+        @RequestParam(name = "q", required = false, defaultValue = "") String query,
+        @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
+        @RequestParam(name = "destinationId", required = false) Long destinationId
+    ) {
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+        DateTimeFormatter destinationDate = DateTimeFormatter.ofPattern("MMM dd, yyyy"); // for flatpickr();
+
+        return service.searchPending(query, destinationId)
+            .stream()
+            .limit(limit)
+            .map(d -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", d.getId());
+                map.put("date", d.getDate().format(destinationDate));
+                map.put("truckLicensePlate", d.getTruck().getLicensePlate());
+                map.put("truckId", d.getTruck().getId());
+                map.put("settingCode", d.getSetting().getCode());
+                map.put("settingName", d.getSetting().getName());
+                map.put("settingDistance", d.getSetting().getDistance());
+
+                String label =
+                        d.getDate().format(fmt) + "  |  " +
+                        d.getTruck().getLicensePlate() + "  |  " +
+                        d.getSetting().getCode() + "  |  " +
+                        d.getSetting().getName();
+
+                map.put("text", label);
+                return map;
+            })
+            .toList();
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/ajax/{id}", produces = "application/json")
+    public Map<String, Object> ajaxGetDestinationById(@PathVariable Long id) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+        DateTimeFormatter destinationDate = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+
+        Destination d = service.findById(id);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", d.getId());
+        map.put("date", d.getDate().format(destinationDate));
+        map.put("truckLicensePlate", d.getTruck().getLicensePlate());
+        map.put("truckId", d.getTruck().getId());
+        map.put("settingCode", d.getSetting().getCode());
+        map.put("settingName", d.getSetting().getName());
+        map.put("settingDistance", d.getSetting().getDistance());
+
+        String label =
+                d.getDate().format(fmt) + "  |  " +
+                d.getTruck().getLicensePlate() + "  |  " +
+                d.getSetting().getCode() + "  |  " +
+                d.getSetting().getName();
+
+        map.put("text", label); // ✅ needed for Select2
+
+        return map;
+    }
+
+    // get settings
+
+    @ResponseBody
+    @GetMapping(value = "/ajax/settings", produces = "application/json")
+    public List<Map<String, Object>> ajaxGetDestinationSettings(
+            @RequestParam(name = "q", required = false, defaultValue = "") String query,
+            @RequestParam(name = "limit", required = false, defaultValue = "10") int limit
+    ) {
+
+        return service.searchSettingsByCodeAndName(query)
+                .stream()
+                .limit(limit)
+                .map(d -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", d.getId());
+                    map.put("settingCode", d.getCode());
+                    map.put("settingName", d.getName());
+                    map.put("settingDistance", d.getDistance());
+                    map.put("text", d.getCode() + " | " + d.getName() + " | " + d.getDistanceFormat() );
+                    return map;
+                })
+                .toList();
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/ajax/checking-existing-entries", produces = "application/json")
+    public Map<String, Object> ajaxCheckIsExistingDestinationsByTruckAndDate(
+            @RequestParam(name = "settingId", required = false) Long settingId,
+            @RequestParam(value = "date", required = false)
+            @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate date,
+            @RequestParam(name = "truckId", required = false) Long truckId,
+            @RequestParam(name = "destinationId", required = false) Long destinationId
+    ) {
+
+         Map<String, Object> response = new HashMap<>();
+
+        boolean isExist = service.existsByDateAndTruckAndSetting(
+                date,
+                truckId,
+                settingId,
+                destinationId
+        );
+
+        response.put("isExist", isExist);
+
+        if (isExist) {
+            response.put("message", "This destination already exists for this truck and date.");
+        } else {
+            response.put("message", "No existing record found.");
+        }
+
+        return response;
+    }
+
     
 }

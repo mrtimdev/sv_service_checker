@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import timdev.timdev.dto.Status;
 import timdev.timdev.entity.Destination;
+import timdev.timdev.entity.DestinationSetting;
 
 @Repository
 public interface DestinationRepository extends JpaRepository<Destination, Long>, JpaSpecificationExecutor<Distribution> {
@@ -98,6 +99,23 @@ public interface DestinationRepository extends JpaRepository<Destination, Long>,
 
 
     boolean existsByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
+
+
+    @Query("""
+        SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END
+        FROM Destination d
+        WHERE d.date = :destinationDate
+        AND d.truck.id = :truckId
+        AND d.setting.id = :settingId
+        AND (:destinationId IS NULL OR d.id <> :destinationId)
+        """)
+        boolean existsByDateAndTruckAndSetting(
+                @Param("destinationDate") LocalDate destinationDate,
+                @Param("truckId") Long truckId,
+                @Param("settingId") Long settingId,
+                @Param("destinationId") Long destinationId
+        );
+
     
     // Optional<Destination> findByDateAndTruckIdAndSettingId(LocalDate date, Long truckId, Long settingId);
 
@@ -164,6 +182,56 @@ public interface DestinationRepository extends JpaRepository<Destination, Long>,
                 @Param("endDate") LocalDate endDate,
                 @Param("statuses") List<Status> statuses,
                 Pageable pageable);
+
+        // @Query("""
+        //         SELECT d FROM Destination d
+        //         LEFT JOIN d.setting s
+        //         LEFT JOIN d.truck t
+        //         WHERE d.status = :status
+        //         AND (
+        //         LOWER(s.code) LIKE LOWER(CONCAT('%', :q, '%'))
+        //         OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%'))
+        //         OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :q, '%'))
+        //         )
+        //         AND d.id NOT IN (
+        //                 SELECT ct.destination.id FROM CompanyTruck ct WHERE (:destinationId IS NULL OR ct.destination.id != :destinationId)
+        //         )
+        //         ORDER BY d.id DESC
+        // """)
+        // List<Destination> searchPending(
+        //         @Param("status") Status status,
+        //         @Param("q") String query,
+        //         @Param("destination") Long destinationId
+        // );
+
+        @Query("""
+                SELECT d FROM Destination d
+                LEFT JOIN d.setting s
+                LEFT JOIN d.truck t
+                WHERE d.status = :status
+                AND (
+                        LOWER(s.code) LIKE LOWER(CONCAT('%', :q, '%'))
+                        OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%'))
+                        OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :q, '%'))
+                )
+                AND NOT EXISTS (
+                        SELECT 1
+                        FROM CompanyTruck ct
+                        WHERE ct.destination = d
+                        AND (:destinationId IS NULL OR ct.destination.id <> :destinationId)
+                )
+                ORDER BY d.id DESC
+                """)
+                List<Destination> searchPending(
+                        @Param("status") Status status,
+                        @Param("q") String q,
+                        @Param("destinationId") Long destinationId
+                );
+
+
+        
+
+
 
 
     

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <th:block th:fragment="~{layouts/main :: head}">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"/>
+
 </th:block>
 <th:block th:insert="~{layouts/main :: layout(~{::content}, 'Sub Trucks')}">
     <th:block th:fragment="content">
@@ -26,7 +25,7 @@
                     </h1>
 
 
-                    <div class="flex gap-2 items-center mb-6">
+                    <div class="flex gap-2 items-center">
                         <a th:href="@{/destinations}" 
                             th:text="#{back_to_list}"
                             class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
@@ -37,10 +36,29 @@
                 </div>
 
                 <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
-                    <form th:action="@{/destinations/store}" th:object="${destination}" method="post" class="space-y-4">
+                    <form th:action="@{/destinations/store}" th:object="${destination}" id="form" method="post" class="space-y-4">
                         <input type="hidden" th:if="${destination?.id != null}" th:field="*{id}"/>
                         
+                        
+                        <input type="hidden" id="destinationSettingId" th:value="${destination.setting != null} ? ${destination.setting.id} : ''" />
+                        <input type="hidden" id="destinationSettingCode" th:value="${destination.setting != null} ? ${destination.setting.code} : ''" />
+                        <input type="hidden" id="destinationSettingName" th:value="${destination.setting != null} ? ${destination.setting.name} : ''" />
+                        <input type="hidden" id="destinationSettingDistanceFormat" th:value="${destination.setting != null} ? ${destination.setting.distanceFormat} : ''" />
+
+
+                        <div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{destination}"></label>
+                                <select th:field="*{setting}" id="destinationSetting" required
+                                    style="width: 100%;"
+                                    class="w-full select rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                    
+                                </select>
+                            </div>
+                        </div>
                         <div class="grid gap-5 grid-cols-2">
+
+                            
 
                             <div>
                                 <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{date}"></label>
@@ -54,7 +72,7 @@
                                 <select th:field="*{truck}" id="truck"
                                     style="width: 100%;"
                                     required
-                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
+                                    class="w-full select rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm">
                                     <option value="" th:text="#{select_one}"></option>
                                     <option th:each="t : ${trucks}" 
                                             th:value="${t.id}" 
@@ -65,16 +83,11 @@
                                 <p class="text-sm text-red-600" th:if="${#fields.hasErrors('truck')}" th:errors="*{truck}"></p>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{code}"></label>
-                                <input type="text" th:field="*{code}" id="code" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
-                            </div>
-
-                            
-
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{destination}"></label>
-                                <input type="text" th:field="*{name}" readonly class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" />
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300" th:text="#{note}"></label>
+                                <textarea th:field="*{note}" rows="3" 
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"></textarea>
+                                <p class="text-sm text-red-600" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></p>
                             </div>
 
                         </div>
@@ -83,7 +96,7 @@
                         <div class="flex gap-2">
                             <a th:href="@{/destinations}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cancel</a>
                             <button 
-                                
+                                id="btn-submit"
                                 type="submit"
                                 th:text="${destination.id == null} ? #{save} : #{update}"
                                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
@@ -104,9 +117,9 @@
 
 
 <th:block th:fragment="~{layouts/main :: body-scripts}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js" ></script>
+    
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script th:inline="javascript">
         const isClone = /*[[${isClone}]]*/ false;
         $(function () {
@@ -123,4 +136,6 @@
         })
         
     </script>
+
+    <script th:src="@{/js/destination.js}"></script>
 </th:block>

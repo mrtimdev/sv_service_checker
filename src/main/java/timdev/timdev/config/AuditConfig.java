@@ -1,17 +1,26 @@
 package timdev.timdev.config;
 
+import org.junit.jupiter.api.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import timdev.timdev.dto.CustomUserDetails;
+
 import java.util.Optional;
 
+import timdev.timdev.entity.User;
+
+// @EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 @Configuration
 public class AuditConfig {
 
+    
     @Bean
     public AuditorAware<String> auditorAware() {
         return () -> {
@@ -28,6 +37,26 @@ public class AuditConfig {
             }
 
             return Optional.of("unknown");
+        };
+    }
+
+    
+    @Bean
+    @Primary
+    public AuditorAware<User> auditorProvider() {
+        return () -> {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return Optional.empty();
+            }
+
+            Object principal = auth.getPrincipal();
+
+            if (principal instanceof CustomUserDetails userDetails) {
+                return Optional.of(userDetails.getUser()); 
+            }
+
+            return Optional.empty();
         };
     }
 }

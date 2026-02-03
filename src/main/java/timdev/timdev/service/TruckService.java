@@ -63,7 +63,12 @@ public class TruckService {
         truckRepo.deleteById(id); 
     }
 
+    public List<Truck> findTrucksWithoutAverages(Long truckId) {
+        return truckRepo.findTrucksWithoutAverages(truckId);
+    }
 
-
+    public List<Truck> findTrucksWithoutAverageForMeasurement(Long measurementId) {
+        return truckRepo.findTrucksWithoutAverageForMeasurement(measurementId);
+    }
 
 }

@@ -103,6 +103,14 @@ public class FuelRequestService {
         return repository.findFiltered(requester, position, purpose, truckId, status, startDate, endDate, pageable, createdById, isFilled);
     }
 
+    public Page<FuelRequest> findKmQuantityFilledFiltered(int page, int size, String requester, String position, String purpose, Long truckId, 
+                                      ApproveStatus status, LocalDate startDate, LocalDate endDate, Long createdById, Boolean isFilled) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+  
+        return repository.findKmQuantityFilledFiltered(requester, position, purpose, truckId, status, startDate, endDate, pageable, createdById, isFilled);
+    }
+
     
 
 

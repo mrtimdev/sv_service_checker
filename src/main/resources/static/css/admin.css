@@ -135,6 +135,8 @@ body {
 /* Show overlay when active */
 #sidebarOverlay.active {
     display: block;
+    backdrop-filter: blur(4px);
+
 }
 
 /* Mobile only: hide overlay on large screens */

@@ -124,6 +124,104 @@ public interface FuelRequestRepository extends JpaRepository<FuelRequest, Long>,
     Optional<FuelRequest> findByTruckAndDate(Truck truck, LocalDate date);
 
 
+
+
+
+    default Page<FuelRequest> findKmQuantityFilledFiltered(
+            String requester,
+            String position,
+            String purpose,
+            Long truckId,
+            ApproveStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable,
+            Long createdById,
+            Boolean isFilled
+    ) {
+        return findAll(
+                createFilterSpecificationForKmQuantity(requester, position, purpose ,truckId, status, startDate, endDate, createdById, isFilled),
+                pageable
+        );
+    }
+
+    private Specification<FuelRequest> createFilterSpecificationForKmQuantity(
+            String requester,
+            String position,
+            String purpose,
+            Long truckId,
+            ApproveStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long createdById,
+            Boolean isFilled
+    ) {
+        return (root, query, criteriaBuilder) -> {
+
+            List<Predicate> predicates = new ArrayList<>();
+
+        
+            // Truck ID filter
+            if (truckId != null) {
+                Join<FuelRequest, Truck> truckJoin = root.join("truck");
+                predicates.add(criteriaBuilder.equal(truckJoin.get("id"), truckId));
+            }
+
+            if (requester != null && !requester.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        root.get("requester"),
+                        "%" + requester + "%"
+                ));
+            }
+
+            if (position != null && !position.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        root.get("position"),
+                        "%" + position + "%"
+                ));
+            }
+            if (purpose != null && !purpose.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        root.get("purpose"),
+                        "%" + purpose + "%"
+                ));
+            }
+
+
+            // Status filter
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            // Date range filter
+            if (startDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("date"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("date"), endDate));
+            }
+
+            if (createdById != null) {
+                Join<FuelRequest, User> userJoin = root.join("createdBy");
+                predicates.add(criteriaBuilder.equal(userJoin.get("id"), createdById));
+            }
+
+            if (createdById != null) {
+                Join<FuelRequest, User> userJoin = root.join("createdBy");
+                predicates.add(criteriaBuilder.equal(userJoin.get("id"), createdById));
+            }
+            // isFilled filter (3 states)
+            if (isFilled != null) {
+                if (isFilled) {
+                    predicates.add(criteriaBuilder.isNotNull(root.get("filledBy")));
+                } else {
+                    predicates.add(criteriaBuilder.isNull(root.get("filledBy")));
+                }
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
     
 
 }

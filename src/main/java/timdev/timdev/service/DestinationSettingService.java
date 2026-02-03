@@ -51,5 +51,9 @@ public class DestinationSettingService {
         return repository.findAllById(ids);
     }
 
+    public List<DestinationSetting> searchSettingsByCodeAndName(String query) {
+        return repository.searchSettingsByCodeAndName(query);
+    }
+
     
 }

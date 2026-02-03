@@ -35,8 +35,14 @@ public class CompanyTruckRequestDTO {
     @DecimalMin(value = "0.0", inclusive = false, message = "Average must be greater than 0")
     private Double average;
 
-    @NotNull(message = "Measurement type is required")
+    @Nullable
     private Measurement measurement;
+
+    @Nullable
+    private Long measurementId;
+
+    @Nullable
+    private Long destinationId;
 
     @NotNull(message = "Litre Quantity is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Litre Quantity must be greater than 0")
@@ -184,5 +190,21 @@ public class CompanyTruckRequestDTO {
 
     public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
+    }
+
+    public Long getMeasurementId() {
+        return measurementId;
+    }
+
+    public void setMeasurementId(Long measurementId) {
+        this.measurementId = measurementId;
+    }
+
+    public Long getDestinationId() {
+        return destinationId;
+    }
+
+    public void setDestinationId(Long destinationId) {
+        this.destinationId = destinationId;
     }
 }

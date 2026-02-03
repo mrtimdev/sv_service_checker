@@ -45,6 +45,7 @@ import timdev.timdev.enums.ApprovalStatus;
 import timdev.timdev.repository.CompanyTruckRepository;
 import timdev.timdev.repository.DestinationRepository;
 import timdev.timdev.repository.DestinationSettingRepository;
+import timdev.timdev.repository.MeasurementRepository;
 import timdev.timdev.repository.TruckRepository;
 import timdev.timdev.repository.UserRepository;
 
@@ -64,6 +65,8 @@ public class CompanyTruckService {
     
     @Autowired
     private DestinationSettingRepository destinationSettingRepository;
+
+    @Autowired private MeasurementRepository measurementRepository;
 
     public List<CompanyTruck> getAllTrucks() {
         return repository.findAll();
@@ -98,24 +101,72 @@ public class CompanyTruckService {
         truck.setCreatedAt(LocalDateTime.now());
         truck.setOtherOils(dto.getOtherOils());
         truck.setTotalOilsChange(dto.getTotalOilsChange());
+
+        if (dto.getDestinationId() != null) {
+            Destination destination = destinationRepository.findById(dto.getDestinationId()).orElse(null);
+            truck.setDestination(destination);
+        }
+        if (dto.getMeasurementId() != null) {
+            timdev.timdev.entity.Measurement measurementEntity = measurementRepository
+                    .findById(dto.getMeasurementId())
+                    .orElse(null);
+
+            if (measurementEntity != null) {
+                // Convert entity name (English) to enum
+                Measurement measurementEnum = Measurement.fromName(measurementEntity.getName());
+
+                if (measurementEnum != null) {
+                    truck.setMeasurement(measurementEnum);
+                } else {
+                    truck.setMeasurement(null); 
+                }
+            }
+        }
+
         return repository.save(truck);
     }
 
     public CompanyTruck updateTruck(Long id, CompanyTruckRequestDTO dto) {
         CompanyTruck existing = getTruckById(id);
+
+        
+
+
         User userUpdate = userRepository.findById(dto.getUpdatedBy()).orElse(null);
         existing.setDate(dto.getDate());
         existing.setTruck(truckRepository.findById(dto.getTruckId()).orElseThrow());
         existing.setTotalDestination(dto.getTotalDestination());
         existing.setTotalKm(dto.getTotalKm());
         existing.setAverage(dto.getAverage());
-        existing.setMeasurement(dto.getMeasurement());
         existing.setLitreQuantity(dto.getLitreQuantity());
         existing.setNote(dto.getNote());
         existing.setOtherOils(dto.getOtherOils());
         existing.setTotalOilsChange(dto.getTotalOilsChange());
         existing.setUpdatedAt(LocalDateTime.now());
         existing.setUpdatedBy(userUpdate != null ? userUpdate : null);
+
+        if (dto.getDestinationId() != null) {
+            Destination destination = destinationRepository.findById(dto.getDestinationId()).orElse(null);
+            existing.setDestination(destination);
+        }
+        if (dto.getMeasurementId() != null) {
+            timdev.timdev.entity.Measurement measurementEntity = measurementRepository
+                    .findById(dto.getMeasurementId())
+                    .orElse(null);
+
+            if (measurementEntity != null) {
+                // Convert entity name (English) to enum
+                Measurement measurementEnum = Measurement.fromName(measurementEntity.getName());
+
+                if (measurementEnum != null) {
+                    existing.setMeasurement(measurementEnum);
+                } else {
+                    existing.setMeasurement(null); 
+                }
+            }
+        }
+
+        
         return repository.save(existing);
     }
 

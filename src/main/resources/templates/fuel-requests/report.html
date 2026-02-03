@@ -217,11 +217,16 @@
                                     <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{requester}"></th>
                                     <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{position}"></th>
                                     <th class="p-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_quantity}">Oil Qty</th>
-                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{status}">Status</th>
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{fuel_status}">Status</th>
+                                    <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{km_quantity}">KM Qty</th>
+                                    <th style="width: 100px;" class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{km_status}">KM Status</th>
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{purpose}"></th>
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{note}">Note</th>
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{changed_at}">Changed At</th>
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{changed_by}">Changed By</th>
+
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{filled_at}">Filled At</th>
+                                    <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{filled_by}">Filled By</th>
 
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 bg-yellow-500" th:text="#{created_at}">Created At</th>
                                     <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 bg-yellow-500" th:text="#{created_by}">Created By</th>
@@ -260,14 +265,28 @@
                                         </span>
                                     </td>
 
+                                    <td class="p-3 text-center text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
+                                        th:text="${st.kmQuantity}"></td>
+
+                                    <td class="p-3 border text-center border-gray-300 dark:border-gray-700">
+                                        <span th:class="${st.fillingStatus.toString() == 'PENDING' ? 
+                                            'px-2 py-1 rounded-md text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                            'px-2 py-1 rounded-md text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}" 
+                                            th:text="#{${#strings.capitalize(st.fillingStatus.name.toLowerCase())}}">
+                                        </span>
+                                    </td>
+
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
                                         th:text="${st.purpose}"></td>
 
                                     <td class="p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" 
                                         th:text="${st.note}"></td>
 
-                                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.changedAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.changedAt, 'MMM dd, yyyy HH:mm a')}"></td>
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${st.changedBy?.fullName}"></td>
+                                    
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.filledAt, 'MMM dd, yyyy HH:mm a')}"></td>
+                                    <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${st.filledBy?.fullName}"></td>
 
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${#temporals.format(st.createdAt, 'MMM dd, yyyy HH:mm a')}"></td>
                                     <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${st.createdBy?.fullName}"></td>

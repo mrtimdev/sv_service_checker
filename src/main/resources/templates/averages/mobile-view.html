@@ -1,32 +1,253 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-    <div th:fragment="desktop-view">
-        
-
-        <!-- Table -->
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="w-full border-collapse border border-gray-300 dark:border-gray-700">
-                <thead>
-                    <tr class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
-                       
-                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{no}" style="width: 10px;">No</th>
-                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{value}" style="width: 10px;">Value</th>
-                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{measurement}" style="width: 100px;">Measurement</th>
-                        <th class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700" th:text="#{actions}">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr th:each="a : ${averages}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300">
-                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.id}"></td>
-                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.value}"></td>
-                        <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700" th:text="${a.measurement != null ? a.measurement.name + ' — ' + a.measurement.nativeName : '-'}"></td>
-                    </tr>
+    <div th:fragment="mobile-view">
+        <!-- Mobile Header with Filters -->
+        <div class="mb-6 space-y-4">
+            <!-- Size Selector -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <form method="get" class="space-y-4">
+                    <input type="hidden" name="page" value="0" />
                     
-                </tbody>
-            </table>
+                    <div class="space-y-2">
+                        <label for="size-mobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Items per page:</label>
+                        <select id="size-mobile" name="size" onchange="this.form.submit()" 
+                                class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option th:value="5" th:selected="${pageSize == '5'}">5</option>
+                            <option th:value="10" th:selected="${pageSize == '10'}">10</option>
+                            <option th:value="20" th:selected="${pageSize == '20'}">20</option>
+                            <option th:value="50" th:selected="${pageSize == '50'}">50</option>
+                            <option th:value="100" th:selected="${pageSize == '100'}">100</option>
+                            <option th:value="all" th:selected="${pageSize.toString() == 'all'}">All</option>
+                        </select>
+                    </div>
+
+                    <!-- Truck Filter -->
+                    <div class="space-y-2">
+                        <label for="truck-mobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Truck:</label>
+                        <select id="truck-mobile" name="truckId" onchange="this.form.submit()"
+                                class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">All Trucks</option>
+                            <option th:each="t : ${trucks}" th:value="${t.id}"
+                                    th:text="${t.licensePlate + ' — ' + t.group}" 
+                                    th:selected="${truckId != null && truckId == t.id ? true : false}">
+                            </option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Reset Button -->
+            <a href="/averages"
+                th:text="#{reset}"
+                class="w-full flex justify-center items-center px-4 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
+                Reset Filters
+            </a>
         </div>
 
-        
+        <!-- Mobile Cards View -->
+        <div class="space-y-4">
+            <div th:each="item, i : ${averages}" 
+                 class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+                
+                <!-- Card Header -->
+                <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">#[[${startIndex + i.index}]]</span>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-1">
+                            <span th:text="${item.truck != null ? item.truck.licensePlate : '-'}"></span>
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" th:if="${item.truck != null}">
+                            [[${item.truck.group}]]
+                        </p>
+                    </div>
+                    
+                    <div class="text-right">
+                        <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm font-medium rounded-full">
+                            Value: [[${item.value}]]
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="space-y-3">
+                    <!-- Measurement -->
+                    <div class="flex items-center gap-2">
+                        <div class="flex-shrink-0 text-start">
+                            <i class="fas fa-ruler text-gray-400"></i>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <p class="text-gray-800 dark:text-gray-200 font-medium" th:text="${item.measurement != null ? item.measurement.name : '-'}"></p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400" th:if="${item.measurement != null}">
+                                [[${item.measurement.nativeName}]]
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Footer - Actions -->
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        
+                        <a th:href="@{'/averages/form/' + ${item.id}}" 
+                           class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="fas fa-edit"></i>
+                            <span>Edit</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${averages.empty}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+                <div class="mb-4">
+                    <i class="fa fa-plus-circle text-4xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    No Averages found<span th:if="${selectedTruck != null}"> for [[${selectedTruck.licensePlate}]]</span>
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    No data is currently available. Try adjusting your search or add a new Average.
+                </p>
+            </div>
+        </div>
+
+        <!-- Mobile Pagination & Info -->
+        <div class="mt-6 space-y-6">
+            <!-- Info -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    <span th:if="${totalElements > 0}">
+                        Showing 
+                        <span class="font-semibold" th:text="${startIndex}">1</span> to 
+                        <span class="font-semibold" th:text="${endIndex}">10</span> of 
+                        <span class="font-semibold" th:text="${totalElements}">100</span> entries
+                    </span>
+                    <span th:if="${totalElements == 0}" class="text-gray-500 dark:text-gray-400">
+                        No entries found
+                    </span>
+                </div>
+            </div>
+
+            <!-- Mobile Pagination -->
+            <div th:if="${totalPages > 1}"
+                class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+
+                <div class="flex flex-col space-y-4">
+
+                    <!-- First / Last Buttons -->
+                    <div class="flex justify-between">
+                        <!-- First -->
+                        <a th:if="${currentPage > 0}"
+                        th:href="@{/averages(
+                                page=0,
+                                size=${pageSize},
+                                sortBy=${sortBy},
+                                order=${order},
+                                query=${query != null ? query : ''},
+                                startDate=${startDate != null ? #temporals.format(startDate,'MMM dd, yyyy') : ''},
+                                endDate=${endDate != null ? #temporals.format(endDate,'MMM dd, yyyy') : ''},
+                                status=${status != null ? status.name() : ''}
+                        )}"
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                                text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <i class="fa fa-angle-double-left mr-1"></i> First
+                        </a>
+
+                        <!-- Last -->
+                        <a th:if="${currentPage < totalPages - 1}"
+                        th:href="@{/averages(
+                                page=${totalPages - 1},
+                                size=${pageSize},
+                                sortBy=${sortBy},
+                                order=${order},
+                                query=${query != null ? query : ''},
+                                startDate=${startDate != null ? #temporals.format(startDate,'MMM dd, yyyy') : ''},
+                                endDate=${endDate != null ? #temporals.format(endDate,'MMM dd, yyyy') : ''},
+                                status=${status != null ? status.name() : ''}
+                        )}"
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                                text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Last <i class="fa fa-angle-double-right ml-1"></i>
+                        </a>
+                    </div>
+
+                    <!-- Previous / Next -->
+                    <div class="flex justify-between">
+                        <!-- Previous -->
+                        <a th:if="${currentPage > 0}"
+                        th:href="@{/averages(
+                                page=${currentPage - 1},
+                                size=${pageSize},
+                                sortBy=${sortBy},
+                                order=${order},
+                                query=${query != null ? query : ''},
+                                startDate=${startDate != null ? #temporals.format(startDate,'MMM dd, yyyy') : ''},
+                                endDate=${endDate != null ? #temporals.format(endDate,'MMM dd, yyyy') : ''},
+                                status=${status != null ? status.name() : ''}
+                        )}"
+                        class="flex-1 mr-2 px-4 py-2 border border-gray-300 dark:border-gray-600
+                                rounded-md text-gray-700 dark:text-gray-300 text-sm text-center
+                                hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <i class="fa fa-angle-left mr-1"></i> Previous
+                        </a>
+
+                        <!-- Next -->
+                        <a th:if="${currentPage < totalPages - 1}"
+                        th:href="@{/averages(
+                                page=${currentPage + 1},
+                                size=${pageSize},
+                                sortBy=${sortBy},
+                                order=${order},
+                                query=${query != null ? query : ''},
+                                startDate=${startDate != null ? #temporals.format(startDate,'MMM dd, yyyy') : ''},
+                                endDate=${endDate != null ? #temporals.format(endDate,'MMM dd, yyyy') : ''},
+                                status=${status != null ? status.name() : ''}
+                        )}"
+                        class="flex-1 ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600
+                                rounded-md text-gray-700 dark:text-gray-300 text-sm text-center
+                                hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Next <i class="fa fa-angle-right ml-1"></i>
+                        </a>
+                    </div>
+
+                    <!-- Page Info -->
+                    <div class="text-center">
+                        <span class="px-4 py-2 bg-blue-100 dark:bg-blue-900
+                                    text-blue-800 dark:text-blue-200 text-sm font-medium rounded-full">
+                            Page [[${currentPage + 1}]] of [[${totalPages}]]
+                        </span>
+                    </div>
+
+                    <!-- Page Numbers -->
+                    <div class="flex justify-center flex-wrap gap-1">
+
+                        <span th:each="i : ${#numbers.sequence(
+                                T(java.lang.Math).max(0, currentPage - 2),
+                                T(java.lang.Math).min(totalPages - 1, currentPage + 2)
+                        )}">
+
+                            <a th:href="@{/averages(
+                                    page=${i},
+                                    size=${pageSize},
+                                    sortBy=${sortBy},
+                                    order=${order},
+                                    query=${query != null ? query : ''},
+                                    startDate=${startDate != null ? #temporals.format(startDate,'MMM dd, yyyy') : ''},
+                                    endDate=${endDate != null ? #temporals.format(endDate,'MMM dd, yyyy') : ''},
+                                    status=${status != null ? status.name() : ''}
+                            )}"
+                            th:text="${i + 1}"
+                            th:classappend="${i == currentPage} ?
+                                    'bg-blue-500 text-white border-blue-500' :
+                                    'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                            class="px-3 py-1 border rounded-md text-xs">
+                            </a>
+                        </span>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </html>
