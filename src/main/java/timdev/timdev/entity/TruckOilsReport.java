@@ -73,6 +73,12 @@ public class TruckOilsReport {
     @Column(name = "note")
     private String note;
 
+    @Column(name = "location_changed")
+    private String locationChanged;
+
+    @Column(name = "file_path")
+    private String filePath;
+
 
      // --- Audit fields ---
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -265,6 +271,22 @@ public class TruckOilsReport {
     @Transient
     public String getNextRangeFormat() {
         return String.format("%,.2f km", nextRange); 
+    }
+
+    public String getLocationChanged() {
+        return locationChanged;
+    }
+
+    public void setLocationChanged(String locationChanged) {
+        this.locationChanged = locationChanged;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
     
 

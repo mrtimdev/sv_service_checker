@@ -1,10 +1,15 @@
 package timdev.timdev.controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,19 +20,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,12 +56,27 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+
 import timdev.timdev.dto.CustomUserDetails;
 import timdev.timdev.dto.TruckRequestDTO;
 import timdev.timdev.entity.Truck;
@@ -64,17 +91,24 @@ import timdev.timdev.service.TruckFatsReportService;
 import timdev.timdev.service.TruckOilsReportService;
 import timdev.timdev.service.TruckService;
 
-@AllArgsConstructor
 @Controller
 @RequestMapping("/admin/trucks")
 public class TruckWebController {
 
-    private final TruckService truckService;
-    private final ModelService modelService;
-    private final TruckFatsReportService fatsReportService;
-    private final TruckOilsReportService oilsReportService;
+    @Autowired
+    private TruckService truckService;
+    @Autowired
+    private ModelService modelService;
+    @Autowired
+    private TruckFatsReportService fatsReportService;
+    @Autowired
+    private TruckOilsReportService oilsReportService;
+    @Autowired
+    private TruckDistanceService truckDistanceService;
 
-    private final TruckDistanceService truckDistanceService;
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
 
 
     @GetMapping
@@ -294,7 +328,7 @@ public class TruckWebController {
     public Object indexShootFats(
             Model model,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "size", defaultValue = "100") String sizeParam,
             @RequestParam(value = "all", defaultValue = "false") boolean showAll,
             @RequestParam(value = "licensePlate", required = false) String licensePlate,
             @RequestParam(value = "export", required = false) String export,
@@ -342,6 +376,7 @@ public class TruckWebController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("size", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);
 
@@ -718,9 +753,10 @@ public class TruckWebController {
     }
 
     @PostMapping("/fats/shoot/{id}")
-    public String saveChangeFats(
+    public String saveFatsShoot(
         @PathVariable("id") Long truckId,
         @Valid @ModelAttribute("truckFatsReport") TruckFatsReport report,
+        @RequestParam("file") MultipartFile file,
         BindingResult result,
         Model model,
         RedirectAttributes redirectAttributes,
@@ -736,6 +772,35 @@ public class TruckWebController {
             return "fats_shoot/shoot";
         }
 
+        if (!file.isEmpty()) {
+
+            try {
+
+                File uploadPath = new File(uploadDir);
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
+
+                String originalName = file.getOriginalFilename();
+                String extension = "";
+
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+
+                String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+                Path filePath = Paths.get(uploadDir, fileName);
+
+                file.transferTo(filePath);
+
+                report.setFilePath("/uploads/" + fileName);
+
+            } catch (IOException e) {
+                throw new RuntimeException("File upload failed", e);
+            }
+        }
+
+
         // calculate next range
         Double nextKmForFatShot = truck.getKmForFatsShoot() + report.getDistanceKm();
         User user = userDetails.getUser();
@@ -748,6 +813,8 @@ public class TruckWebController {
         report.setKmForFatsShoot(truck.getKmForFatsShoot());
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
+
+        report.setLocationChanged(report.getLocationChanged());
 
         report.setDistanceKm(report.getDistanceKm());
         report.setCreatedBy(user);
@@ -767,6 +834,123 @@ public class TruckWebController {
         return "redirect:/admin/trucks/shoot/fats";
     }
 
+    @GetMapping("/fats/shoot/edit/{reportId}")
+    public String showEditFatForm(
+            @PathVariable("reportId") Long reportId,
+            Model model
+    ) {
+        TruckFatsReport report = fatsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Oil report not found"));
+
+        Truck truck = report.getTruck();
+
+        model.addAttribute("truck", truck);
+        model.addAttribute("truckFatsReport", report);
+        model.addAttribute("statuses", OilStatus.values());
+        model.addAttribute("currentDate", report.getDate()); 
+
+        return "fats_shoot/edit";
+    }
+
+    @PostMapping("/fats/shoot/update/{reportId}")
+    public String updateFatsShoot(
+            @PathVariable("reportId") Long reportId,
+            @Valid @ModelAttribute("truckFatsReport") TruckFatsReport formReport,
+            @RequestParam("file") MultipartFile file,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        TruckFatsReport existing = fatsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Fats report not found"));
+
+        Truck truck = existing.getTruck();
+
+        if (result.hasErrors()) {
+            model.addAttribute("truck", truck);
+            model.addAttribute("statuses", OilStatus.values());
+            return "fats_shoot/edit";
+        }
+
+        User user = userDetails.getUser();
+
+        // =========================
+        // FILE UPDATE
+        // =========================
+        if (file != null && !file.isEmpty()) {
+
+            try {
+
+                File uploadPath = new File(uploadDir);
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
+
+                // 🔥 Delete old file
+                if (existing.getFilePath() != null) {
+                    String oldFileName = existing.getFilePath().replace("/uploads/", "");
+                    Path oldFilePath = Paths.get(uploadDir, oldFileName);
+                    Files.deleteIfExists(oldFilePath);
+                }
+
+                // 🔥 Generate random file name
+                String originalName = file.getOriginalFilename();
+                String extension = "";
+
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+
+                String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+                Path newFilePath = Paths.get(uploadDir, fileName);
+
+                file.transferTo(newFilePath);
+
+                existing.setFilePath("/uploads/" + fileName);
+
+            } catch (IOException e) {
+                throw new RuntimeException("File upload failed", e);
+            }
+        }
+
+        // =========================
+        // UPDATE DATA
+        // =========================
+
+        Double nextKmForFatShot =
+                truck.getKmForFatsShoot() + formReport.getDistanceKm();
+
+        existing.setDate(formReport.getDate());
+        existing.setDistanceKm(formReport.getDistanceKm());
+        existing.setLiterQuantityOfFats(formReport.getLiterQuantityOfFats());
+        existing.setNote(formReport.getNote());
+        existing.setLocationChanged(formReport.getLocationChanged());
+
+        existing.setNextRange(nextKmForFatShot);
+        existing.setStatus(OilStatus.COMPLETED);
+        existing.setUpdatedAt(LocalDateTime.now());
+        existing.setUpdatedBy(user);
+
+        fatsReportService.save(existing);
+
+        // =========================
+        // UPDATE TRUCK
+        // =========================
+        truck.setNextFatsRange(nextKmForFatShot);
+        truck.setStatus(existing.getStatus());
+
+        truckService.save(truck);
+
+        redirectAttributes.addFlashAttribute("success",
+                "បានកែប្រែការបាញ់ខ្លាញ់របស់ឡាន " +
+                        truck.getLicensePlate() + " ដោយជោគជ័យ!");
+
+        return "redirect:/admin/trucks/shoot/fats";
+    }
+
+
     @GetMapping("/fats/reports")
     public String fatsReports(
             Model model,
@@ -777,32 +961,23 @@ public class TruckWebController {
             @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
             @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate
     ) {
-        // load trucks for filter dropdown
         List<Truck> trucks = truckService.getAll();
-
-        List<TruckFatsReport> reports;
-        int totalPages = 1;
+    
         int size;
-        
-        if ("all".equalsIgnoreCase(sizeParam)) {
+        if ("all".equalsIgnoreCase(sizeParam) || showAll) {
             size = Integer.MAX_VALUE;
+            page = 0; // Reset to first page when showing all
         } else {
             size = Integer.parseInt(sizeParam); 
         }
-        if (showAll) {
-            // fetch all reports with filter
-            reports = fatsReportService.getAllFiltered(truckId, fromDate, toDate);
-        } else {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
-            Page<TruckFatsReport> truckPage = fatsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
-            reports = truckPage.getContent();
-            totalPages = truckPage.getTotalPages();
-        }
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        Page<TruckFatsReport> truckPage = fatsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
 
         // put everything into model
-        model.addAttribute("reports", reports);
+        model.addAttribute("reports", truckPage);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalPages", truckPage.getTotalPages());
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
 
@@ -822,7 +997,7 @@ public class TruckWebController {
     @GetMapping("/change/oils")
     public Object indexChangeOils(Model model,
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "100") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll,
         @RequestParam(value = "licensePlate", required = false) String licensePlate,
         @RequestParam(value = "export", required = false) String export,
@@ -869,6 +1044,7 @@ public class TruckWebController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("pageSize", sizeParam);
+        model.addAttribute("size", size);
         model.addAttribute("showAll", showAll);
         model.addAttribute("licensePlate", licensePlate);  
         return "oils_change/list";
@@ -909,6 +1085,7 @@ public class TruckWebController {
     public String saveChangeOil(
         @PathVariable("id") Long truckId,
         @Valid @ModelAttribute("truckOilsReport") TruckOilsReport report,
+        @RequestParam("file") MultipartFile file,
         BindingResult result,
         Model model,
         RedirectAttributes redirectAttributes,
@@ -924,6 +1101,35 @@ public class TruckWebController {
             return "oils_change/change";
         }
 
+        if (!file.isEmpty()) {
+
+            try {
+
+                File uploadPath = new File(uploadDir);
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
+
+                String originalName = file.getOriginalFilename();
+                String extension = "";
+
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+
+                String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+                Path filePath = Paths.get(uploadDir, fileName);
+
+                file.transferTo(filePath);
+
+                report.setFilePath("/uploads/" + fileName);
+
+            } catch (IOException e) {
+                throw new RuntimeException("File upload failed", e);
+            }
+        }
+
+
         // calculate next range
         Double nextKmForOilsChange = truck.getKmForOilsChange() + report.getDistanceKm();
 
@@ -937,6 +1143,8 @@ public class TruckWebController {
         report.setKmForOilsChange(truck.getKmForOilsChange());
         report.setCreatedAt(LocalDateTime.now());
         report.setUpdatedAt(LocalDateTime.now());
+
+        report.setLocationChanged(report.getLocationChanged());
         
         report.setDistanceKm(report.getDistanceKm());
         report.setCreatedBy(user);
@@ -978,6 +1186,7 @@ public class TruckWebController {
     public String updateChangeOil(
             @PathVariable("reportId") Long reportId,
             @Valid @ModelAttribute("truckOilsReport") TruckOilsReport formReport,
+            @RequestParam("file") MultipartFile file,
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes,
@@ -993,6 +1202,46 @@ public class TruckWebController {
             model.addAttribute("statuses", OilStatus.values());
             return "oils_change/edit";
         }
+
+        // Handle file update
+        if (file != null && !file.isEmpty()) {
+
+            try {
+
+                File uploadPath = new File(uploadDir);
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
+
+                // 🔥 1️⃣ Delete old file if exists
+                if (existing.getFilePath() != null) {
+
+                    String oldFileName = existing.getFilePath().replace("/uploads/", "");
+                    Path oldFilePath = Paths.get(uploadDir, oldFileName);
+
+                    Files.deleteIfExists(oldFilePath);
+                }
+
+                // 🔥 2️⃣ Generate random file name
+                String originalName = file.getOriginalFilename();
+                String extension = "";
+
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+
+                String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+                Path newFilePath = Paths.get(uploadDir, fileName);
+
+                file.transferTo(newFilePath);
+
+                existing.setFilePath("/uploads/" + fileName);
+
+            } catch (IOException e) {
+                throw new RuntimeException("File upload failed", e);
+            }
+        }
+
 
         // Calculate next range
         Double nextKmForOilsChange =
@@ -1012,6 +1261,8 @@ public class TruckWebController {
         existing.setNextRange(nextKmForOilsChange);
         existing.setStatus(OilStatus.COMPLETED);
 
+        existing.setLocationChanged(formReport.getLocationChanged());
+
         oilsReportService.save(existing);
 
         // Update truck
@@ -1026,22 +1277,96 @@ public class TruckWebController {
         return "redirect:/admin/trucks/change/oils";
     }
 
+    @GetMapping("/fats/shoot/delete/{reportId}")
+    public String deleteFatsShoot(
+            @PathVariable("reportId") Long reportId,
+            RedirectAttributes redirectAttributes
+    ) {
+        // 1️⃣ Find existing report
+        TruckFatsReport existing = fatsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Fats report not found"));
 
-
-    @GetMapping("/oils/delete/{id}")
-        public String deleteOilReport(
-                @PathVariable("id") Long reportId,
-                RedirectAttributes redirectAttributes
-        ) {
-            try {
-                oilsReportService.deleteById(reportId);
-                redirectAttributes.addFlashAttribute("success", "បានលុបរបាយការណ៍បាញ់ខ្លាញ់ដោយជោគជ័យ!");
-            } catch (Exception e) {
-                redirectAttributes.addFlashAttribute("error", "មានបញ្ហាក្នុងការលុបរបាយការណ៍!");
+        Truck truck = existing.getTruck();
+        fatsReportService.deleteById(existing.getId());
+        try {
+            // 2️⃣ Delete uploaded file if exists
+            if (existing.getFilePath() != null) {
+                String fileName = existing.getFilePath().replace("/uploads/", "");
+                Path filePath = Paths.get(uploadDir, fileName);
+                Files.deleteIfExists(filePath);
             }
 
-            return "redirect:/admin/trucks/change/oils";
+            // 3️⃣ Update truck next range
+            // Subtract the distance of this deleted report from next range
+            Double newNextRange = truck.getNextFatsRange() - existing.getDistanceKm();
+            if (newNextRange < 0) {
+                newNextRange = 0.0; // prevent negative
+            }
+            truck.setNextFatsRange(newNextRange);
+
+            // Optional: recalculate truck status if needed
+            truck.setStatus(OilStatus.PENDING); // or your logic
+
+            truckService.save(truck);
+
+            // 4️⃣ Delete report from DB
+            
+
+            redirectAttributes.addFlashAttribute("success",
+                    "បានលុបការបាញ់ខ្លាញ់របស់ឡាន " + truck.getLicensePlate() + " ដោយជោគជ័យ!");
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file", e);
         }
+
+        return "redirect:/admin/trucks/fats/reports";
+    }
+
+
+    @GetMapping("/oils/change/delete/{reportId}")
+    public String deleteOilsReport(
+            @PathVariable("reportId") Long reportId,
+            RedirectAttributes redirectAttributes
+    ) {
+        // 1️⃣ Find existing report
+        TruckOilsReport existing = oilsReportService.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Oil report not found"));
+
+        Truck truck = existing.getTruck();
+        // 4️⃣ Delete report from DB
+        oilsReportService.delete(existing);
+        try {
+            // 2️⃣ Delete uploaded file if exists
+            if (existing.getFilePath() != null) {
+                String fileName = existing.getFilePath().replace("/uploads/", "");
+                Path filePath = Paths.get(uploadDir, fileName);
+                Files.deleteIfExists(filePath);
+            }
+
+            // 3️⃣ Update truck next range
+            // Subtract the distance of this deleted report from next oils range
+            Double newNextOilsRange = truck.getNextOilsRange() - existing.getDistanceKm();
+            if (newNextOilsRange < 0) {
+                newNextOilsRange = 0.0; // prevent negative
+            }
+            truck.setNextOilsRange(newNextOilsRange);
+
+            // Optional: update truck status
+            truck.setStatus(OilStatus.PENDING); // or your logic
+
+            truckService.save(truck);
+
+            
+
+            redirectAttributes.addFlashAttribute("success",
+                    "បានលុបការប្ដូរប្រេងរបស់ឡាន " + truck.getLicensePlate() + " ដោយជោគជ័យ!");
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file", e);
+        }
+
+        return "redirect:/admin/trucks/oils/reports";
+    }
 
 
     @GetMapping("/oils/reports")
@@ -1054,32 +1379,22 @@ public class TruckWebController {
             @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,
             @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate
     ) {
-        // load trucks for filter dropdown
         List<Truck> trucks = truckService.getAll();
-
-        List<TruckOilsReport> reports;
-        int totalPages = 1;
+    
         int size;
-        
-        if ("all".equalsIgnoreCase(sizeParam)) {
+        if ("all".equalsIgnoreCase(sizeParam) || showAll) {
             size = Integer.MAX_VALUE;
+            page = 0; // Reset to first page when showing all
         } else {
             size = Integer.parseInt(sizeParam); 
         }
-        if (showAll) {
-            // fetch all reports with filter
-            reports = oilsReportService.getAllFiltered(truckId, fromDate, toDate);
-        } else {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
-            Page<TruckOilsReport> truckPage = oilsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
-            reports = truckPage.getContent();
-            totalPages = truckPage.getTotalPages();
-        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        Page<TruckOilsReport> truckPage = oilsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
 
         // put everything into model
-        model.addAttribute("reports", reports);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("reports", truckPage);
+        model.addAttribute("currentPage", truckPage.getNumber());
+        model.addAttribute("totalPages", truckPage.getTotalPages());
         model.addAttribute("pageSize", sizeParam);
         model.addAttribute("showAll", showAll);
 
@@ -1104,10 +1419,24 @@ public class TruckWebController {
             @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
             @RequestParam(value = "excel", required = false, defaultValue = "false") boolean excel,
             @RequestParam(value = "pdf", required = false, defaultValue = "false") boolean pdf,
+
+
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
             HttpServletResponse response) throws IOException {
 
-        // fetch filtered data
-        List<TruckFatsReport> reports = fatsReportService.getAllFiltered(truckId, fromDate, toDate);
+        int size;
+        if ("all".equalsIgnoreCase(sizeParam) || showAll) {
+            size = Integer.MAX_VALUE;
+            page = 0; 
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        Page<TruckFatsReport> truckPage = fatsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
+        List<TruckFatsReport> reports = truckPage.getContent();
 
         if (excel) {
             // Export to Excel
@@ -1116,25 +1445,103 @@ public class TruckWebController {
 
             try (Workbook workbook = new XSSFWorkbook()) {
                 Sheet sheet = workbook.createSheet("Fats Reports");
+                
+                // Enable auto-sizing for columns
+                sheet.autoSizeColumn(0);
+                for (int i = 0; i < 13; i++) {
+                    sheet.setColumnWidth(i, 5000); // Set default width
+                }
+
+                // Create a style for the blue header
+                CellStyle headerStyle = workbook.createCellStyle();
+                headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+                headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                headerStyle.setBorderBottom(BorderStyle.THIN);
+                headerStyle.setBorderTop(BorderStyle.THIN);
+                headerStyle.setBorderLeft(BorderStyle.THIN);
+                headerStyle.setBorderRight(BorderStyle.THIN);
+                
+                Font headerFont = workbook.createFont();
+                headerFont.setBold(true);
+                headerFont.setColor(IndexedColors.WHITE.getIndex());
+                headerStyle.setFont(headerFont);
+                headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+                // Create a style for normal cells
+                CellStyle cellStyle = workbook.createCellStyle();
+                cellStyle.setBorderBottom(BorderStyle.THIN);
+                cellStyle.setBorderTop(BorderStyle.THIN);
+                cellStyle.setBorderLeft(BorderStyle.THIN);
+                cellStyle.setBorderRight(BorderStyle.THIN);
+                cellStyle.setWrapText(true); // Enable text wrapping
 
                 int rowIdx = 0;
                 // Header row
                 Row headerRow = sheet.createRow(rowIdx++);
-                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note"};
+                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Liter Quantity", "Location Changed", "File Attached", "Note", "Created At", "Created By", "Latest Update"};
+                
                 for (int i = 0; i < headers.length; i++) {
-                    headerRow.createCell(i).setCellValue(headers[i]);
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(headers[i]);
+                    cell.setCellStyle(headerStyle);
                 }
 
                 int index = 1;
+                // Create hyperlink style
+                CellStyle hyperlinkStyle = workbook.createCellStyle();
+                Font hyperlinkFont = workbook.createFont();
+                hyperlinkFont.setUnderline(Font.U_SINGLE);
+                hyperlinkFont.setColor(IndexedColors.BLUE.getIndex());
+                hyperlinkStyle.setFont(hyperlinkFont);
+                hyperlinkStyle.setBorderBottom(BorderStyle.THIN);
+                hyperlinkStyle.setBorderTop(BorderStyle.THIN);
+                hyperlinkStyle.setBorderLeft(BorderStyle.THIN);
+                hyperlinkStyle.setBorderRight(BorderStyle.THIN);
+
                 for (TruckFatsReport report : reports) {
                     Row row = sheet.createRow(rowIdx++);
-                    row.createCell(0).setCellValue(index++);
-                    row.createCell(1).setCellValue(report.getTruck().getLicensePlate());
-                    row.createCell(2).setCellValue(report.getTruck().getCurrentKm());
-                    row.createCell(3).setCellValue(report.getDate().toString());
-                    row.createCell(4).setCellValue(report.getCurrentKm());
-                    row.createCell(5).setCellValue(report.getNextRange());
-                    row.createCell(6).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    
+                    // Apply cell style to all cells in the row
+                    for (int i = 0; i < headers.length; i++) {
+                        row.createCell(i).setCellStyle(cellStyle);
+                    }
+                    
+                    row.getCell(0).setCellValue(index++);
+                    row.getCell(1).setCellValue(report.getTruck() != null ? report.getTruck().getLicensePlate() : "");
+                    row.getCell(2).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
+                    row.getCell(3).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
+                    row.getCell(4).setCellValue(report.getCurrentKm());
+                    row.getCell(5).setCellValue(report.getNextRange());
+                    row.getCell(6).setCellValue(report.getLiterQuantityOfFats());
+                    row.getCell(7).setCellValue(report.getLocationChanged());
+                    
+                    Cell fileCell = row.getCell(8);
+                    if (fileCell == null) fileCell = row.createCell(8);
+
+                    if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
+                        fileCell.setCellValue("Yes");
+                    } else {
+                        fileCell.setCellValue("No");
+                    }
+
+
+                    
+                    row.getCell(9).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    row.getCell(10).setCellValue(report.getCreatedAt() != null ? 
+                        report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : "");
+                    row.getCell(11).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
+                    row.getCell(12).setCellValue(report.getUpdatedAt() != null ? 
+                        report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : 
+                        (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : ""));
+                }
+
+                // Auto-size columns after data is added
+                for (int i = 0; i < headers.length; i++) {
+                    sheet.autoSizeColumn(i);
+                    // Ensure minimum width
+                    if (sheet.getColumnWidth(i) < 3000) {
+                        sheet.setColumnWidth(i, 3000);
+                    }
                 }
 
                 workbook.write(response.getOutputStream());
@@ -1145,43 +1552,143 @@ public class TruckWebController {
             response.setContentType("application/pdf");
             response.setHeader("Content-Disposition", "attachment; filename=fats-reports.pdf");
 
-            com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+            Document document = new Document(PageSize.A4.rotate()); // Landscape orientation
             try {
-                com.itextpdf.text.pdf.PdfWriter.getInstance(document, response.getOutputStream());
+                PdfWriter.getInstance(document, response.getOutputStream());
                 document.open();
-                document.add(new com.itextpdf.text.Paragraph("Fats Reports"));
-                document.add(new com.itextpdf.text.Paragraph(" "));
+                
+                // Add title with styling
+                com.itextpdf.text.Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.DARK_GRAY);
+                Paragraph title = new Paragraph("Fats Reports", titleFont);
+                title.setAlignment(Element.ALIGN_CENTER);
+                title.setSpacingAfter(20);
+                document.add(title);
+                
+                // Add subtitle with date range if provided
+                if (fromDate != null || toDate != null) {
+                    com.itextpdf.text.Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.GRAY);
+                    String dateRange = "Date Range: " + 
+                        (fromDate != null ? fromDate.toString() : "Start") + " - " + 
+                        (toDate != null ? toDate.toString() : "End");
+                    Paragraph subtitle = new Paragraph(dateRange, subtitleFont);
+                    subtitle.setAlignment(Element.ALIGN_CENTER);
+                    subtitle.setSpacingAfter(15);
+                    document.add(subtitle);
+                }
 
-                com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(7);
+                PdfPTable table = new PdfPTable(13); // Updated to 13 columns
                 table.setWidthPercentage(100);
                 table.setSpacingBefore(10f);
+                table.setWidths(new float[]{1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 3});
 
+                // Create blue header style
+                com.itextpdf.text.Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
+                BaseColor headerColor = new BaseColor(41, 128, 185); // Nice blue color
+                
                 // headers
-                Stream.of("#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note")
-                        .forEach(headerTitle -> {
-                            com.itextpdf.text.pdf.PdfPCell headerCell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(headerTitle));
-                            headerCell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
-                            table.addCell(headerCell);
-                        });
+                String[] pdfHeaders = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", 
+                                    "Liter Qty", "Location Changed", "File", "Note", "Created At", "Created By", "Latest Update"};
+                
+                for (String headerTitle : pdfHeaders) {
+                    PdfPCell headerCell = new PdfPCell(new Phrase(headerTitle, headerFont));
+                    headerCell.setBackgroundColor(headerColor);
+                    headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    headerCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    headerCell.setPadding(5);
+                    headerCell.setBorderWidth(1);
+                    table.addCell(headerCell);
+                }
 
+                // Create normal cell style
+                com.itextpdf.text.Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+                
                 int index = 1;
                 for (TruckFatsReport report : reports) {
-                    table.addCell(String.valueOf(index++));
-                    table.addCell(report.getTruck().getLicensePlate());
-                    table.addCell(String.valueOf(report.getTruck().getCurrentKm()));
-                    table.addCell(report.getDate().toString());
-                    table.addCell(String.valueOf(report.getCurrentKm()));
-                    table.addCell(String.valueOf(report.getNextRange()));
-                    table.addCell(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    // #
+                    addTableCell(table, String.valueOf(index++), cellFont, Element.ALIGN_CENTER);
+                    
+                    // License Plate
+                    addTableCell(table, report.getTruck() != null ? report.getTruck().getLicensePlate() : "", cellFont, Element.ALIGN_LEFT);
+                    
+                    // Current Km
+                    addTableCell(table, report.getTruck() != null ? String.valueOf(report.getTruck().getCurrentKm()) : "0", cellFont, Element.ALIGN_RIGHT);
+                    
+                    // Date
+                    addTableCell(table, report.getDate() != null ? report.getDate().toString() : "", cellFont, Element.ALIGN_CENTER);
+                    
+                    // Shot Km
+                    addTableCell(table, String.valueOf(report.getCurrentKm()), cellFont, Element.ALIGN_RIGHT);
+                    
+                    // Next Range
+                    addTableCell(table, String.valueOf(report.getNextRange()), cellFont, Element.ALIGN_RIGHT);
+                    
+                    // Liter Quantity
+                    addTableCell(table, String.valueOf(report.getLiterQuantityOfFats()), cellFont, Element.ALIGN_RIGHT);
+                    
+                    // Location Changed
+                    addTableCell(table, report.getLocationChanged(), cellFont, Element.ALIGN_CENTER);
+                    
+                    PdfPCell fileCell;
+
+                    if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
+                        fileCell = new PdfPCell(new Phrase("Yes", cellFont));
+                    } else {
+                        fileCell = new PdfPCell(new Phrase("No", cellFont));
+                    }
+
+                    fileCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    fileCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    fileCell.setPadding(5);
+                    fileCell.setBorderWidth(1);
+
+                    table.addCell(fileCell);
+
+                    
+                    // Note
+                    String cleanNote = report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "";
+                    addTableCell(table, cleanNote, cellFont, Element.ALIGN_LEFT);
+                    
+                    // Created At
+                    String createdAt = report.getCreatedAt() != null ? 
+                        report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "";
+                    addTableCell(table, createdAt, cellFont, Element.ALIGN_CENTER);
+                    
+                    // Created By
+                    addTableCell(table, report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "", cellFont, Element.ALIGN_LEFT);
+                    
+                    // Latest Update
+                    String updatedAt = report.getUpdatedAt() != null ? 
+                        report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : 
+                        (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "");
+                    addTableCell(table, updatedAt, cellFont, Element.ALIGN_CENTER);
                 }
 
                 document.add(table);
+                
+                // Add footer with page numbers
+                document.add(new Paragraph(" "));
+                com.itextpdf.text.Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.GRAY);
+                Paragraph footer = new Paragraph("Exported on: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")), footerFont);
+                footer.setAlignment(Element.ALIGN_CENTER);
+                document.add(footer);
+                
             } catch (Exception e) {
                 e.printStackTrace();
+                throw new IOException("Error generating PDF", e);
             } finally {
                 document.close();
             }
         }
+    }
+
+    // Helper method for PDF table cells
+    private void addTableCell(PdfPTable table, String text, com.itextpdf.text.Font font, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(5);
+        cell.setBorderWidth(1);
+        table.addCell(cell);
     }
 
     // oils
@@ -1192,37 +1699,130 @@ public class TruckWebController {
             @RequestParam(value = "toDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate toDate,
             @RequestParam(value = "excel", required = false, defaultValue = "false") boolean excel,
             @RequestParam(value = "pdf", required = false, defaultValue = "false") boolean pdf,
-            HttpServletResponse response) throws IOException {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") String sizeParam,
+            @RequestParam(value = "all", defaultValue = "false") boolean showAll,
+            HttpServletResponse response) throws IOException 
+    {
 
-        // fetch filtered data
-        List<TruckOilsReport> reports = oilsReportService.getAllFiltered(truckId, fromDate, toDate);
+
+        int size;
+        if ("all".equalsIgnoreCase(sizeParam) || showAll) {
+            size = Integer.MAX_VALUE;
+            page = 0; 
+        } else {
+            size = Integer.parseInt(sizeParam); 
+        }
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        Page<TruckOilsReport> truckPage = oilsReportService.getAllWithPageable(pageable, truckId, fromDate, toDate);
+        List<TruckOilsReport> reports = truckPage.getContent();
 
         if (excel) {
             // Export to Excel
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.setHeader("Content-Disposition", "attachment; filename=Oils-reports.xlsx");
+            response.setHeader("Content-Disposition", "attachment; filename=oil-reports.xlsx");
 
             try (Workbook workbook = new XSSFWorkbook()) {
-                Sheet sheet = workbook.createSheet("Oils Reports");
+                Sheet sheet = workbook.createSheet("Oil Reports");
+                
+                // Set default column widths
+                for (int i = 0; i < 13; i++) {
+                    sheet.setColumnWidth(i, 5000);
+                }
+
+                // Create a style for the blue header
+                CellStyle headerStyle = workbook.createCellStyle();
+                headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+                headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                headerStyle.setBorderBottom(BorderStyle.THIN);
+                headerStyle.setBorderTop(BorderStyle.THIN);
+                headerStyle.setBorderLeft(BorderStyle.THIN);
+                headerStyle.setBorderRight(BorderStyle.THIN);
+                
+                Font headerFont = workbook.createFont();
+                headerFont.setBold(true);
+                headerFont.setColor(IndexedColors.WHITE.getIndex());
+                headerStyle.setFont(headerFont);
+                headerStyle.setAlignment(HorizontalAlignment.CENTER);
+                headerStyle.setVerticalAlignment(VerticalAlignment.CENTER.CENTER);
+
+                // Create a style for normal cells
+                CellStyle cellStyle = workbook.createCellStyle();
+                cellStyle.setBorderBottom(BorderStyle.THIN);
+                cellStyle.setBorderTop(BorderStyle.THIN);
+                cellStyle.setBorderLeft(BorderStyle.THIN);
+                cellStyle.setBorderRight(BorderStyle.THIN);
+                cellStyle.setWrapText(true);
 
                 int rowIdx = 0;
                 // Header row
                 Row headerRow = sheet.createRow(rowIdx++);
-                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note"};
+                headerRow.setHeight((short) 500); // Set header row height
+                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", 
+                                "Liter Quantity", "Location Changed", "File Attached", "Note", 
+                                "Created At", "Created By", "Latest Update"};
+                
                 for (int i = 0; i < headers.length; i++) {
-                    headerRow.createCell(i).setCellValue(headers[i]);
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(headers[i]);
+                    cell.setCellStyle(headerStyle);
                 }
 
                 int index = 1;
+                // Create hyperlink style for file attachments
+                CellStyle hyperlinkStyle = workbook.createCellStyle();
+                Font hyperlinkFont = workbook.createFont();
+                hyperlinkFont.setUnderline(Font.U_SINGLE);
+                hyperlinkFont.setColor(IndexedColors.BLUE.getIndex());
+                hyperlinkStyle.setFont(hyperlinkFont);
+                hyperlinkStyle.setBorderBottom(BorderStyle.THIN);
+                hyperlinkStyle.setBorderTop(BorderStyle.THIN);
+                hyperlinkStyle.setBorderLeft(BorderStyle.THIN);
+                hyperlinkStyle.setBorderRight(BorderStyle.THIN);
+
                 for (TruckOilsReport report : reports) {
                     Row row = sheet.createRow(rowIdx++);
-                    row.createCell(0).setCellValue(index++);
-                    row.createCell(1).setCellValue(report.getTruck().getLicensePlate());
-                    row.createCell(2).setCellValue(report.getTruck().getCurrentKm());
-                    row.createCell(3).setCellValue(report.getDate().toString());
-                    row.createCell(4).setCellValue(report.getCurrentKm());
-                    row.createCell(5).setCellValue(report.getNextRange());
-                    row.createCell(6).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    
+                    // Apply cell style to all cells in the row
+                    for (int i = 0; i < headers.length; i++) {
+                        row.createCell(i).setCellStyle(cellStyle);
+                    }
+                    
+                    row.getCell(0).setCellValue(index++);
+                    row.getCell(1).setCellValue(report.getTruck() != null ? report.getTruck().getLicensePlate() : "");
+                    row.getCell(2).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
+                    row.getCell(3).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
+                    row.getCell(4).setCellValue(report.getCurrentKm());
+                    row.getCell(5).setCellValue(report.getNextRange());
+                    row.getCell(6).setCellValue(report.getLiterQuantityOfOils());
+                    row.getCell(7).setCellValue(report.getLocationChanged());
+                    
+                    Cell fileCell = row.getCell(8);
+                    if (fileCell == null) fileCell = row.createCell(8);
+
+                    if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
+                        fileCell.setCellValue("Yes");
+                    } else {
+                        fileCell.setCellValue("No");
+                    }
+
+                    
+                    row.getCell(9).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    row.getCell(10).setCellValue(report.getCreatedAt() != null ? 
+                        report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : "");
+                    row.getCell(11).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
+                    row.getCell(12).setCellValue(report.getUpdatedAt() != null ? 
+                        report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : 
+                        (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : ""));
+                }
+
+                // Auto-size columns
+                for (int i = 0; i < headers.length; i++) {
+                    sheet.autoSizeColumn(i);
+                    if (sheet.getColumnWidth(i) < 3000) {
+                        sheet.setColumnWidth(i, 3000);
+                    }
                 }
 
                 workbook.write(response.getOutputStream());
@@ -1231,46 +1831,200 @@ public class TruckWebController {
         } else if (pdf) {
             // Export to PDF
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "attachment; filename=Oils-reports.pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=oil-reports.pdf");
 
-            com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+            com.itextpdf.text.Document document = new com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4.rotate()); // Landscape
             try {
                 com.itextpdf.text.pdf.PdfWriter.getInstance(document, response.getOutputStream());
                 document.open();
-                document.add(new com.itextpdf.text.Paragraph("Oils Reports"));
-                document.add(new com.itextpdf.text.Paragraph(" "));
+                
+                // Add title with styling
+                com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.HELVETICA, 
+                    16, 
+                    com.itextpdf.text.Font.BOLD, 
+                    com.itextpdf.text.BaseColor.DARK_GRAY
+                );
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph("Oil Change Reports", titleFont);
+                title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+                title.setSpacingAfter(20);
+                document.add(title);
+                
+                // Add subtitle with date range if provided
+                if (fromDate != null || toDate != null) {
+                    com.itextpdf.text.Font subtitleFont = new com.itextpdf.text.Font(
+                        com.itextpdf.text.Font.FontFamily.HELVETICA, 
+                        10, 
+                        com.itextpdf.text.Font.NORMAL, 
+                        com.itextpdf.text.BaseColor.GRAY
+                    );
+                    String dateRange = "Date Range: " + 
+                        (fromDate != null ? fromDate.toString() : "Start") + " - " + 
+                        (toDate != null ? toDate.toString() : "End");
+                    com.itextpdf.text.Paragraph subtitle = new com.itextpdf.text.Paragraph(dateRange, subtitleFont);
+                    subtitle.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+                    subtitle.setSpacingAfter(15);
+                    document.add(subtitle);
+                }
 
-                com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(7);
+                com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(13); // 13 columns
                 table.setWidthPercentage(100);
                 table.setSpacingBefore(10f);
+                table.setWidths(new float[]{1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 3}); // Column widths
 
-                // headers
-                Stream.of("#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Note")
-                        .forEach(headerTitle -> {
-                            com.itextpdf.text.pdf.PdfPCell headerCell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(headerTitle));
-                            headerCell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
-                            table.addCell(headerCell);
-                        });
+                // Create blue header style
+                com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.HELVETICA, 
+                    10, 
+                    com.itextpdf.text.Font.BOLD, 
+                    com.itextpdf.text.BaseColor.WHITE
+                );
+                com.itextpdf.text.BaseColor headerColor = new com.itextpdf.text.BaseColor(41, 128, 185); // Nice blue
+                
+                // headers - all 13 columns
+                String[] pdfHeaders = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", 
+                                    "Liter Quantity", "Location Changed", "File Attached", "Note", 
+                                    "Created At", "Created By", "Latest Update"};
+                
+                for (String headerTitle : pdfHeaders) {
+                    com.itextpdf.text.pdf.PdfPCell headerCell = new com.itextpdf.text.pdf.PdfPCell(
+                        new com.itextpdf.text.Phrase(headerTitle, headerFont)
+                    );
+                    headerCell.setBackgroundColor(headerColor);
+                    headerCell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+                    headerCell.setVerticalAlignment(com.itextpdf.text.Element.ALIGN_MIDDLE);
+                    headerCell.setPadding(5);
+                    headerCell.setBorderWidth(1);
+                    table.addCell(headerCell);
+                }
 
+                // Create normal cell font
+                com.itextpdf.text.Font cellFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.HELVETICA, 
+                    9, 
+                    com.itextpdf.text.Font.NORMAL, 
+                    com.itextpdf.text.BaseColor.BLACK
+                );
+                
                 int index = 1;
                 for (TruckOilsReport report : reports) {
-                    table.addCell(String.valueOf(index++));
-                    table.addCell(report.getTruck().getLicensePlate());
-                    table.addCell(String.valueOf(report.getTruck().getCurrentKm()));
-                    table.addCell(report.getDate().toString());
-                    table.addCell(String.valueOf(report.getCurrentKm()));
-                    table.addCell(String.valueOf(report.getNextRange()));
-                    table.addCell(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    // #
+                    addTableCell(table, String.valueOf(index++), cellFont, com.itextpdf.text.Element.ALIGN_CENTER);
+                    
+                    // License Plate
+                    addTableCell(table, 
+                        report.getTruck() != null ? report.getTruck().getLicensePlate() : "", 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_LEFT
+                    );
+                    
+                    // Current Km
+                    addTableCell(table, 
+                        report.getTruck() != null ? String.valueOf(report.getTruck().getCurrentKm()) : "0", 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_RIGHT
+                    );
+                    
+                    // Date
+                    addTableCell(table, 
+                        report.getDate() != null ? report.getDate().toString() : "", 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_CENTER
+                    );
+                    
+                    // Shot Km
+                    addTableCell(table, 
+                        String.valueOf(report.getCurrentKm()), 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_RIGHT
+                    );
+                    
+                    // Next Range
+                    addTableCell(table, 
+                        String.valueOf(report.getNextRange()), 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_RIGHT
+                    );
+                    
+                    // Liter Quantity
+                    addTableCell(table, 
+                        report.getLiterQuantityOfOils() != null ? String.valueOf(report.getLiterQuantityOfOils()) : "0", 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_RIGHT
+                    );
+                    
+                    // Location Changed
+                    addTableCell(table, 
+                        report.getLocationChanged(), 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_CENTER
+                    );
+                    
+                    PdfPCell fileCell;
+
+                    if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
+                        fileCell = new PdfPCell(new Phrase("Yes", cellFont));
+                    } else {
+                        fileCell = new PdfPCell(new Phrase("No", cellFont));
+                    }
+
+                    fileCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    fileCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    fileCell.setPadding(5);
+                    fileCell.setBorderWidth(1);
+
+                    table.addCell(fileCell);
+
+                    
+                    // Note
+                    String cleanNote = report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "";
+                    addTableCell(table, cleanNote, cellFont, com.itextpdf.text.Element.ALIGN_LEFT);
+                    
+                    // Created At
+                    String createdAt = report.getCreatedAt() != null ? 
+                        report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "";
+                    addTableCell(table, createdAt, cellFont, com.itextpdf.text.Element.ALIGN_CENTER);
+                    
+                    // Created By
+                    addTableCell(table, 
+                        report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "", 
+                        cellFont, 
+                        com.itextpdf.text.Element.ALIGN_LEFT
+                    );
+                    
+                    // Latest Update
+                    String updatedAt = report.getUpdatedAt() != null ? 
+                        report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : 
+                        (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "");
+                    addTableCell(table, updatedAt, cellFont, com.itextpdf.text.Element.ALIGN_CENTER);
                 }
 
                 document.add(table);
+                
+                // Add footer with page numbers
+                document.add(new com.itextpdf.text.Paragraph(" "));
+                com.itextpdf.text.Font footerFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.HELVETICA, 
+                    8, 
+                    com.itextpdf.text.Font.NORMAL, 
+                    com.itextpdf.text.BaseColor.GRAY
+                );
+                com.itextpdf.text.Paragraph footer = new com.itextpdf.text.Paragraph(
+                    "Exported on: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")), 
+                    footerFont
+                );
+                footer.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+                document.add(footer);
+                
             } catch (Exception e) {
                 e.printStackTrace();
+                throw new IOException("Error generating PDF", e);
             } finally {
                 document.close();
             }
         }
     }
+
 
 
 

@@ -39,8 +39,6 @@ import timdev.timdev.listener.AuditListener;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 @Entity
 @Table(name = "trucks")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -57,6 +55,12 @@ public class Truck {
 
     @Column(name = "license_plate", nullable = false, unique = true)
     private String licensePlate;
+
+    @Column(name = "model_name", nullable = true)
+    private String modelName;
+
+    @Column(name = "group_name", nullable = true)
+    private String groupName;
 
     @Column(nullable = false)
     private Double literQuantityOfFats = 0.0;
@@ -533,6 +537,22 @@ public class Truck {
     @Transient
     public String getCurrentKmFormat() {
         return String.format("%,.2f km", currentKm); 
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
 

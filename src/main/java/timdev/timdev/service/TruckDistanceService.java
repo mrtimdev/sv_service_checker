@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,9 +33,10 @@ import timdev.timdev.repository.TruckDistanceRepository;
 public class TruckDistanceService {
 
 
-    
-    private final TruckDistanceRepository truckDistanceRepo;
-    private final UserService userService;
+    @Autowired
+    private TruckDistanceRepository truckDistanceRepo;
+    @Autowired
+    private UserService userService;
     // ✅ Get all
     public List<TruckDistance> getAll() {
         return truckDistanceRepo.findAll();

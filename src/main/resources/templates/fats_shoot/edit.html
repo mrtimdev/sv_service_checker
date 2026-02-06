@@ -101,7 +101,8 @@
                 </div>
                 
                 <div class="">
-                    <form th:action="@{/admin/trucks/fats/shoot/{id}(id=${truck.id})}" 
+                    <form
+                        th:action="@{/admin/trucks/fats/shoot/update/{id}(id=${truckFatsReport.id})}"
                         enctype="multipart/form-data"
                         th:object="${truckFatsReport}" method="post">
                         <input type="hidden" th:field="*{currentKm}"/>
@@ -145,7 +146,6 @@
                                 <input type="file"
                                     name="file"
                                     id="file"
-                                    required
                                     class="shadow-sm border border-gray-300 dark:border-gray-600 rounded-lg w-full py-3 px-4 bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                             </div>
 

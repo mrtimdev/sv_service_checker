@@ -5,7 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'SV Services Checker'">SV Services Checker</title>
+    <title th:text="${pageTitle} ?: 'SV Trucking Vehicles Controller'">SV Trucking Vehicles Controller</title>
     
     
     
@@ -117,7 +117,22 @@
             }
         });
 
+        const delay = (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        const scrollToActive = async () => {
+            var sidebar = $('#sidebar');
+            var activeLink = sidebar.find('ul li a.active-menu');
+
+            if (activeLink.length) {
+                activeLink.get(0).scrollIntoView({ behavior: 'smooth' });
+                await delay(150);
+            }
+        }
+
         $(function() {
+            scrollToActive();
             $(".datepicker").flatpickr({
                 dateFormat: "M d, Y",
                 maxDate: "today"

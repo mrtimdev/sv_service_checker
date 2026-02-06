@@ -8,7 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import timdev.timdev.entity.TruckFatsReport;
 import timdev.timdev.entity.TruckOilsReport;
 import timdev.timdev.repository.TruckOilsReportRepository;
 
@@ -53,4 +55,9 @@ public class TruckOilsReportService {
     public List<TruckOilsReport> findTop10ByOrderByDateDesc() {
         return reportRepo.findTop10ByOrderByDateDesc();
     }
+    @Transactional
+    public void delete(TruckOilsReport report) {
+        reportRepo.delete(report);
+    }
+
 }

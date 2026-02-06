@@ -113,7 +113,7 @@
                         </tr>
                     </thead>
                     <tbody class="text-gray-600">
-                        <tr th:each="truck, row : ${trucks}" class="border-b border-gray-200"
+                        <tr th:each="truck, rowStat : ${trucks}" class="border-b border-gray-200"
                             th:classappend="${ 
                                 truck.kmOilsBalance == 500 ? 'bg-[#E87A7AFF] need-to-update text-white' :
                                 (truck.kmOilsBalance < 0 ? 'bg-[#ff0000] need-to-update text-white' :
@@ -121,7 +121,12 @@
                                 'insufficient final-condition'))
                             }">
 
-                            <td class="py-3 px-6 text-center" th:text="${row.index + 1}"></td>
+                            <td class="py-3 px-6 text-center" th:text="${showAll} ? 
+                  ${rowStat.index + 1} : 
+                  ${(currentPage * size) + rowStat.index + 1}"></td>
+
+
+
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
                             <td class="py-3 px-6" th:text="${truck.model.name}"></td>
                             

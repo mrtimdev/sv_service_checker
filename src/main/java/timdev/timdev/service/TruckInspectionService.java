@@ -3,20 +3,22 @@ package timdev.timdev.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import timdev.timdev.entity.TruckInspection;
 import timdev.timdev.repository.TruckInspectionRepository;
 
 
-@RequiredArgsConstructor
 @Service
 public class TruckInspectionService {
     
-    private final TruckInspectionRepository truckRepo;
+    @Autowired
+    private TruckInspectionRepository truckRepo;
 
     public List<TruckInspection> getAll() {
         return truckRepo.findAll();
@@ -57,7 +59,7 @@ public class TruckInspectionService {
     public Optional<TruckInspection> getByLicensePlate(String lp) {
         return truckRepo.findByLicensePlate(lp);
     }
-
+    @Transactional
     public void deleteById(Long id) {
         truckRepo.deleteById(id); 
     }

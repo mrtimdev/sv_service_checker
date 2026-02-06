@@ -58,10 +58,10 @@ import timdev.timdev.service.UserService;
 @RequestMapping("/truck-distances")
 public class TruckDistanceWebController {
 
-    private final TruckDistanceService truckDistanceService;
-    private final TruckService truckService;
-    private final UserService userService;
-    private final TruckRepository truckRepo;
+    private TruckDistanceService truckDistanceService;
+    private TruckService truckService;
+    private UserService userService;
+    private TruckRepository truckRepo;
 
   
 
@@ -70,7 +70,7 @@ public class TruckDistanceWebController {
     @GetMapping
     public Object listTruckDistances(
         @RequestParam(value = "page", defaultValue = "0") int page,
-        @RequestParam(value = "size", defaultValue = "50") String sizeParam,
+        @RequestParam(value = "size", defaultValue = "200") String sizeParam,
         @RequestParam(value = "all", defaultValue = "false") boolean showAll, 
         @RequestParam(value = "truck_id", required = false) Long truckId,
         @RequestParam(value = "fromDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate fromDate,

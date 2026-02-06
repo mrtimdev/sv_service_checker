@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import lombok.AllArgsConstructor;
 import timdev.timdev.entity.Request;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ApprovalLevel;
@@ -17,6 +18,7 @@ import timdev.timdev.enums.UserType;
 import timdev.timdev.repository.RequestRepository;
 import timdev.timdev.repository.UserRepository;
 
+@AllArgsConstructor
 @Service
 public class UserService {
 
