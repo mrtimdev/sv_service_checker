@@ -145,6 +145,12 @@
             <div class="bg-white dark:bg-gray-800 shadow-md">
                 <form method="get" class="p-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
                     <!-- Page size selector -->
+                    <input type="hidden" name="fromDate"
+                        th:value="${fromDate != null ? #temporals.format(fromDate, 'MMM dd, yyyy') : ''}" />
+                    <input type="hidden" name="toDate"
+                        th:value="${toDate != null ? #temporals.format(toDate, 'MMM dd, yyyy') : ''}" />
+                    <!-- reset page -->
+                    <input type="hidden" name="page" value="0"/>
                     <div class="flex items-center">
                         <label for="size">Size:</label>
                         <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
@@ -162,6 +168,9 @@
                         <tr class="text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
                             <th class="py-3 px-6 text-center">#</th>
                             <th class="py-3 px-6 text-center">លេខឡាន</th>
+                            <th class="py-3 px-6 text-left">ប្រភេទ/ម៉ាក</th>
+                            <th class="py-3 px-6 text-left">ផ្នែកការរ៉ាស់</th>
+                            <th class="py-3 px-6 text-left">ឆ្នាំផលិត</th>
                             <th class="py-3 px-6 text-center">គីឡូបច្ចុប្បន្ន</th>
                             <th class="py-3 px-6 text-center">ថ្ងៃបានប្ដូរ</th>
                             <th class="py-3 px-6 text-center">គីឡូដែលបានប្ដូរ</th>
@@ -179,10 +188,15 @@
                         <tr th:each="report, rowStat : ${reports}" class="text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td class="py-3 px-6 text-center" th:text="${rowStat.index + 1 + (reports.number * reports.size)}"></td>
                             <td class="py-3 px-6 text-center" th:text="${report.truck.licensePlate}"></td>
+
+                            <td class="py-3 px-6" th:text="${report.truck.modelName}"></td>
+                            <td class="py-3 px-6" th:text="${report.truck.groupName}"></td>
+                            <td class="py-3 px-6" th:text="${report.truck.yearOfManufacture}"></td>
+
                             <td class="py-3 px-6 text-center" th:text="${report.truck.getCurrentKmFormat()}"></td>
                             <td class="py-3 px-6 text-center" th:text="${#temporals.format(report.date, 'MMM dd, yyyy')}"></td>
-                            <td class="py-3 px-6 text-center" th:text="${report.distanceKm == 0 ? report.currentKm : report.distanceKm}"></td>
-                            <td class="py-3 px-6 text-center" th:text="${report.nextRange}"></td>
+                            <td class="py-3 px-6 text-center" th:text="${report.distanceKm == 0 ? report.currentKmFormat : report.distanceFormat}"></td>
+                            <td class="py-3 px-6 text-center" th:text="${report.nextRangeFormat}"></td>
                             <td class="py-3 px-6 text-center" th:text="${report.literQuantityOfOils}"></td>
                             <td class="py-3 px-6 text-center" th:text="${report.locationChanged}"></td>
                             <td class="py-3 px-6 text-center">
@@ -290,10 +304,11 @@
 
                 <!-- Show All button -->
                 <a th:href="@{/admin/trucks/oils/reports(
+                    page=0,
                     truck_id=${selectedTruckId}, 
                     fromDate=${fromDate}, 
                     toDate=${toDate}, 
-                    all=true)}"
+                    size=all)}"
                     class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>

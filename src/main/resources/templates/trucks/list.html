@@ -90,6 +90,7 @@
                             <th class="py-3 px-6 text-left">លេខឡាន</th>
                             <th class="py-3 px-6 text-left">ឆ្នាំផលិត</th>
                             <th class="py-3 px-6 text-left">Size</th>
+                            <th class="py-3 px-6 text-left">Group Name</th>
                             <th class="py-3 px-6 text-left">គីឡូកំណត់បាញ់ខ្លាញ់</th>
                             <th class="py-3 px-6 text-left">គីឡូកំណត់ប្ដូរប្រេង</th>
                             <th class="py-3 px-6 text-left">គីឡូបច្ចុប្បន្ន</th>
@@ -99,10 +100,11 @@
                     </thead>
                     <tbody class="text-gray-600 text-sm">
                         <tr th:each="truck : ${trucks}" class="border-b border-gray-200">
-                            <td class="py-3 px-6" th:text="${truck.model.name}"></td>
+                            <td class="py-3 px-6" th:text="${truck.modelName}"></td>
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
-                            <td class="py-3 px-6" th:text="${truck.year}"></td>
+                            <td class="py-3 px-6" th:text="${truck.yearOfManufacture}"></td>
                             <td class="py-3 px-6" th:text="${truck.size}"></td>
+                            <td class="py-3 px-6" th:text="${truck.groupName}"></td>
                             <td class="py-3 px-6" th:text="${truck.kmForFatsShoot}"></td>
                             <td class="py-3 px-6" th:text="${truck.kmForOilsChange}"></td>
                             <td class="py-3 px-6" th:text="${truck.getCurrentKmFormat()}"></td>

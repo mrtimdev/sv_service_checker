@@ -43,17 +43,17 @@
 
 
                 <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">តារាងចូលបាញ់ខ្លាញ់</h1>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">តារាងចូលបាញ់ខ្លាញ់</h1>
 
-                <div class="flex gap-2 items-center mb-6">
-                    <a th:href="@{/truck-distances/create}" 
+                    <div class="flex gap-2 items-center">
+                    <!-- <a th:href="@{/truck-distances/create}" 
                         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200">
                             Create Distances (km)
                     </a>
                     <a th:href="@{/truck-distances/import}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
                         <i class="fa fa-excel"></i>
                         Import Distances
-                    </a>
+                    </a> -->
                     <!-- Excel Export Button -->
                     <a th:href="@{/admin/trucks/shoot/fats(
                         page=${currentPage},
@@ -71,9 +71,11 @@
             </div>
 
             <div class="">
-                <div class="flex justify-between items-center">
-                    <form method="get" class="mb-4 flex items-center gap-4 text-gray-800 dark:text-gray-200">
+                <div class="mb-4  flex justify-between items-center">
+                    <form method="get" class="flex items-center gap-4 text-gray-800 dark:text-gray-200">
                         <!-- Page size selector -->
+                        <input type="hidden" name="licensePlate" th:value="${licensePlate}" />
+                        <input type="hidden" name="page" value="0"/>
                         <div class="flex items-center">
                             <label for="size">Size:</label>
                             <select id="size" name="size" onchange="this.form.submit()" class="truck w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 text-gray-700 dark:text-gray-100">
@@ -86,11 +88,22 @@
                             </select>
                         </div>
                     </form>
-                    <form th:action="@{/admin/trucks/shoot/fats}" method="get" class="mb-4 flex space-x-2">
-                        <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search License Plate"
-                            class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
-                        <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Search</button>
-                    </form>
+                    <div>
+                        <form th:action="@{/admin/trucks/shoot/fats}" method="get" >
+                            <div class="flex justify-center items-center gap-5">
+                                <input type="text" name="licensePlate" th:value="${licensePlate}" placeholder="Search any..."
+                                    class="shadow border rounded w-full py-2 px-4 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">Search</button>
+                                <a href="/admin/trucks/shoot/fats"
+                                    th:text="#{reset}"
+                                    class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none shadow-sm">
+                                    Reset
+                                </a>
+                            </div>
+                            
+                        </form>
+                        
+                    </div>
                 </div>
                 
                 <table class="min-w-full bg-white">
@@ -99,6 +112,7 @@
                             <th class="py-3 px-6 text-center w-[70px]">ល​.រ</th>
                             <th class="py-3 px-6 text-left">លេខឡាន</th>
                             <th class="py-3 px-6 text-left">ប្រភេទ/ម៉ាក</th>
+                            <th class="py-3 px-6 text-left">ផ្នែកការរ៉ាស់</th>
                             
                             <th class="py-3 px-6 text-left">ឆ្នាំផលិត</th>
                             <th class="py-3 px-6 text-left">គីឡូកំណត់បាញ់ខ្លាញ់</th>
@@ -126,9 +140,10 @@
                                 ${rowStat.index + 1} : 
                                 ${(currentPage * size) + rowStat.index + 1}"></td>
                             <td class="py-3 px-6" th:text="${truck.licensePlate}"></td>
-                            <td class="py-3 px-6" th:text="${truck.model.name}"></td>
+                            <td class="py-3 px-6" th:text="${truck.modelName}"></td>
+                            <td class="py-3 px-6" th:text="${truck.groupName}"></td>
                             
-                            <td class="py-3 px-6" th:text="${truck.year}"></td>
+                            <td class="py-3 px-6" th:text="${truck.yearOfManufacture}"></td>
                             <td class="py-3 px-6" th:text="${#numbers.formatInteger(truck.kmForFatsShoot, 0, 'COMMA')}"></td>
                             <td class="py-3 px-6" th:text="${truck.getCurrentKmFormat()}"></td>
 
@@ -164,13 +179,13 @@
                                         class="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
 
                                         <a th:href="@{/admin/trucks/fats/shoot(truck_id=${truck.id})}" 
-                                            class="btnShootFats flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 space-x-2">
+                                            target="_blank" class="btnShootFats flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 space-x-2">
                                             <i class="fas fa-oil-can text-blue-500"></i>
                                             <span>បាញ់ខ្លាញ់</span>
                                         </a>
 
                                         <a th:href="@{/admin/trucks/fats/reports(truck_id=${truck.id})}" 
-                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
+                                            target="_blank" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2">
                                             <i class="fas fa-history text-gray-500"></i>
                                             <span>ប្រវត្តិបាញ់ខ្លាញ់</span>
                                         </a>
@@ -201,7 +216,7 @@
                 <ul class="inline-flex -space-x-px mr-4" 
                     th:if="${totalPages > 1}">
                     <li th:each="i : ${#numbers.sequence(0, totalPages-1)}">
-                        <a th:href="@{/admin/trucks/shoot/fats(page=${i}, size=${pageSize})}"
+                        <a th:href="@{/admin/trucks/shoot/fats(page=${i}, size=${pageSize}, licensePlate=${licensePlate})}"
                             th:text="${i + 1}"
                             class="px-3 py-1 border rounded-md mr-1 hover:bg-blue-100 dark:hover:bg-gray-700"
                             th:classappend="${i == currentPage} ? ' bg-blue-500 text-white' : 'text-blue-500'">
@@ -210,7 +225,7 @@
                 </ul>
 
                 <!-- Show All button -->
-                <a th:href="@{/admin/trucks/shoot/fats(all=true)}"
+                <a th:href="@{/admin/trucks/shoot/fats(size=all,page=0, licensePlate=${licensePlate})}"
                 class="px-3 py-1 border rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600">
                     Show All
                 </a>

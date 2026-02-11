@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import timdev.timdev.entity.Truck;
@@ -27,6 +29,15 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
 
 
     List<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate);
+
+    @Query("""
+        SELECT t FROM Truck t
+        WHERE (:query IS NULL OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(t.modelName) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(t.groupName) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(t.yearOfManufacture) LIKE LOWER(CONCAT('%', :query, '%')))
+    """)
+    List<Truck> advancedFilter(@Param("query") String query);
 
     Page<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 

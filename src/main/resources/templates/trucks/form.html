@@ -97,8 +97,17 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-6 mb-8">
-                        <!-- Year -->
+                        <!-- Year of Manufacture -->
                         <div>
+                            <label for="yearOfManufacture" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">
+                                Year of Manufacture
+                            </label>
+                            <input type="text" th:field="*{yearOfManufacture}" id="yearOfManufacture"
+                                class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                            <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('yearOfManufacture')}" th:errors="*{yearOfManufacture}"></p>
+                        </div>
+                        <!-- Year -->
+                        <div style="display: none;">
                             <label for="year" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Year</label>
                             <input type="text" th:field="*{year}" id="year"
                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
@@ -119,6 +128,30 @@
                                    class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
                             <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('kmForOilsChange')}" th:errors="*{kmForOilsChange}"></p>
                         </div>
+
+
+                        <!-- Model Name -->
+                        <div>
+                            <label for="modelName" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">
+                                Model Name
+                            </label>
+                            <input type="text" th:field="*{modelName}" id="modelName"
+                                class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                            <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('modelName')}" th:errors="*{modelName}"></p>
+                        </div>
+
+                        <!-- Group Name -->
+                        <div>
+                            <label for="groupName" class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">
+                                Group Name
+                            </label>
+                            <input type="text" th:field="*{groupName}" id="groupName"
+                                class="shadow border rounded w-full py-2 px-3 bg-white text-gray-700 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                            <p class="text-red-500 text-xs italic" th:if="${#fields.hasErrors('groupName')}" th:errors="*{groupName}"></p>
+                        </div>
+
+                        
+
                     </div>
 
                     <div class="flex items-center justify-between">

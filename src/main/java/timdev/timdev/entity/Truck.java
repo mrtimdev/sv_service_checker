@@ -62,6 +62,11 @@ public class Truck {
     @Column(name = "group_name", nullable = true)
     private String groupName;
 
+    @Column(name = "year_of_manufacture", nullable = true)
+    private String yearOfManufacture;
+
+    
+
     @Column(nullable = false)
     private Double literQuantityOfFats = 0.0;
 
@@ -553,6 +558,14 @@ public class Truck {
 
     public void setGroupName(String groupName) {
         this.groupName = groupName;
+    }
+
+    public String getYearOfManufacture() {
+        return yearOfManufacture;
+    }
+
+    public void setYearOfManufacture(String yearOfManufacture) {
+        this.yearOfManufacture = yearOfManufacture;
     }
 
 

@@ -33,6 +33,10 @@ public class TruckService {
         return truckRepo.findByLicensePlateContainingIgnoreCase(licensePlate);
     }
 
+    public List<Truck> advancedFilter(String query) {
+        return truckRepo.advancedFilter(query);
+    }
+
     public Page<Truck> findByLicensePlateContainingWithPageable(String licensePlate, Pageable pageable) {
         return truckRepo.findByLicensePlateContainingIgnoreCase(licensePlate, pageable);
     }

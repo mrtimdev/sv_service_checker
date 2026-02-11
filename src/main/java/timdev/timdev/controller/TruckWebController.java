@@ -184,10 +184,13 @@ public class TruckWebController {
         dto.setId(t.getId());
         dto.setLicensePlate(t.getLicensePlate());
         dto.setModelId(t.getModel().getId());
-        dto.setYear(t.getYear());
+        dto.setYear(0);
         dto.setKmForFatsShoot(t.getKmForFatsShoot());
         dto.setKmForOilsChange(t.getKmForOilsChange());
         dto.setSize(t.getSize());
+        dto.setGroupName(t.getGroupName());
+        dto.setModelName(t.getModelName());
+        dto.setYearOfManufacture(t.getYearOfManufacture());
         model.addAttribute("sizes", TruckSize.values());
         model.addAttribute("truck", dto);
         model.addAttribute("models", modelService.getAll());
@@ -220,11 +223,15 @@ public class TruckWebController {
             truck.setKmForFatsShoot(truckDTO.getKmForFatsShoot());
             truck.setKmForOilsChange(truckDTO.getKmForOilsChange());
             truck.setSize(truckDTO.getSize());
+
+            truck.setGroupName(truckDTO.getGroupName());
+            truck.setModelName(truckDTO.getModelName());
+            truck.setYearOfManufacture(truckDTO.getYearOfManufacture());
             // Set the model
             modelService.findById(1L).ifPresent(truck::setModel);
 
             truckService.save(truck);
-            redirectAttributes.addFlashAttribute("success", (id == null ? "Truck created successfully!" : "Truck updated successfully!"));
+            redirectAttributes.addFlashAttribute("success", (id == null ? "Truck [" + truck.getLicensePlate() + "] created successfully!" : "Truck [" + truck.getLicensePlate() +"] updated successfully!"));
             return "redirect:/admin/trucks";
 
         } catch (Exception e) {
@@ -248,10 +255,14 @@ public class TruckWebController {
         try {
             Truck truck = new Truck();
             truck.setLicensePlate(truckDTO.getLicensePlate());
-            truck.setYear(truckDTO.getYear());
+            truck.setYear(0);
             truck.setKmForFatsShoot(truckDTO.getKmForFatsShoot());
             truck.setKmForOilsChange(truckDTO.getKmForOilsChange());
             truck.setSize(truckDTO.getSize());
+            
+            truck.setGroupName(truckDTO.getGroupName());
+            truck.setModelName(truckDTO.getModelName());
+            truck.setYearOfManufacture(truckDTO.getYearOfManufacture());
 
             // Set the model
             modelService.findById(1L).ifPresent(truck::setModel);
@@ -276,7 +287,7 @@ public class TruckWebController {
                 redirectAttributes.addFlashAttribute("error", "Truck not found");
             } else {
                 Truck truck = truckOpt.get();
-                if(truck.getLastFatsReport() != null) {
+                if(truck.getLastFatsReport() != null || truck.getLastOilsReport() != null) {
                     redirectAttributes.addFlashAttribute("error", "This Truck can not delete");
                     return "redirect:/admin/trucks";
                 }
@@ -338,7 +349,7 @@ public class TruckWebController {
 
         List<Truck> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = truckService.findByLicensePlateContaining(licensePlate);
+            allTrucks = truckService.advancedFilter(licensePlate);
         } else {
             allTrucks = truckService.getAll();
         }
@@ -458,7 +469,7 @@ public class TruckWebController {
         CellStyle headerStyle = createHeaderStyle(workbook);
         
         String[] headers = {
-            "#", "License Plate", "Model", "Year", 
+            "#", "License Plate", "Model", "Year", "ផ្នែកការរ៉ាស់",
             "KM for Oil Change", "Current KM", "Last Oil Change Date",
             "Last Oil Change KM", "Next Range", "KM Balance"
         };
@@ -482,10 +493,11 @@ public class TruckWebController {
             // Populate data
             createCell(row, 0, i + 1, rowStyle); // #
             createCell(row, 1, truck.getLicensePlate(), rowStyle);
-            createCell(row, 2, truck.getModel() != null ? truck.getModel().getName() : "", rowStyle);
-            createCell(row, 3, truck.getYear(), rowStyle);
-            createCell(row, 4, truck.getKmForOilsChange(), rowStyle);
-            createCell(row, 5, truck.getCurrentKm(), rowStyle);
+            createCell(row, 2, truck.getModelName() != null ? truck.getModelName() : "", rowStyle);
+            createCell(row, 3, truck.getYearOfManufacture() != null ? truck.getYearOfManufacture() : "", rowStyle);
+            createCell(row, 4, truck.getGroupName() != null ? truck.getGroupName() : "", rowStyle);
+            createCell(row, 5, truck.getKmForOilsChange(), rowStyle);
+            createCell(row, 6, truck.getCurrentKm(), rowStyle);
             
             // Last oil change data
             String lastChangeDate = truck.getLastOilsReport() != null && truck.getLastOilsReport().getDate() != null ?
@@ -493,10 +505,10 @@ public class TruckWebController {
             Double lastChangeKm = truck.getLastOilsReport() != null ? truck.getLastOilsReport().getCurrentKm() : null;
             Double nextRange = truck.getLastOilsReport() != null ? truck.getLastOilsReport().getNextRange() : null;
             
-            createCell(row, 6, lastChangeDate, rowStyle);
-            createCell(row, 7, lastChangeKm, rowStyle);
-            createCell(row, 8, nextRange, rowStyle);
-            createCell(row, 9, truck.getKmOilsBalance(), rowStyle);
+            createCell(row, 7, lastChangeDate, rowStyle);
+            createCell(row, 8, lastChangeKm, rowStyle);
+            createCell(row, 9, nextRange, rowStyle);
+            createCell(row, 10, truck.getKmOilsBalance(), rowStyle);
         }
         
         // Auto-size columns for better fit
@@ -533,7 +545,7 @@ public class TruckWebController {
         CellStyle headerStyle = createHeaderStyle(workbook);
         
         String[] headers = {
-            "#", "License Plate", "Model", "Year", 
+            "#", "License Plate", "Model", "Year", "ផ្នែកការរ៉ាស់",
             "KM for Fats Change", "Current KM", "Last Fats Change Date",
             "Last Fats Change KM", "Next Range", "KM Balance"
         };
@@ -557,10 +569,11 @@ public class TruckWebController {
             // Populate data
             createCell(row, 0, i + 1, rowStyle); // #
             createCell(row, 1, truck.getLicensePlate(), rowStyle);
-            createCell(row, 2, truck.getModel() != null ? truck.getModel().getName() : "", rowStyle);
-            createCell(row, 3, truck.getYear(), rowStyle);
-            createCell(row, 4, truck.getKmForFatsShoot(), rowStyle);
-            createCell(row, 5, truck.getCurrentKm(), rowStyle);
+            createCell(row, 2, truck.getModelName() != null ? truck.getModelName() : "", rowStyle);
+            createCell(row, 3, truck.getYearOfManufacture() != null ? truck.getYearOfManufacture() : "", rowStyle);
+            createCell(row, 4, truck.getGroupName() != null ? truck.getGroupName() : "", rowStyle);
+            createCell(row, 5, truck.getKmForFatsShoot(), rowStyle);
+            createCell(row, 6, truck.getCurrentKm(), rowStyle);
             
             // Last Fat change data
             String lastChangeDate = truck.getLastFatsReport() != null && truck.getLastFatsReport().getDate() != null ?
@@ -568,10 +581,10 @@ public class TruckWebController {
             Double lastChangeKm = truck.getLastFatsReport() != null ? truck.getLastFatsReport().getCurrentKm() : null;
             Double nextRange = truck.getLastFatsReport() != null ? truck.getLastFatsReport().getNextRange() : null;
             
-            createCell(row, 6, lastChangeDate, rowStyle);
-            createCell(row, 7, lastChangeKm, rowStyle);
-            createCell(row, 8, nextRange, rowStyle);
-            createCell(row, 9, truck.getKmFatsBalance(), rowStyle);
+            createCell(row, 7, lastChangeDate, rowStyle);
+            createCell(row, 8, lastChangeKm, rowStyle);
+            createCell(row, 9, nextRange, rowStyle);
+            createCell(row, 10, truck.getKmFatsBalance(), rowStyle);
         }
         
         // Auto-size columns for better fit
@@ -1005,7 +1018,7 @@ public class TruckWebController {
     ) throws IOException {
         List<Truck> allTrucks;
         if (licensePlate != null && !licensePlate.isEmpty()) {
-            allTrucks = truckService.findByLicensePlateContaining(licensePlate);
+            allTrucks = truckService.advancedFilter(licensePlate);
         } else {
             allTrucks = truckService.getAll();
         }
@@ -1478,7 +1491,7 @@ public class TruckWebController {
                 int rowIdx = 0;
                 // Header row
                 Row headerRow = sheet.createRow(rowIdx++);
-                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", "Liter Quantity", "Location Changed", "File Attached", "Note", "Created At", "Created By", "Latest Update"};
+                String[] headers = {"#", "លេខឡាន", "ប្រភេទ/ម៉ាក", "ផ្នែកការរ៉ាស់", "ឆ្នាំផលិត", "Current Km", "Date", "Shot Km", "Next Range", "Liter Quantity", "Location Changed", "File Attached", "Note", "Created At", "Created By", "Latest Update"};
                 
                 for (int i = 0; i < headers.length; i++) {
                     Cell cell = headerRow.createCell(i);
@@ -1508,15 +1521,20 @@ public class TruckWebController {
                     
                     row.getCell(0).setCellValue(index++);
                     row.getCell(1).setCellValue(report.getTruck() != null ? report.getTruck().getLicensePlate() : "");
-                    row.getCell(2).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
-                    row.getCell(3).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
-                    row.getCell(4).setCellValue(report.getCurrentKm());
-                    row.getCell(5).setCellValue(report.getNextRange());
-                    row.getCell(6).setCellValue(report.getLiterQuantityOfFats());
-                    row.getCell(7).setCellValue(report.getLocationChanged());
+
+                    row.getCell(2).setCellValue(report.getTruck().getModelName() != null ? report.getTruck().getModelName() : "");
+                    row.getCell(3).setCellValue(report.getTruck().getGroupName() != null ? report.getTruck().getGroupName() : "");
+                    row.getCell(4).setCellValue(report.getTruck().getYearOfManufacture() != null ? report.getTruck().getYearOfManufacture() : "");
+
+                    row.getCell(5).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
+                    row.getCell(6).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
+                    row.getCell(7).setCellValue(report.getCurrentKm());
+                    row.getCell(8).setCellValue(report.getNextRange());
+                    row.getCell(9).setCellValue(report.getLiterQuantityOfFats());
+                    row.getCell(10).setCellValue(report.getLocationChanged());
                     
-                    Cell fileCell = row.getCell(8);
-                    if (fileCell == null) fileCell = row.createCell(8);
+                    Cell fileCell = row.getCell(11);
+                    if (fileCell == null) fileCell = row.createCell(11);
 
                     if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
                         fileCell.setCellValue("Yes");
@@ -1526,11 +1544,11 @@ public class TruckWebController {
 
 
                     
-                    row.getCell(9).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
-                    row.getCell(10).setCellValue(report.getCreatedAt() != null ? 
+                    row.getCell(12).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    row.getCell(13).setCellValue(report.getCreatedAt() != null ? 
                         report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : "");
-                    row.getCell(11).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
-                    row.getCell(12).setCellValue(report.getUpdatedAt() != null ? 
+                    row.getCell(14).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
+                    row.getCell(15).setCellValue(report.getUpdatedAt() != null ? 
                         report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : 
                         (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : ""));
                 }
@@ -1759,7 +1777,7 @@ public class TruckWebController {
                 // Header row
                 Row headerRow = sheet.createRow(rowIdx++);
                 headerRow.setHeight((short) 500); // Set header row height
-                String[] headers = {"#", "License Plate", "Current Km", "Date", "Shot Km", "Next Range", 
+                String[] headers = {"#", "លេខឡាន", "ប្រភេទ/ម៉ាក", "ផ្នែកការរ៉ាស់", "ឆ្នាំផលិត", "Current Km", "Date", "Shot Km", "Next Range", 
                                 "Liter Quantity", "Location Changed", "File Attached", "Note", 
                                 "Created At", "Created By", "Latest Update"};
                 
@@ -1791,15 +1809,18 @@ public class TruckWebController {
                     
                     row.getCell(0).setCellValue(index++);
                     row.getCell(1).setCellValue(report.getTruck() != null ? report.getTruck().getLicensePlate() : "");
-                    row.getCell(2).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
-                    row.getCell(3).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
-                    row.getCell(4).setCellValue(report.getCurrentKm());
-                    row.getCell(5).setCellValue(report.getNextRange());
-                    row.getCell(6).setCellValue(report.getLiterQuantityOfOils());
-                    row.getCell(7).setCellValue(report.getLocationChanged());
+                    row.getCell(2).setCellValue(report.getTruck().getModelName() != null ? report.getTruck().getModelName() : "");
+                    row.getCell(3).setCellValue(report.getTruck().getGroupName() != null ? report.getTruck().getGroupName() : "");
+                    row.getCell(4).setCellValue(report.getTruck().getYearOfManufacture() != null ? report.getTruck().getYearOfManufacture() : "");
+                    row.getCell(5).setCellValue(report.getTruck() != null ? report.getTruck().getCurrentKm() : 0);
+                    row.getCell(6).setCellValue(report.getDate() != null ? report.getDate().toString() : "");
+                    row.getCell(7).setCellValue(report.getCurrentKm());
+                    row.getCell(8).setCellValue(report.getNextRange());
+                    row.getCell(9).setCellValue(report.getLiterQuantityOfOils());
+                    row.getCell(10).setCellValue(report.getLocationChanged());
                     
-                    Cell fileCell = row.getCell(8);
-                    if (fileCell == null) fileCell = row.createCell(8);
+                    Cell fileCell = row.getCell(11);
+                    if (fileCell == null) fileCell = row.createCell(11);
 
                     if (report.getFilePath() != null && !report.getFilePath().isEmpty()) {
                         fileCell.setCellValue("Yes");
@@ -1808,11 +1829,11 @@ public class TruckWebController {
                     }
 
                     
-                    row.getCell(9).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
-                    row.getCell(10).setCellValue(report.getCreatedAt() != null ? 
+                    row.getCell(12).setCellValue(report.getNote() != null ? report.getNote().replaceAll("\\<.*?\\>", "") : "");
+                    row.getCell(13).setCellValue(report.getCreatedAt() != null ? 
                         report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : "");
-                    row.getCell(11).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
-                    row.getCell(12).setCellValue(report.getUpdatedAt() != null ? 
+                    row.getCell(14).setCellValue(report.getCreatedBy() != null ? report.getCreatedBy().fullName() : "");
+                    row.getCell(15).setCellValue(report.getUpdatedAt() != null ? 
                         report.getUpdatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : 
                         (report.getCreatedAt() != null ? report.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a")) : ""));
                 }
