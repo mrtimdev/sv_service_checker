@@ -14,6 +14,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleRuntime(RuntimeException ex) {
-        return Map.of("error", ex.getMessage());
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            message = "Unexpected error";
+        }
+        return Map.of("error", message);
     }
 }

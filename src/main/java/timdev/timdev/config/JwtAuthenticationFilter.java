@@ -23,11 +23,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static Logger getLogger() {
         return logger;
     }
+
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, 
-                                 UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil,
+            UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }

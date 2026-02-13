@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:insert="~{layouts/main :: head}"></th:block>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+</head>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, ${#messages.msg('pm.bulk.page_title')})}">
+    <th:block th:fragment="content">
+        <div class="mx-auto sm:px-6 lg:px-8">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6" th:text="#{pm.bulk.title}">Bulk Create PM</h1>
+
+            <div class="text-sm text-gray-500 mb-4" th:text="#{pm.bulk.subtitle}">Select trucks on the left, then open the plan modal to create PM.</div>
+
+            <form th:action="@{/maintenance/bulk}" method="post" th:object="${plan}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left: Trucks without active plan -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100" th:text="#{pm.bulk.left.title}">Trucks Without Active PM</h2>
+                                <p class="text-xs text-gray-500" th:text="#{pm.bulk.left.subtitle}">Select trucks to create new PM plan</p>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                <span th:text="#{pm.bulk.selected}">Selected:</span> <span id="selectedCount" class="font-bold">0</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mb-3">
+                            <input id="truckSearch" type="text" th:placeholder="#{pm.bulk.search.placeholder}" class="w-full border rounded px-3 py-2 text-sm">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input id="selectAllTrucks" type="checkbox">
+                                <span th:text="#{pm.bulk.select_all}">Select All</span>
+                            </label>
+                            <button type="button" id="openPlanModal" class="bg-blue-600 text-white px-3 py-2 rounded text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed" disabled th:text="#{pm.bulk.create_plans}">Create Plans</button>
+                        </div>
+
+                        <div class="overflow-auto max-h-[520px] border border-gray-100 dark:border-gray-700 rounded">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.left.table.select}">Select</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.left.table.truck}">Truck</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.left.table.brand}">Brand</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="truckTableBody" class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    <tr th:each="t : ${availableTrucks}" class="truck-row">
+                                        <td class="px-3 py-2">
+                                            <input type="checkbox" name="truckIds" th:value="${t.id}" class="truck-check">
+                                        </td>
+                                        <td class="px-3 py-2 font-semibold" th:text="${t.licensePlate} ?: ${t.id}"></td>
+                                        <td class="px-3 py-2 text-gray-600 dark:text-gray-300" th:text="${t.modelName} ?: '-'"></td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(availableTrucks)}">
+                                        <td colspan="3" class="px-3 py-6 text-center text-gray-500" th:text="#{pm.bulk.left.empty}">All trucks already have active plans</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-2 text-xs text-gray-500">
+                            <span th:text="#{pm.bulk.left.hint}">Use the Create Plans button to open the plan modal.</span>
+                        </div>
+                    </section>
+
+                    <!-- Right: Active schedules -->
+                    <section class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                        <div class="mb-3">
+                            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100" th:text="#{pm.bulk.right.title}">Active PM Schedules</h2>
+                            <p class="text-xs text-gray-500" th:text="#{pm.bulk.right.subtitle}">Current planned or in-progress schedules</p>
+                        </div>
+
+                        <div class="overflow-auto max-h-[680px] border border-gray-100 dark:border-gray-700 rounded">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.right.table.truck}">Truck</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.right.table.plan_title}">Plan Title</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.right.table.planned_start}">Planned Start</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.right.table.planned_end}">Planned End</th>
+                                        <th class="px-3 py-2 text-left" th:text="#{pm.bulk.right.table.status}">Status</th>
+                                        <th class="px-3 py-2 text-right" th:text="#{pm.bulk.right.table.actions}">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    <tr th:each="p : ${activePlans}">
+                                        <td class="px-3 py-2 font-semibold" th:text="${p.truck != null ? p.truck.licensePlate : '-'}"></td>
+                                        <td class="px-3 py-2" th:text="${p.planTitle}"></td>
+                                        <td class="px-3 py-2" th:text="${p.plannedStartDate}"></td>
+                                        <td class="px-3 py-2" th:text="${p.plannedEndDate}"></td>
+                                        <td class="px-3 py-2">
+                                            <span class="px-2 py-1 rounded text-xs font-bold"
+                                                  th:classappend="${p.status.name() == 'PLANNED'} ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'"
+                                                  th:text="${p.status}"></span>
+                                        </td>
+                                        <td class="px-3 py-2 text-right space-x-1">
+                                            <a th:href="@{/maintenance/edit/{id}(id=${p.planningId})}" class="text-blue-600 hover:underline" th:text="#{pm.action.edit}">Edit</a>
+                                            <form th:if="${p.status.name() == 'PLANNED'}" th:action="@{/maintenance/start/{id}(id=${p.planningId})}" method="post" class="inline">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                <button type="submit" class="text-green-600 hover:underline" th:text="#{pm.action.start}">Start</button>
+                                            </form>
+                                            <form th:if="${p.status.name() == 'IN_PROGRESS'}" th:action="@{/maintenance/complete/{id}(id=${p.planningId})}" method="post" class="inline">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                <button type="submit" class="text-emerald-600 hover:underline" th:text="#{pm.action.complete}">Complete</button>
+                                            </form>
+                                            <form th:if="${p.status.name() == 'PLANNED'}" th:action="@{/maintenance/cancel/{id}(id=${p.planningId})}" method="post" class="inline">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                <button type="submit" class="text-red-600 hover:underline" th:text="#{pm.action.cancel}">Cancel</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(activePlans)}">
+                                        <td colspan="6" class="px-3 py-6 text-center text-gray-500" th:text="#{pm.bulk.right.empty}">No active PM schedules</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+                <!-- Modal -->
+                <div id="planModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100" th:text="#{pm.bulk.modal.title}">Create PM Plan</h2>
+                            <button type="button" id="closePlanModal" class="text-gray-500 hover:text-gray-800">✕</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.plan_title}">Plan Title</label>
+                                <select th:field="*{planTitle}" class="select2 w-full border rounded px-3 py-2"
+                                        th:attr="data-placeholder=#{pm.form.plan_title.placeholder}">
+                                    <option value=""></option>
+                                    <option value="Annual PM Inspection" th:text="#{pm.plan_title.annual}">Annual PM Inspection</option>
+                                    <option value="Engine & Transmission Check" th:text="#{pm.plan_title.engine}">Engine & Transmission Check</option>
+                                    <option value="Brake System Service" th:text="#{pm.plan_title.brake}">Brake System Service</option>
+                                    <option value="Electrical System Check" th:text="#{pm.plan_title.electrical}">Electrical System Check</option>
+                                    <option value="Tire & Suspension Service" th:text="#{pm.plan_title.tire}">Tire & Suspension Service</option>
+                                    <option value="Cooling System Service" th:text="#{pm.plan_title.cooling}">Cooling System Service</option>
+                                    <option value="Oil & Filter Change" th:text="#{pm.plan_title.oil}">Oil & Filter Change</option>
+                                    <option value="Body/Chassis Inspection" th:text="#{pm.plan_title.body}">Body/Chassis Inspection</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.plan_task}">Plan Task</label>
+                                <select th:field="*{planTaskText}" class="select2 w-full border rounded px-3 py-2"
+                                        th:attr="data-placeholder=#{pm.form.plan_task.placeholder}">
+                                    <option value=""></option>
+                                    <option value="Engine inspection" th:text="#{pm.plan_task.engine}">Engine inspection</option>
+                                    <option value="Transmission inspection" th:text="#{pm.plan_task.transmission}">Transmission inspection</option>
+                                    <option value="Brake system check" th:text="#{pm.plan_task.brake}">Brake system check</option>
+                                    <option value="Electrical system check" th:text="#{pm.plan_task.electrical}">Electrical system check</option>
+                                    <option value="Suspension check" th:text="#{pm.plan_task.suspension}">Suspension check</option>
+                                    <option value="Cooling system check" th:text="#{pm.plan_task.cooling}">Cooling system check</option>
+                                    <option value="Oil & filter change" th:text="#{pm.plan_task.oil}">Oil & filter change</option>
+                                    <option value="Body/Chassis inspection" th:text="#{pm.plan_task.body}">Body/Chassis inspection</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.planned_start}">Planned Start Date</label>
+                                <input type="text" th:field="*{plannedStartDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.planned_end}">Planned End Date</label>
+                                <input type="text" th:field="*{plannedEndDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.interval_type}">Interval Type</label>
+                                <select class="w-full border rounded px-3 py-2 bg-gray-100" disabled>
+                                    <option selected>YEAR</option>
+                                </select>
+                                <input type="hidden" name="intervalType" value="YEAR" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.interval_value}">Interval Value</label>
+                                <input type="number" name="intervalValue" value="1" min="1" class="w-full border rounded px-3 py-2" />
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mt-6">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" th:text="#{pm.bulk.create_plans}">Create Plans</button>
+                            <button type="button" id="cancelPlanModal" class="text-gray-600 hover:text-gray-900" th:text="#{pm.bulk.modal.cancel}">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modal = document.getElementById('planModal');
+                const openBtn = document.getElementById('openPlanModal');
+                const closeBtn = document.getElementById('closePlanModal');
+                const cancelBtn = document.getElementById('cancelPlanModal');
+                const selectAll = document.getElementById('selectAllTrucks');
+                const selectedCount = document.getElementById('selectedCount');
+                const searchInput = document.getElementById('truckSearch');
+                const rows = Array.from(document.querySelectorAll('.truck-row'));
+                const getCheckboxes = () => Array.from(document.querySelectorAll('.truck-check'));
+
+                const updateCount = () => {
+                    const checkboxes = getCheckboxes();
+                    const count = checkboxes.filter(cb => cb.checked).length;
+                    selectedCount.textContent = count;
+                    if (openBtn) openBtn.disabled = count === 0;
+                    if (selectAll) {
+                        selectAll.checked = count > 0 && count === checkboxes.length;
+                        selectAll.indeterminate = count > 0 && count < checkboxes.length;
+                        selectAll.disabled = checkboxes.length === 0;
+                    }
+                };
+
+                if (selectAll) {
+                    selectAll.addEventListener('change', () => {
+                        getCheckboxes().forEach(cb => { cb.checked = selectAll.checked; });
+                        updateCount();
+                    });
+                }
+
+                document.getElementById('truckTableBody')?.addEventListener('change', (e) => {
+                    if (e.target && e.target.classList.contains('truck-check')) {
+                        updateCount();
+                    }
+                });
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', () => {
+                        const q = searchInput.value.trim().toLowerCase();
+                        rows.forEach(row => {
+                            const text = row.textContent.toLowerCase();
+                            row.style.display = text.includes(q) ? '' : 'none';
+                        });
+                    });
+                }
+
+                if (openBtn && modal) {
+                    openBtn.addEventListener('click', () => {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    });
+                }
+                const closeModal = () => {
+                    if (!modal) return;
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                };
+                if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeModal();
+                    });
+                }
+
+                updateCount();
+            });
+        </script>
+    </th:block>
+</th:block>
+</html>

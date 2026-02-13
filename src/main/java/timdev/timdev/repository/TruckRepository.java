@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import timdev.timdev.enums.PlanningStatus;
 import timdev.timdev.entity.Truck;
 
 
@@ -53,5 +54,14 @@ public interface TruckRepository extends JpaRepository<Truck, Long> {
     List<Truck> findByRequiredInspectionTrue();
     List<Truck> findByRequiredInspectionFalse();
     List<Truck> findByRequiredInspection(Boolean requiredInspection);
+
+    @Query("""
+        SELECT t FROM Truck t
+        WHERE t.id NOT IN (
+            SELECT p.truck.id FROM PlanningRepairMaintenance p
+            WHERE p.status IN :statuses
+        )
+    """)
+    List<Truck> findWithoutActivePlans(@Param("statuses") List<PlanningStatus> statuses);
 
 }

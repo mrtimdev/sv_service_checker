@@ -83,6 +83,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
 
     <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
@@ -133,10 +134,35 @@
 
         $(function() {
             scrollToActive();
+            $(".datepicker-iso").flatpickr({
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d-M-Y",
+                altInputClass: "w-full border rounded px-3 py-2 uppercase",
+                allowInput: true
+            });
+            $(".datetimepicker-iso").flatpickr({
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                altInput: true,
+                altFormat: "d-M-Y H:i",
+                altInputClass: "w-full border rounded px-3 py-2 uppercase",
+                allowInput: true
+            });
             $(".datepicker").flatpickr({
                 dateFormat: "M d, Y",
                 maxDate: "today"
             });
+            if ($.fn.select2) {
+                $('.select2').each(function () {
+                    const $el = $(this);
+                    $el.select2({
+                        placeholder: $el.data('placeholder') || 'Select...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                });
+            }
 
         })
     </script>
