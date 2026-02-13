@@ -1,6 +1,5 @@
 package timdev.timdev.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
@@ -44,20 +42,20 @@ public class AdminController {
 
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private RequestService requestService;
-    
+
     @Autowired
     private ApprovalService approvalService;
-
 
     @Autowired
     private SettingRepository settingRepo;
     @Autowired
     private TruckService truckService;
 
-    @Autowired private FatsOilsSettingService fatsOilsSettingService;
+    @Autowired
+    private FatsOilsSettingService fatsOilsSettingService;
 
     @Autowired
     private TruckFatsReportService fatsReportService;
@@ -90,22 +88,18 @@ public class AdminController {
         } else {
             // Get request statistics
             totalRequests = requestService.getTotalRequestCountByUser(user);
-            pendingRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.PENDING,  user);
-            approvedRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.APPROVED,  user);
-            rejectedRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.REJECTED,  user);
+            pendingRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.PENDING, user);
+            approvedRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.APPROVED, user);
+            rejectedRequests = requestService.getRequestCountByStatusAndUser(ApprovalStatus.REJECTED, user);
             recentRequests = requestService.findRecentRequestsByUser(user, 5);
         }
-        
 
-        
-        
         model.addAttribute("totalRequests", totalRequests);
         model.addAttribute("pendingRequests", pendingRequests);
         model.addAttribute("approvedRequests", approvedRequests);
         model.addAttribute("rejectedRequests", rejectedRequests);
-        
-        model.addAttribute("recentRequests", recentRequests);
 
+        model.addAttribute("recentRequests", recentRequests);
 
         List<TruckFatsReport> recentFats = fatsReportService
                 .findTop10ByOrderByDateDesc(); // implement in repo or service
@@ -116,13 +110,14 @@ public class AdminController {
 
         model.addAttribute("recentFats", recentFats);
         model.addAttribute("recentOils", recentOils);
-        
+
         return "admin/dashboard";
     }
+
     @GetMapping("/settings")
     public String settings(Model model) {
         Setting setting = settingRepo.findById(1L).orElse(null);
-        model.addAttribute("approvedLevels", new String[]{"LEVEL_1", "LEVEL_2", "LEVEL_3"});
+        model.addAttribute("approvedLevels", new String[] { "LEVEL_1", "LEVEL_2", "LEVEL_3" });
         model.addAttribute("setting", setting);
         model.addAttribute("pageTitle", "Settings");
         return "admin/settings";
@@ -130,7 +125,7 @@ public class AdminController {
 
     @PostMapping("/settings")
     public String saveSettings(@Valid @ModelAttribute("setting") Setting request,
-        BindingResult result, Model model) {
+            BindingResult result, Model model) {
         Setting setting_ = settingRepo.findById(1L).orElse(null);
         setting_.setKmForFatsShoot(request.getKmForFatsShoot());
         setting_.setKmForOilsChange(request.getKmForOilsChange());
@@ -149,13 +144,10 @@ public class AdminController {
         return "redirect:/settings";
     }
 
-
-
     @PostMapping("/fats-oils-settings/update")
     public String updateAllSettings(
-        FatsOilsSettingsForm form,
-        RedirectAttributes redirectAttributes
-    ) {
+            FatsOilsSettingsForm form,
+            RedirectAttributes redirectAttributes) {
         if (form.getSettings() != null) {
             form.getSettings().forEach(fatsOilsSettingService::save);
         }
@@ -173,36 +165,31 @@ public class AdminController {
         return "admin/fats_oils_settings"; // name of the template
     }
 
-
-
-
     @GetMapping("/dashboard/maintenance")
     public String maintenanceDashboard(Model model) {
         List<Truck> allTrucks = truckService.getAll();
-        
+
         // Calculate trucks without oil reports
         long noOilReports = allTrucks.stream()
-            .filter(truck -> truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty())
-            .count();
-        
-        // Calculate trucks without fat reports  
+                .filter(truck -> truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty())
+                .count();
+
+        // Calculate trucks without fat reports
         long noFatReports = allTrucks.stream()
-            .filter(truck -> truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty())
-            .count();
-            
+                .filter(truck -> truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty())
+                .count();
+
         // Calculate trucks without any reports
         long noReportsAtAll = allTrucks.stream()
-            .filter(truck -> 
-                (truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty()) &&
-                (truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty())
-            )
-            .count();
-        
+                .filter(truck -> (truck.getTruckOilsReports() == null || truck.getTruckOilsReports().isEmpty()) &&
+                        (truck.getTruckFatsReports() == null || truck.getTruckFatsReports().isEmpty()))
+                .count();
+
         model.addAttribute("trucks", allTrucks);
         model.addAttribute("noOilReports", noOilReports);
         model.addAttribute("noFatReports", noFatReports);
         model.addAttribute("noReportsAtAll", noReportsAtAll);
-        
+
         return "admin/report_dashboard";
     }
 
@@ -213,8 +200,8 @@ public class AdminController {
 
         try {
             List<TruckDTOResponse> trucks = truckService.getAll().stream()
-                .map(TruckDTOResponse::fromEntity)
-                .toList();
+                    .map(TruckDTOResponse::fromEntity)
+                    .toList();
 
             response.put("status", "success");
             response.put("count", trucks.size());
@@ -228,13 +215,5 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
-
-
-
-
-
-
 
 }

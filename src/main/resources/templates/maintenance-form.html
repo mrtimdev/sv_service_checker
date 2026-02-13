@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:insert="~{layouts/main :: head}"></th:block>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+</head>
+<th:block th:insert="~{layouts/main :: layout(~{::content}, ${#messages.msg('pm.form.page_title')})}">
+    <th:block th:fragment="content">
+        <div class="mx-auto sm:px-6 lg:px-8">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6"
+                th:text="${plan.planningId} != null ? #{pm.form.edit_title} : #{pm.form.create_title}">Create Planning</h1>
+
+            <form th:action="${plan.planningId} != null ? @{/maintenance/update/{id}(id=${plan.planningId})} : @{/maintenance/save}" method="post" th:object="${plan}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.truck}">Truck</label>
+                        <select name="truckId" class="select2 w-full border rounded px-3 py-2"
+                                th:attr="data-placeholder=#{pm.form.truck.placeholder}">
+                            <option value="" th:text="#{pm.form.truck.select}">-- Select Truck --</option>
+                            <option th:each="t : ${trucks}" th:value="${t.id}"
+                                    th:selected="${plan.truck != null ? t.id == plan.truck.id : false}"
+                                    th:text="${t.licensePlate} ?: ${t.id}"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.plan_title}">Plan Title</label>
+                        <select th:field="*{planTitle}" class="select2 w-full border rounded px-3 py-2"
+                                th:attr="data-placeholder=#{pm.form.plan_title.placeholder}">
+                            <option value=""></option>
+                            <option value="Annual PM Inspection" th:text="#{pm.plan_title.annual}">Annual PM Inspection</option>
+                            <option value="Engine & Transmission Check" th:text="#{pm.plan_title.engine}">Engine & Transmission Check</option>
+                            <option value="Brake System Service" th:text="#{pm.plan_title.brake}">Brake System Service</option>
+                            <option value="Electrical System Check" th:text="#{pm.plan_title.electrical}">Electrical System Check</option>
+                            <option value="Tire & Suspension Service" th:text="#{pm.plan_title.tire}">Tire & Suspension Service</option>
+                            <option value="Cooling System Service" th:text="#{pm.plan_title.cooling}">Cooling System Service</option>
+                            <option value="Oil & Filter Change" th:text="#{pm.plan_title.oil}">Oil & Filter Change</option>
+                            <option value="Body/Chassis Inspection" th:text="#{pm.plan_title.body}">Body/Chassis Inspection</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.plan_task}">Plan Task</label>
+                        <textarea name="planTaskText" rows="3" class="w-full border rounded px-3 py-2" th:text="${plan.planTaskText}"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.actual_task}">Actual Task</label>
+                        <textarea name="actualTaskText" rows="3" class="w-full border rounded px-3 py-2" th:text="${plan.actualTaskText}"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.note}">Note</label>
+                        <textarea name="noteText" rows="3" class="w-full border rounded px-3 py-2" th:text="${plan.noteText}"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.planned_start}">Planned Start Date</label>
+                        <input type="text" name="plannedStartDate" th:value="${plan.plannedStartDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.planned_end}">Planned End Date</label>
+                        <input type="text" name="plannedEndDate" th:value="${plan.plannedEndDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.actual_start}">Actual Start Date</label>
+                        <input type="text"
+                               th:value="${plan.actualStartDate != null ? #temporals.format(plan.actualStartDate, 'yyyy-MM-dd HH:mm') : ''}"
+                               class="datetimepicker-iso w-full border rounded px-3 py-2 bg-gray-100" disabled />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.actual_end}">Actual End Date</label>
+                        <input type="text"
+                               th:value="${plan.actualEndDate != null ? #temporals.format(plan.actualEndDate, 'yyyy-MM-dd HH:mm') : ''}"
+                               class="datetimepicker-iso w-full border rounded px-3 py-2 bg-gray-100" disabled />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.interval_type}">Interval Type</label>
+                        <select class="w-full border rounded px-3 py-2 bg-gray-100" disabled>
+                            <option selected>YEAR</option>
+                        </select>
+                        <input type="hidden" name="intervalType" value="YEAR" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.interval_value}">Interval Value</label>
+                        <input type="number" name="intervalValue" th:value="${plan.intervalValue != null} ? plan.intervalValue : 1" class="w-full border rounded px-3 py-2" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2" th:text="#{pm.form.status}">Status</label>
+                        <select name="status" class="w-full border rounded px-3 py-2" disabled>
+                            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${plan.status} == ${s}"></option>
+                        </select>
+                        <div class="text-xs text-gray-500 mt-1" th:text="#{pm.form.status_help}">Status changes via Start/Complete/Cancel actions.</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" th:text="#{pm.form.save}">Save</button>
+                    <a th:href="@{/maintenance}" class="text-blue-600" th:text="#{pm.form.cancel}">Cancel</a>
+                </div>
+            </form>
+
+        </div>
+    </th:block>
+</th:block>
+</html>

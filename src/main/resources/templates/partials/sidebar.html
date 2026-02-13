@@ -119,6 +119,52 @@
                 </ul>
             </div>
 
+            <!-- Group: PM -->
+            <div class="mb-4">
+                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{pm.group.title}">PM</h3>
+                <ul>
+                    <li>
+                        <a href="/maintenance"
+                            th:classappend="${requestURI == '/maintenance'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-clipboard-list"></i>
+                            <span th:text="#{pm.menu.planning}">PM Planning</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/maintenance/history"
+                            th:classappend="${requestURI.startsWith('/maintenance/history')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-clock-rotate-left"></i>
+                            <span th:text="#{pm.menu.report}">PM Report</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/maintenance/bulk"
+                            th:classappend="${requestURI.startsWith('/maintenance/bulk')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-layer-group"></i>
+                            <span th:text="#{pm.menu.bulk}">Bulk Create PM</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/maintenance/import"
+                            th:classappend="${requestURI.startsWith('/maintenance/import')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-file-import"></i>
+                            <span th:text="#{pm.menu.import}">PM Import</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/maintenance/template"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700">
+                            <i class="menu-icon fas fa-file-arrow-down"></i>
+                            <span th:text="#{pm.menu.template}">PM Template</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
             <!-- Group: Users & Drivers -->
             <div class="mb-4">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Users & Drivers</h3>
