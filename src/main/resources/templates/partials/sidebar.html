@@ -125,7 +125,7 @@
                 <ul>
                     <li>
                         <a href="/maintenance"
-                            th:classappend="${requestURI == '/maintenance'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI == '/maintenance' || requestURI.startsWith('/maintenance/edit')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-clipboard-list"></i>
                             <span th:text="#{pm.menu.planning}">PM Planning</span>

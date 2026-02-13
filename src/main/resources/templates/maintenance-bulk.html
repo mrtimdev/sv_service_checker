@@ -160,11 +160,11 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.planned_start}">Planned Start Date</label>
-                                <input type="text" th:field="*{plannedStartDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                                <input type="text" th:field="*{plannedStartDate}" required class="datepicker-iso w-full border rounded px-3 py-2" />
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.planned_end}">Planned End Date</label>
-                                <input type="text" th:field="*{plannedEndDate}" class="datepicker-iso w-full border rounded px-3 py-2" />
+                                <input type="text" th:field="*{plannedEndDate}" required class="datepicker-iso w-full border rounded px-3 py-2" />
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-2" th:text="#{pm.bulk.modal.interval_type}">Interval Type</label>

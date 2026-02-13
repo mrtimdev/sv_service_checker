@@ -19,8 +19,8 @@ RestartSec=10
 WantedBy=multi-user.target
 
 scp -P 2236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@154.26.134.117:~/sv_truck_fats/
-scp ./messages_km.properties deverloper@154.26.134.117:~/sv_truck_fats/
-scp ./messages.properties deverloper@154.26.134.117:~/sv_truck_fats/
+scp -P 2236 ./messages_km.properties deverloper@154.26.134.117:~/sv_truck_fats/
+scp -P 2236 ./messages.properties deverloper@154.26.134.117:~/sv_truck_fats/
 
 
 #DB Backup
