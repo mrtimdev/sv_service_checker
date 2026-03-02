@@ -12,7 +12,7 @@
 	<artifactId>timdev</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>timdev</name>
-	<description>SV Service Checker</description>
+	<description>SV Safety Checklists</description>
 	<url/>
 	<licenses>
 		<license/>

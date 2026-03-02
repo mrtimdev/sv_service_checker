@@ -5,7 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'SV Services Checker'">SV Services Checker</title>
+    <title th:text="${pageTitle} ?: 'SV Safety Checklists'">SV Safety Checklists</title>
     
     
     
@@ -39,7 +39,7 @@
     <div id="preloader">
         <div class="preloader-content">
             <img src="/images/logo.png" alt="Logo">
-            <p class="!text-white">© 2025 SV Service Checker. All rights reserved.</p>
+            <p class="!text-white">© 2025 SV Safety Checklists. All rights reserved.</p>
         </div>
     </div>
 
@@ -87,6 +87,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         dayjs.extend(dayjs_plugin_relativeTime);
     </script>
@@ -98,6 +101,12 @@
 
 
     <script>
+        tailwind.config = {
+            darkMode: 'dark', // Enable class-based dark mode
+            theme: {
+            extend: {},
+            }
+        }
         // On page load or when changing themes, best to add inline in `head` to avoid FOUC
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark')

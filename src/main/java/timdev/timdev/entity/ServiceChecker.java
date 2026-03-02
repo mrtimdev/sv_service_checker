@@ -69,14 +69,40 @@ public class ServiceChecker {
     private ExternalDriverDTO exDriver;
 
 
+    @Column(nullable = false)
+    private String licensePlate;
+
+    @Column(nullable = true, columnDefinition = "TEXT")
+    private String licensePlateEstimated;
+    
+    private String imagePath;
+    
+    // Device Info
+    private String deviceId;
+    private String deviceModel;
+    private String devicePlatform;
+    private String appVersion;
+
+
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", nullable=true)
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "updated_by", nullable=true)
     private User updatedBy;
+
+    private String cancelReason;
+
+    @Column(name = "cancelled_at", nullable = true)
+    private LocalDateTime cancelledAt;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "cancelled_by", nullable=true)
+    private User cancelledBy;
+
+    
     
 
     public User getUpdatedBy() {
@@ -283,5 +309,85 @@ public class ServiceChecker {
     @Transient
     public String getEditNote() {
         return canEdit() ? "Editable" : "Cannot edit (over 24h)";
+    }
+
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
+    public void setLicensePlate(String licensePlate) {
+        this.licensePlate = licensePlate;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
+
+    public String getDeviceModel() {
+        return deviceModel;
+    }
+
+    public void setDeviceModel(String deviceModel) {
+        this.deviceModel = deviceModel;
+    }
+
+    public String getDevicePlatform() {
+        return devicePlatform;
+    }
+
+    public void setDevicePlatform(String devicePlatform) {
+        this.devicePlatform = devicePlatform;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
+
+    public String getLicensePlateEstimated() {
+        return licensePlateEstimated;
+    }
+
+    public void setLicensePlateEstimated(String licensePlateEstimated) {
+        this.licensePlateEstimated = licensePlateEstimated;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public User getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public void setCancelledBy(User cancelledBy) {
+        this.cancelledBy = cancelledBy;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import timdev.timdev.enums.RoleType;
@@ -40,10 +39,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Split configuration for API and Web
-            .securityMatcher("/api/v1/**", "/**")
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+
+                // ========================
+                // PUBLIC API (NO LOGIN)
+                // ========================
+                .requestMatchers("/api/v1/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/sv/uploads/**").permitAll()
+                .requestMatchers("/api/v1/uploads/**").permitAll()
+
+                // ========================
+                // PUBLIC WEB
+                // ========================
                 .requestMatchers(
                     "/",
                     "/auth/login",
@@ -54,48 +62,24 @@ public class SecurityConfig {
                     "/webjars/**",
                     "/error"
                 ).permitAll()
-                
-                // // API endpoints
-                // .requestMatchers("/api/v1/auth/**").permitAll()
-                // .requestMatchers("/api/v1/**").authenticated()
-                // .requestMatchers("/api/v1/**").hasRole("ADMIN")
 
-                // // Web endpoints
-                // .requestMatchers("/admin/**").hasRole("ADMIN")
-                // API endpoints
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/**").authenticated()
-                .requestMatchers("/api/v1/**")
-                .hasAnyRole(
-                    RoleType.ADMIN.toString(),
-                    RoleType.MANAGER.toString(),
-                    RoleType.SUPERVISOR.toString(),
-                    RoleType.USER.toString()
-                )
-
-                // Web endpoints
-                .requestMatchers("/**")
-                .hasAnyRole(
-                    RoleType.ADMIN.toString(),
-                    RoleType.MANAGER.toString(),
-                    RoleType.SUPERVISOR.toString(),
-                    RoleType.USER.toString()
-                )
+                // ========================
+                // SECURED WEB (LOGIN REQUIRED)
+                // ========================
+                .requestMatchers("/admin/**").hasRole(RoleType.ADMIN.toString())
 
                 .anyRequest().authenticated()
             )
-            
-            // Form login configuration for Thymeleaf
+
+            // Form Login (Web only)
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/auth/login")
-                // .defaultSuccessUrl("/admin/dashboard", true)
                 .successHandler(customAuthSuccessHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
-            
-            // Logout configuration
+
             .logout(logout -> logout
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                 .logoutSuccessUrl("/auth/login?logout=true")
@@ -103,31 +87,27 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            
-            // Session management
-            // .sessionManagement(session -> session
-            //     .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // For Thymeleaf
-            //     .maximumSessions(1)
-            //     .maxSessionsPreventsLogin(false)
-            // )
 
-             .rememberMe(rememberMe -> rememberMe
+            .rememberMe(rememberMe -> rememberMe
                 .key("uniqueAndSecretKey")   // use a strong secret key
                 .tokenValiditySeconds(Integer.MAX_VALUE) 
                 .rememberMeParameter("remember-me") // name of checkbox in login form
                 .userDetailsService(customUserDetailsService)
             )
-            
-            // API specific configurations
+
+            // Disable CSRF for API
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/v1/**") // Disable CSRF for API
+                .ignoringRequestMatchers("/api/v1/**")
             )
-            
-            // Add JWT filter for API requests
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+            // ❗ REMOVE JWT FILTER if API is public
+            // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+            .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
+
 
     @SuppressWarnings("deprecation")
     @Bean

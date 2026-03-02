@@ -37,8 +37,8 @@
                                     <option value="">Select a driver</option>
                                     <option th:each="driver : ${drivers}" 
                                             th:value="${driver.id}" 
-                                            th:text="${driver.assignedVehicle != null ? driver.assignedVehicle.licensePlate + ' - ' +  driver.getFullName() : driver.getFullName() }"
-                                            th:selected="${driver.id == serviceChecker.exDriver?.id}"></option>
+                                            th:text="${driver.plateNumber != null ? driver.plateNumber + ' - ' +  driver.getFullName() : driver.getFullName() }"
+                                            th:selected="${driver.id == serviceChecker.driver?.id}"></option>
                                 </select>
                             </div>
                         </div>

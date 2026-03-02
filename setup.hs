@@ -23,12 +23,22 @@ scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@192.168.1.249:~/sv_service_c
 
 scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@45.201.196.19:~/sv_service_checker
 
-sudo systemctl status sv_service_checker
+scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@192.168.1.249:~/sv_service_checker/
+
+sudo nano /etc/systemd/system/service_checker.service
+sudo systemctl daemon-reload
+sudo systemctl stop service_checker
+sudo systemctl start service_checker
+sudo systemctl enable service_checker
+sudo systemctl status service_checker.service
+sudo systemctl status -f service_checker.service
+journalctl -u service_checker.service -f
+
 
 server.port=8084
 
 [Unit]
-Description=SV Services Checker Application
+Description=SV Safety Checklists Application
 After=syslog.target
 
 [Service]
@@ -49,7 +59,7 @@ sudo nano /etc/systemd/system/sv_repairman.service
 
 
 [Unit]
-Description=SV Services Checker Application
+Description=SV Safety Checklists Application
 After=syslog.target
 
 [Service]

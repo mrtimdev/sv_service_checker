@@ -90,7 +90,7 @@ public class ServiceCheckerWebController {
     ) {
         
         // Get filtered data
-        List<ServiceChecker> data = serviceCheckerService.getByDateAndDriverFilter(driverId, dateFilter, startDate, endDate);
+        List<ServiceChecker> data = serviceCheckerService.getByDateFilter(dateFilter, startDate, endDate); //serviceCheckerService.getByDateAndDriverFilter(driverId, dateFilter, startDate, endDate);
         if (orderColumn == 0 && "asc".equalsIgnoreCase(orderDirection)) {
             orderColumn = 1;       // Date column index
             orderDirection = "desc";
@@ -249,34 +249,6 @@ public class ServiceCheckerWebController {
     // Convert ServiceChecker objects to DataTables format
     private List<Map<String, Object>> convertToDataTablesFormat(List<ServiceChecker> data) {
         return data.stream().map(sc -> {
-            // Safely get the stored value (could be null)
-            ExternalDriverDTO storedExDriver = sc.getExDriver();
-
-            // Safely get the ID (could also be null)
-            Long exDriverId = null;
-            if (storedExDriver != null) {
-                exDriverId = storedExDriver.getId();
-            }
-
-            // Call proxy only if we have an ID
-            ExternalDriverDTO freshExDriver = null;
-            if (exDriverId != null) {
-                try {
-                    freshExDriver = driverProxyService.getDriverById(exDriverId);
-                } catch (Exception e) {
-                    // log and ignore if external service fails
-                    System.out.println("Cannot fetch driver by id "+ exDriverId + ": " + e.getMessage());
-                }
-            }
-            sc.setExDriver(freshExDriver);
-            String driverName = Optional.ofNullable(sc.getExDriver())
-                            .map(ExternalDriverDTO::getName)
-                            .orElse("Unknown driver");
-
-            String licensePlate = Optional.ofNullable(sc.getExDriver())
-                .map(ExternalDriverDTO::getAssignedVehicle)
-                .map(AssignedVehicleDTO::getLicensePlate)
-                .orElse("Unknown plate");
 
            String truckType = Optional.ofNullable(sc.getExDriver())
                 .map(ExternalDriverDTO::getAssignedVehicle)
@@ -286,8 +258,9 @@ public class ServiceCheckerWebController {
             Map<String, Object> row = new HashMap<>();
             row.put("id", sc.getId());
             row.put("date", sc.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
-            row.put("driverName", driverName);
-            row.put("licensePlate", licensePlate);
+            row.put("deviceId", sc.getDeviceId());
+            row.put("image", sc.getImagePath());
+            row.put("licensePlate", sc.getLicensePlate());
             row.put("truckType", truckType);
             row.put("checkedCount", sc.getCheckedCount());
             row.put("notCheckedCount", sc.getNotCheckedCount());
@@ -328,27 +301,14 @@ public class ServiceCheckerWebController {
         @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
         @RequestParam(value = "endDate", required = false)
         @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
-        @RequestParam(value = "driverId", required = false) Long driverId,
         @RequestParam(value = "truckType", required = false) String truckType,
         Authentication authentication,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) throws IOException {
 
         // Fetch service checkers with items and notes eagerly loaded
-        List<ServiceChecker> data = serviceCheckerService.getByDateAndDriverFilter(driverId, dateFilter, startDate, endDate);
-        if (truckType != null && !truckType.isEmpty()) {
-            data = data.stream()
-                .filter(sc -> {
-                    ExternalDriverDTO exDriver = sc.getExDriver() != null 
-                    ? driverProxyService.getDriverById(sc.getExDriver().getId()) 
-                    : null;
-
-                    return exDriver != null
-                        && exDriver.getAssignedVehicle() != null
-                        && truckType.equals(exDriver.getAssignedVehicle().getTruckSize());
-                })
-                .collect(Collectors.toList());
-        }
+        List<ServiceChecker> data = serviceCheckerService.getByDateFilter(dateFilter, startDate, endDate);
+       
         User user = userDetails.getUser();
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -356,7 +316,6 @@ public class ServiceCheckerWebController {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
 
             if (isRoleUser) {
-                // Filter to only show records belonging to the logged-in user
                 data = data.stream()
                         .filter(sc -> sc.getCreatedBy() != null 
                                     && sc.getCreatedBy().getId().equals(user.getId()))
@@ -418,8 +377,11 @@ public class ServiceCheckerWebController {
 
     @GetMapping
     public String getAll(Authentication authentication, Model model) {
-        List<ExternalDriverDTO> exDrivers = driverProxyService.getAllDrivers();
-        model.addAttribute("drivers", exDrivers);
+        // List<ExternalDriverDTO> exDrivers = driverProxyService.getAllDrivers();
+
+        List<Driver> drivers = driverService.getAllDrivers();
+
+        model.addAttribute("drivers", drivers);
 
         if (authentication != null && authentication.isAuthenticated()) {
             if(authentication.getAuthorities().stream()
@@ -440,13 +402,13 @@ public class ServiceCheckerWebController {
 
        
 
-        ExternalDriverDTO exDriver = driverProxyService.getDriverById(data.getExDriver().getId());
-
-        if (exDriver == null) {
-            redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
-            return "redirect:/admin/dashboard";
-        }
-        data.setExDriver(exDriver);
+        // // ExternalDriverDTO exDriver = driverProxyService.getDriverById(data.getExDriver().getId());
+        // Driver exDriver = driverService.getDriverById(data.getDriver().getId())
+        //         .orElseThrow(() -> new RuntimeException("Driver not found"));
+        // if (exDriver == null) {
+        //     redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
+        //     return "redirect:/admin/dashboard";
+        // }
         model.addAttribute("serviceChecker", data);
         if (authentication != null && authentication.isAuthenticated()) {
             if(authentication.getAuthorities().stream()
@@ -610,8 +572,8 @@ public class ServiceCheckerWebController {
 
     @GetMapping("/new")
     public String showCreateFormNew(Model model) {
-        List<ExternalDriverDTO> exDrivers = driverProxyService.getAllDrivers();
-        model.addAttribute("drivers", exDrivers);
+        List<Driver> drivers = driverService.getAllDrivers();
+        model.addAttribute("drivers", drivers);
         model.addAttribute("currentDate", LocalDate.now());
         model.addAttribute("serviceChecker", new ServiceChecker());
         model.addAttribute("categories", inspectionService.getAllCategoriesWithItems());
@@ -633,7 +595,10 @@ public class ServiceCheckerWebController {
         }
 
         try {
-            ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
+            // ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
+
+            Driver exDriver = driverService.getDriverById(driverId)
+                    .orElseThrow(() -> new RuntimeException("Driver not found"));
 
             if (driverId == null) {
                 redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
@@ -657,7 +622,7 @@ public class ServiceCheckerWebController {
             // }
             User user = userDetails.getUser();
             checker.setCreatedBy(user);
-            checker.setExDriver(exDriver);
+            checker.setDriver(exDriver);
             Map<Long, List<ItemNoteDTO>> categoryItems = processFormParameters(allParams);
             serviceCheckerService.createV2WithExternalDriver(checker, categoryItems);
             redirectAttributes.addFlashAttribute("success", "Service checker created successfully!");
@@ -679,8 +644,9 @@ public class ServiceCheckerWebController {
             return "redirect:/admin/service-checkers";
         }
 
-        List<ExternalDriverDTO> exDrivers = driverProxyService.getAllDrivers();
-        model.addAttribute("drivers", exDrivers);
+        // List<ExternalDriverDTO> exDrivers = driverProxyService.getAllDrivers();
+        List<Driver> drivers = driverService.getAllDrivers();
+        model.addAttribute("drivers", drivers);
         
         // model.addAttribute("drivers", driverService.getAllDrivers());
         model.addAttribute("serviceChecker", checker);
@@ -699,8 +665,9 @@ public class ServiceCheckerWebController {
         
         try {
 
-            ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
-
+            // ExternalDriverDTO exDriver = driverProxyService.getDriverById(driverId);
+            Driver exDriver = driverService.getDriverById(driverId)
+                    .orElseThrow(() -> new RuntimeException("Driver not found"));
             if (exDriver == null) {
                 redirectAttributes.addFlashAttribute("error", "Driver not found in external system!");
                 return "redirect:/admin/service-checkers/new";
@@ -726,7 +693,7 @@ public class ServiceCheckerWebController {
             // }
             User user = userDetails.getUser();
             checker.setUpdatedBy(user);
-            checker.setExDriver(exDriver);
+            checker.setDriver(exDriver);
             Map<Long, List<ItemNoteDTO>> categoryItems = processFormParameters(params);
             serviceCheckerService.updateWithInspections(id, checker, categoryItems);
             redirectAttributes.addFlashAttribute("success", "Service checker updated successfully!");

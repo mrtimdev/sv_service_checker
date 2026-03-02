@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import timdev.timdev.dto.AssignedVehicleDTO;
 import timdev.timdev.dto.ExternalDriverDTO;
 import timdev.timdev.dto.ItemNoteDTO;
 import timdev.timdev.entity.Driver;
@@ -29,6 +29,7 @@ import timdev.timdev.entity.ServiceCheckerItem;
 import timdev.timdev.entity.ServiceCheckerItemNote;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.ServiceCheckerStatus;
+import timdev.timdev.exception.ResourceNotFoundException;
 import timdev.timdev.repository.DriverRepository;
 import timdev.timdev.repository.InspectionCategoryRepository;
 import timdev.timdev.repository.InspectionItemRepository;
@@ -55,97 +56,69 @@ public class ServiceCheckerService {
     private final DriverProxyService driverProxyService;
 
 
-    public List<ServiceChecker> getByDateAndDriverFilter(Long driverId, String dateFilter, LocalDate startDate, LocalDate endDate) {
-        LocalDate today = LocalDate.now();
-
-        // If explicit start and end dates are given, use them directly
-        if (startDate != null && endDate != null) {
-            return driverId != null
-                    ? repository.findByExDriverIdAndDateBetween(driverId, startDate, endDate)
-                    : repository.findByDateBetween(startDate, endDate);
-        }
-
-        // Apply dateFilter if no explicit range is provided
-        LocalDate defaultStartDate;
-        LocalDate defaultEndDate = today;
-
-        switch (dateFilter != null ? dateFilter.toLowerCase() : "all") {
-            case "today":
-                defaultStartDate = today;
-                break;
-            case "yesterday":
-                defaultStartDate = today.minusDays(1);
-                defaultEndDate = today.minusDays(1);
-                break;
-            case "last7days":
-                defaultStartDate = today.minusDays(7);
-                break;
-            case "last30days":
-                defaultStartDate = today.minusDays(30);
-                break;
-            case "all":
-            default:
-                return driverId != null
-                        ? repository.findByExDriverId(driverId)
-                        : repository.findAll();
-        }
-
-        // Apply filter with driver if present
-        return driverId != null
-                ? repository.findByExDriverIdAndDateBetween(driverId, defaultStartDate, defaultEndDate)
-                : repository.findByDateBetween(defaultStartDate, defaultEndDate);
-    }
+    
 
 
 
     public List<ServiceChecker> getByDateFilter(String dateFilter, LocalDate startDate, LocalDate endDate) {
         LocalDate today = LocalDate.now();
+        
+        // If explicit start and end dates are provided, use them (excluding CANCELLED)
         if (startDate != null && endDate != null) {
-            return repository.findByDateBetween(startDate, endDate);
+            return repository.findByDateBetweenExcludingCancelled(startDate, endDate);
         }
 
-        LocalDate defaultStartDate;
-        LocalDate defaultEndDate = today;
+        // Otherwise, use the dateFilter parameter
+        LocalDate filterStartDate;
+        LocalDate filterEndDate = today;
 
         switch (dateFilter.toLowerCase()) {
             case "today":
-                defaultStartDate = today;
+                filterStartDate = today;
+                filterEndDate = today;
                 break;
+                
             case "yesterday":
-                defaultStartDate = today.minusDays(1);
-                defaultEndDate = today.minusDays(1);
+                filterStartDate = today.minusDays(1);
+                filterEndDate = today.minusDays(1);
                 break;
+                
             case "last7days":
-                defaultStartDate = today.minusDays(7);
+                filterStartDate = today.minusDays(7);
+                // filterEndDate already = today
                 break;
+                
             case "last30days":
-                defaultStartDate = today.minusDays(30);
+                filterStartDate = today.minusDays(30);
+                // filterEndDate already = today
                 break;
+                
             case "all":
             default:
-                return repository.findAll();
+                // Return all non-cancelled checklists
+                return repository.findAllExcludingCancelled(ServiceCheckerStatus.CANCELLED);
         }
 
-        return repository.findByDateBetween(startDate, endDate);
+        return repository.findByDateBetweenExcludingCancelled(filterStartDate, filterEndDate);
     }
 
 
     public ServiceChecker create(ServiceChecker serviceChecker) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        if (serviceChecker.getDriver() != null && serviceChecker.getDriver().getId() != null) {
-            Driver driver = driverRepository.findById(serviceChecker.getDriver().getId())
-                    .orElseThrow(() -> new RuntimeException("Driver not found"));
-            serviceChecker.setDriver(driver);
+        // if (serviceChecker.getDriver() != null && serviceChecker.getDriver().getId() != null) {
+        //     Driver driver = driverRepository.findById(serviceChecker.getDriver().getId())
+        //             .orElseThrow(() -> new RuntimeException("Driver not found"));
+        //     serviceChecker.setDriver(driver);
 
-            User user = userService.getByUsername(username);
-            serviceChecker.setCreatedBy(user);
+        //     User user = userService.getByUsername(username);
+        //     serviceChecker.setCreatedBy(user);
 
-            // Check if already exists for that day
-            if (repository.existsByDriverAndDate(driver, serviceChecker.getDate())) {
-                throw new RuntimeException("A checklist already exists for this driver on " + serviceChecker.getDate());
-            }
-        }
+        //     // Check if already exists for that day
+        //     if (repository.existsByDriverAndDate(driver, serviceChecker.getDate())) {
+        //         throw new RuntimeException("A checklist already exists for this driver on " + serviceChecker.getDate());
+        //     }
+        // }
         // if (serviceChecker.getItems() != null) {
         //     serviceChecker.getItems().forEach(item -> {
         //         item.setServiceChecker(serviceChecker);
@@ -159,6 +132,10 @@ public class ServiceCheckerService {
 
     public List<ServiceChecker> getAll() {
         return repository.findAll();
+    }
+
+    public boolean existsByLicensePlateAndDate(String licensePlate, LocalDate date) {
+        return repository.existsByLicensePlateAndDate(licensePlate, date);
     }
 
     public ServiceChecker getById(Long id) {
@@ -288,7 +265,39 @@ public class ServiceCheckerService {
         return repository.findByIdWithDetails(id);
     }
 
+    @Transactional
      public ServiceChecker createWithInspections(ServiceChecker checker, 
+                                             Map<Long, List<ItemNoteDTO>> categoryItems) {
+        
+        ServiceChecker saved = repository.save(checker);
+        
+        categoryItems.forEach((categoryId, itemNotes) -> {
+            // Create ServiceCheckerItem for each category
+            ServiceCheckerItem item = new ServiceCheckerItem();
+            item.setServiceChecker(saved);
+            item.setCategory(inspectionCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + categoryId)));
+            ServiceCheckerItem savedItem = itemRepo.save(item);
+            
+            // Create notes for each inspection item
+            itemNotes.forEach(in -> {
+                ServiceCheckerItemNote note = new ServiceCheckerItemNote();
+                note.setServiceCheckerItem(savedItem);
+                
+                // Use inspectionItemRepo instead of itemRepo here
+                note.setInspectionItem(inspectionItemRepo.findById(in.getItemId())
+                    .orElseThrow(() -> new EntityNotFoundException("InspectionItem not found with id: " + in.getItemId())));
+                
+                note.setPassed(in.isPassed());
+                note.setNote(in.getNote());
+                noteRepo.save(note);
+            });
+        });
+        
+        return saved;
+    }
+
+     public ServiceChecker createWithInspectionsOld(ServiceChecker checker, 
                                              Map<Long, List<ItemNoteDTO>> categoryItems) {
         
         ServiceChecker saved = repository.save(checker);
@@ -368,10 +377,10 @@ public class ServiceCheckerService {
         
         // 2. Update basic ServiceChecker fields
         existingChecker.setDate(updatedChecker.getDate());
-        existingChecker.setDriver(updatedChecker.getDriver());
-        existingChecker.setExDriver(updatedChecker.getExDriver());
         existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
         existingChecker.setUpdatedAt(LocalDateTime.now());
+        existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
+        existingChecker.setImagePath(updatedChecker.getImagePath());
         // Update other fields as needed...
         
         // 3. Process inspection updates
@@ -431,8 +440,14 @@ public class ServiceCheckerService {
 
 
     public Page<ServiceChecker> getServiceCheckers(int page, int limit, LocalDate startDate, LocalDate endDate, Long driverId) {
-        Pageable pageable = PageRequest.of(page - 1, limit); // page is 1-based in controller
+        Pageable pageable = PageRequest.of(page - 1, limit); 
         return repository.findByFilters(driverId, startDate, endDate, pageable);
+    }
+
+    
+    public Page<ServiceChecker> getByDeviceId(int page, int limit, LocalDate startDate, LocalDate endDate, String deviceId) {
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("id").descending()); 
+        return repository.findByDeviceIdFilters(deviceId, startDate, endDate, pageable);
     }
 
 
@@ -470,46 +485,11 @@ public class ServiceCheckerService {
 
     public List<Map<String, Object>> convertToDataTablesFormat(List<ServiceChecker> data) {
         return data.stream().map(sc -> {
-            // Safely get the stored value (could be null)
-            ExternalDriverDTO storedExDriver = sc.getExDriver();
-
-            // Safely get the ID (could also be null)
-            Long exDriverId = null;
-            if (storedExDriver != null) {
-                exDriverId = storedExDriver.getId();
-            }
-
-            // Call proxy only if we have an ID
-            ExternalDriverDTO freshExDriver = null;
-            if (exDriverId != null) {
-                try {
-                    freshExDriver = driverProxyService.getDriverById(exDriverId);
-                } catch (Exception e) {
-                    // log and ignore if external service fails
-                    System.out.println("Cannot fetch driver by id "+ exDriverId + ": " + e.getMessage());
-                }
-            }
-            sc.setExDriver(freshExDriver);
-            String driverName = Optional.ofNullable(sc.getExDriver())
-                            .map(ExternalDriverDTO::getName)
-                            .orElse("Unknown driver");
-
-            String licensePlate = Optional.ofNullable(sc.getExDriver())
-                .map(ExternalDriverDTO::getAssignedVehicle)
-                .map(AssignedVehicleDTO::getLicensePlate)
-                .orElse("Unknown plate");
-
-           String truckType = Optional.ofNullable(sc.getExDriver())
-                .map(ExternalDriverDTO::getAssignedVehicle)
-                .map(AssignedVehicleDTO::getTruckSize)
-                .orElse("Unknown type");
-
+            
             Map<String, Object> row = new HashMap<>();
             row.put("id", sc.getId());
             row.put("date", sc.getDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
-            row.put("driverName", driverName);
-            row.put("licensePlate", licensePlate);
-            row.put("truckType", truckType);
+            row.put("licensePlate", sc.getLicensePlate());
             row.put("checkedCount", sc.getCheckedCount());
             row.put("notCheckedCount", sc.getNotCheckedCount());
             row.put("issuesStatus", sc.issuesStatus());
@@ -525,5 +505,23 @@ public class ServiceCheckerService {
             row.put("canEdit", sc.canEdit());
             return row;
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancel(Long id, String reason, User user) {
+
+        ServiceChecker checker = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service checker not found with id: " + id));
+
+        if (ServiceCheckerStatus.CANCELLED.equals(checker.getStatus())) {
+            throw new IllegalStateException("Service checker is already cancelled.");
+        }
+
+        checker.setStatus(ServiceCheckerStatus.CANCELLED);
+        checker.setCancelReason(reason);
+        checker.setCancelledBy(user);
+        checker.setCancelledAt(LocalDateTime.now());
+
+        repository.save(checker);
     }
 }

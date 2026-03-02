@@ -1,6 +1,6 @@
 <th:block th:fragment="sidebar">
     <!-- Sidebar -->
-    <aside class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200">
+    <aside class="no-print w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200">
         <div class="mb-6 pt-[72px] transition-all duration-300" id="custom-padding-top">
             <h2 class="text-sm uppercase tracking-wide text-gray-200 dark:text-gray-400">
                 Menu
@@ -20,7 +20,7 @@
                 </li>
                 <li class="mb-2">
                     <a href="/admin/service-checkers"
-                        th:classappend="${requestURI == '/admin/service-checkers'} ? 
+                        th:classappend="${requestURI.startsWith('/admin/service-checkers')} ? 
                                     'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
                         class="flex items-center space-x-3 p-3 rounded-lg font-medium transition duration-200 text-white hover:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +29,7 @@
                         <span>Services Checker</span>
                     </a>
                 </li>
-                <li class="mb-2" sec:authorize="!hasRole('USER')">
+                <!-- <li class="mb-2" sec:authorize="!hasRole('USER')">
                     <a href="/admin/drivers"
                         th:classappend="${requestURI == '/admin/drivers'} ? 
                                     'bg-gray-700 text-white' : 'text-white hover:bg-gray-700'"
@@ -39,7 +39,7 @@
                         </svg>
                         <span>Drivers</span>
                     </a>
-                </li>
+                </li> -->
 
                 <li class="mb-2" sec:authorize="!hasRole('USER')">
                     <a href="/admin/users"

@@ -66,7 +66,7 @@
                                     <option value="">Select a driver</option>
                                     <option th:each="driver : ${drivers}" 
                                             th:value="${driver.id}" 
-                                            th:text="${driver.assignedVehicle != null ? driver.assignedVehicle.licensePlate + ' - ' +  driver.getFullName() : driver.getFullName() }"></option>
+                                            th:text="${driver.plateNumber != null ? driver.plateNumber + ' - ' +  driver.getFullName() : driver.getFullName() }"></option>
                                 </select>
                             </div>
                             <div id="customRangePicker" class="flex gap-2 flex-1">
@@ -145,8 +145,6 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Plate</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Problem Count</th>
@@ -238,16 +236,9 @@
                         data: "date",
                     },
                     { 
-                        data: "licensePlate"
+                        data: "plateNumber"
                     },
                     
-                    { 
-                        data: "driverName",
-                    },
-
-                    { 
-                        data: "truckType",
-                    },
                     
                     {
                         data: "issuesStatus",

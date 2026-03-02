@@ -6,6 +6,8 @@ public class ItemNoteDTO {
     private boolean passed;
     private String note;
 
+    public ItemNoteDTO() {}
+
     public ItemNoteDTO(Long itemId, boolean passed, String note) {
         this.itemId = itemId;
         this.passed = passed;

@@ -3,5 +3,6 @@ package timdev.timdev.enums;
 public enum ServiceCheckerStatus {
     CHECKING,
     CHECKED,
-    UNCHECKED
+    UNCHECKED,
+    CANCELLED
 }

@@ -39,7 +39,7 @@
                                     <option value="">Select a driver</option>
                                     <option th:each="driver : ${drivers}" 
                                             th:value="${driver.id}" 
-                                            th:text="${driver.assignedVehicle != null ? driver.assignedVehicle.licensePlate + ' - ' +  driver.getFullName() : driver.getFullName() }"
+                                            th:text="${driver.plateNumber != null ? driver.plateNumber + ' - ' +  driver.getFullName() : driver.getFullName() }"
                                             th:selected="${driver.id == serviceChecker.exDriver?.id}"></option>
                                 </select>
                             </div>
@@ -149,31 +149,6 @@
                 allowClear: true
             });
 
-            /*$('#driverId').select2({
-                placeholder: 'Select a driver',
-                allowClear: true,
-                ajax: {
-                    url: '/api/drivers/search',
-                    dataType: 'json',
-                    data: function(params) {
-                        return { term: params.term };
-                    },
-                    type: 'GET',
-                    delay: 250,
-                    processResults: function(data) {
-                        return {
-                            results: $.map(data, function(driver) {
-                                return {
-                                    id: driver.id,
-                                    text: driver.licenseNumber +' - '+ driver.name  
-                                };
-                            })
-                        };
-                    },
-                    cache: true
-                },
-                minimumInputLength: 1
-            });*/
         });
         document.addEventListener('DOMContentLoaded', function() {
             // Show/hide notes when radio buttons change

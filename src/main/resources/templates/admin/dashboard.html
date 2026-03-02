@@ -24,7 +24,7 @@
         }
     </style>
 </th:block>
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard - SV Services Checker')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Dashboard - SV Safety Checklists')}">
     <th:block th:fragment="content">
         <div class="mx-auto sm:px-6 lg:px-8">
 
@@ -38,7 +38,7 @@
                 <p class="text-gray-800 dark:text-gray-200">Here's what's happening with your trucks today</p>
             </div>
 
-            <div class="mb-8 shadow-lg rounded-xl p-4 w-full bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <div class="mb-8 shadow-lg rounded-xl p-4 w-full bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm" style="display: none;">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Filter</h2>
                 <form th:action="@{/dashboard}" method="get">
                     <div class="grid grid-cols-1 md:grid-cols-[auto_auto_10%] gap-6">
@@ -148,58 +148,25 @@
 
                             </div>
 
-                            <div class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Truck Type Statistics Chart</h3>
-                                <div class="h-64"> <!-- Fixed height container -->
-                                    <canvas id="truckStatsChart" height="250"></canvas>
-                                </div>
-                            </div>
-
                             <div class="mb-8 flex items-center justify-center">
                                 <svg class="w-7 h-7 text-green-500 animate-float" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12 4V20M12 20L18 14M12 20L6 14" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </div>
 
-                            <div class="mb-8 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Truck Type Statistics</h3>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                        <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Truck Type</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Trucks</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Checked Count</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unchecked Count</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Issue Items</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                            <tr th:each="entry : ${truckStats_}" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100" th:text="${entry.key}">Truck Type</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${entry.value.total}">0</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-semibold" th:text="${entry.value.checkedCount}">0</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400 font-semibold" th:text="${entry.value.unCheckedCount}">0</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-semibold" th:text="${entry.value.issueItemCount}">0</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                            
 
                             <!-- Recent Checks Section -->
                             <div class="rounded-lg shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Recent Service Checks</h3>
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Recent Checklists</h3>
                                 </div>
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                         <thead class="bg-gray-50 dark:bg-gray-700">
                                             <tr>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Driver</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">License Plate</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Truck Type</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Issues</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created By</th>
@@ -209,9 +176,7 @@
                                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             <tr th:each="check : ${recentChecks}" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.date}">Jan 01, 2024</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.driverName}">Driver Name</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.licensePlate}">ABC-123</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" th:text="${check.truckType}">Large Truck</td>
                                          
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <span th:classappend="${check.issuesStatus == 'Checked'} ? 
@@ -324,87 +289,7 @@
                     }
                 });
 
-                // Truck Type Distribution
-                const ctx = document.getElementById('truckStatsChart').getContext('2d');
-
-                // Extract data using proper Thymeleaf syntax
-                const labels_ = [[${truckStats_.keySet()}]];
-                const totalData = [[${truckStats_.values().![total]}]];
-                const checkedData = [[${truckStats_.values().![checkedCount]}]];
-                const unCheckedData = [[${truckStats_.values().![unCheckedCount]}]];
-                const issuesData = [[${truckStats_.values().![issueItemCount]}]];
-
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels_,
-                        datasets: [
-                            {
-                                label: 'Total Trucks',
-                                data: totalData,
-                                backgroundColor: '#3B82F6', // Blue
-                                borderColor: '#2563EB',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Checked',
-                                data: checkedData,
-                                backgroundColor: '#10B981', // Green
-                                borderColor: '#059669',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Unchecked',
-                                data: unCheckedData,
-                                backgroundColor: '#FACC15', // Yellow
-                                borderColor: '#EAB308',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Issue Items',
-                                data: issuesData,
-                                backgroundColor: '#EF4444', // Red
-                                borderColor: '#DC2626',
-                                borderWidth: 1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: {
-                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
-                                }
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { 
-                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
-                                },
-                                grid: { 
-                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#374151' : '#E5E7EB'
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                ticks: { 
-                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#D1D5DB' : '#374151'
-                                },
-                                grid: { 
-                                    color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#374151' : '#E5E7EB'
-                                }
-                            }
-                        }
-                    }
-                });
-
+                
 
 
                 
