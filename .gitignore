@@ -16,6 +16,9 @@ node_modules/
 .springBeans
 .sts4-cache
 
+uploads/*
+annotated/*
+marvin/*
 ### IntelliJ IDEA ###
 .idea
 *.iws

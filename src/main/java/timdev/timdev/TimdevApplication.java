@@ -6,16 +6,13 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-
 @SpringBootApplication(scanBasePackages = "timdev.timdev.controller")
-@EntityScan(basePackages = "timdev.timdev.entity") 
-@EnableJpaRepositories(basePackages = "timdev.timdev.repository") 
-@ComponentScan(basePackages = "timdev.timdev") 
-
+@EntityScan(basePackages = "timdev.timdev.entity")
+@EnableJpaRepositories(basePackages = "timdev.timdev.repository")
+@ComponentScan(basePackages = "timdev.timdev")
 public class TimdevApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TimdevApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(TimdevApplication.class, args);
+    }
 }

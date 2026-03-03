@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Create Service Checker')}">
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Create Safety Checklists')}">
     <th:block th:fragment="content">
         <div class="">
             <div class="mx-auto max-w-3xl">
                 <div class="bg-white shadow-lg rounded-xl p-6">
-                    <h2 class="text-2xl font-bold mb-6">Create Service Checker</h2>
+                    <h2 class="text-2xl font-bold mb-6">Create Safety Checklists</h2>
                     
                     <!-- Success Message -->
                     <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4" th:text="${success}"></div>
