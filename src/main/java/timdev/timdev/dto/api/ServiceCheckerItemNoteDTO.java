@@ -9,27 +9,58 @@ public class ServiceCheckerItemNoteDTO {
     private ItemDTO inspectionItem;
     private Boolean passed;
     private String note;
-    
+    private Boolean isRequired;
+
     // Constructors
-    public ServiceCheckerItemNoteDTO() {}
-    
+    public ServiceCheckerItemNoteDTO() {
+    }
+
     public ServiceCheckerItemNoteDTO(ServiceCheckerItemNote note) {
         this.id = note.getId();
         this.inspectionItem = new ItemDTO(note.getInspectionItem());
         this.passed = note.isPassed();
         this.note = note.getNote();
+        this.isRequired = note.getIsRequired();
     }
-    
+
     // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    
-    public ItemDTO getInspectionItem() { return inspectionItem; }
-    public void setInspectionItem(ItemDTO inspectionItem) { this.inspectionItem = inspectionItem; }
-    
-    public Boolean getPassed() { return passed; }
-    public void setPassed(Boolean passed) { this.passed = passed; }
-    
-    public String getNote() { return note; }
-    public void setNote(String note) { this.note = note; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public ItemDTO getInspectionItem() {
+        return inspectionItem;
+    }
+
+    public void setInspectionItem(ItemDTO inspectionItem) {
+        this.inspectionItem = inspectionItem;
+    }
+
+    public Boolean getPassed() {
+        return passed;
+    }
+
+    public void setPassed(Boolean passed) {
+        this.passed = passed;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public Boolean getIsRequired() {
+        return isRequired;
+    }
+
+    public void setIsRequired(Boolean isRequired) {
+        this.isRequired = isRequired;
+    }
 }

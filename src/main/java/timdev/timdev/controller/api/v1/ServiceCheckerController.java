@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,15 +39,16 @@ import timdev.timdev.dto.api.ServiceCheckerRequest;
 import timdev.timdev.dto.api.ServiceCheckerResponseDTO;
 import timdev.timdev.dto.api.ServiceCheckerWithDeviceInfoRequest;
 import timdev.timdev.entity.Driver;
+import timdev.timdev.entity.InspectionItem;
 import timdev.timdev.entity.ServiceChecker;
 import timdev.timdev.entity.User;
 import timdev.timdev.exception.ResourceNotFoundException;
 import timdev.timdev.exception.UnauthorizedException;
 import timdev.timdev.repository.UserRepository;
 import timdev.timdev.service.DriverService;
+import timdev.timdev.service.InspectionItemService;
 import timdev.timdev.service.ServiceCheckerService;
 import timdev.timdev.util.JwtUtil;
-
 
 @Slf4j
 @RestController
@@ -59,6 +61,8 @@ public class ServiceCheckerController {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
+    private final InspectionItemService inspectionItemService;
+
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -67,23 +71,22 @@ public class ServiceCheckerController {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new UnauthorizedException("Missing or invalid Authorization header");
         }
-        
+
         String token = authHeader.substring(7);
-        
+
         if (!jwtUtil.validateToken(token)) {
             throw new UnauthorizedException("Invalid or expired token");
         }
-        
+
         return jwtUtil.getUsernameFromToken(token);
     }
 
     @GetMapping("/filters")
     public ResponseEntity<List<ServiceChecker>> getByDateFilter(
-        @RequestHeader("Authorization") String authHeader,
-        @RequestParam("dateFilter") String dateFilter,
-        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-        @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam("dateFilter") String dateFilter,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         try {
             validateToken(authHeader);
             List<ServiceChecker> data = serviceCheckerService.getByDateFilter(dateFilter, startDate, endDate);
@@ -95,7 +98,6 @@ public class ServiceCheckerController {
         }
     }
 
-
     @GetMapping("/list")
     public ResponseEntity<?> getServiceCheckers(
             @RequestHeader("Authorization") String authHeader,
@@ -103,17 +105,17 @@ public class ServiceCheckerController {
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String dateFilter,
             @RequestParam(required = true) String deviceId) {
-        
+
         try {
             validateToken(authHeader);
-            
+
             // Calculate date range based on filter
             LocalDate startDate = null;
             LocalDate endDate = null;
-            
+
             if (dateFilter != null) {
                 LocalDate today = LocalDate.now();
-                
+
                 switch (dateFilter) {
                     case "today" -> {
                         startDate = today;
@@ -134,15 +136,16 @@ public class ServiceCheckerController {
                     }
                 }
             }
-            
-            Page<ServiceChecker> serviceCheckersPage = serviceCheckerService.getByDeviceId(page, limit, startDate, endDate, null);
-            
+
+            Page<ServiceChecker> serviceCheckersPage = serviceCheckerService.getByDeviceId(page, limit, startDate,
+                    endDate, null);
+
             // Convert to DTOs
             List<ServiceCheckerResponseDTO> serviceCheckerDTOs = serviceCheckersPage.getContent()
-                .stream()
-                .map(ServiceCheckerResponseDTO::new)
-                .collect(Collectors.toList());
-            
+                    .stream()
+                    .map(ServiceCheckerResponseDTO::new)
+                    .collect(Collectors.toList());
+
             // Prepare response
             Map<String, Object> response = new HashMap<>();
             response.put("data", serviceCheckerDTOs);
@@ -150,9 +153,9 @@ public class ServiceCheckerController {
             response.put("totalItems", serviceCheckersPage.getTotalElements());
             response.put("totalPages", serviceCheckersPage.getTotalPages());
             response.put("hasMore", serviceCheckersPage.getNumber() < serviceCheckersPage.getTotalPages() - 1);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
@@ -162,23 +165,49 @@ public class ServiceCheckerController {
         }
     }
 
+    @GetMapping("/id/{id}")
+    public ResponseEntity<?> getServiceCheckerById(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long id) {
+
+        try {
+            validateToken(authHeader);
+
+            ServiceChecker serviceChecker = serviceCheckerService.getById(id);
+
+            // ✅ Convert to DTO
+            ServiceCheckerResponseDTO responseDTO = new ServiceCheckerResponseDTO(serviceChecker);
+
+            return ResponseEntity.ok(responseDTO);
+
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to retrieve service checker"));
+        }
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadImage(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam("image") MultipartFile image) {
         try {
             validateToken(authHeader);
-            
+
             log.info("📸 Receiving image upload: {}", image.getOriginalFilename());
-            
+
             // Use absolute path - create uploads directory in your project root
             String projectDir = System.getProperty("user.dir");
             String uploadDir = projectDir + File.separator + "uploads";
-            
+
             File directory = new File(uploadDir);
-            
+
             log.info("📁 Upload directory: {}", directory.getAbsolutePath());
-            
+
             // Create directory if not exists
             if (!directory.exists()) {
                 boolean created = directory.mkdirs();
@@ -187,17 +216,17 @@ public class ServiceCheckerController {
                 } else {
                     log.error("❌ Failed to create upload directory");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("error", "Could not create upload directory"));
+                            .body(Map.of("error", "Could not create upload directory"));
                 }
             }
-            
+
             // Check write permissions
             if (!directory.canWrite()) {
                 log.error("❌ Upload directory is not writable: {}", directory.getAbsolutePath());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Upload directory is not writable"));
+                        .body(Map.of("error", "Upload directory is not writable"));
             }
-            
+
             // Create unique filename
             String originalFileName = image.getOriginalFilename();
             String fileExtension = "";
@@ -206,42 +235,42 @@ public class ServiceCheckerController {
             } else {
                 fileExtension = ".jpg"; // Default extension
             }
-            
-            String fileName = "checklist_" + 
-                System.currentTimeMillis() + "_" + 
-                UUID.randomUUID().toString().substring(0, 8) + 
-                fileExtension;
-            
+
+            String fileName = "checklist_" +
+                    System.currentTimeMillis() + "_" +
+                    UUID.randomUUID().toString().substring(0, 8) +
+                    fileExtension;
+
             // Save file
             String filePath = directory.getAbsolutePath() + File.separator + fileName;
             File dest = new File(filePath);
-            
+
             log.info("💾 Saving to: {}", filePath);
             image.transferTo(dest);
-            
+
             // Verify file was saved
             if (!dest.exists()) {
                 throw new RuntimeException("File was not saved successfully");
             }
-            
+
             log.info("✅ Image saved successfully: {} ({} bytes)", fileName, dest.length());
-            
+
             // Return accessible URL
             String imageUrl = "/uploads/" + fileName;
-            
+
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", imageUrl);
             response.put("path", filePath);
             response.put("fileName", fileName);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
             log.error("❌ Upload failed: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
+                    .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
         }
     }
 
@@ -249,52 +278,54 @@ public class ServiceCheckerController {
     public ResponseEntity<?> createServiceChecker(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody ServiceCheckerWithDeviceInfoRequest request) {
-        
+
         log.info("Received request to create service checker: {}", request);
-        
+
         try {
             String username = validateToken(authHeader);
-        
-        // Get the user from repository
+
+            // Get the user from repository
             User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
             // Validate request
             if (request.getDate() == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Date is required"));
             }
-            
+
             if (request.getLicensePlate() == null || request.getLicensePlate().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "License plate is required"));
             }
-            
+
             if (request.getCategories() == null || request.getCategories().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Categories are required"));
             }
-            
+
             // Check if checklist already exists for this license plate on the given date
             // if (serviceCheckerService.existsByLicensePlateAndDate(
-            //         request.getLicensePlate().toUpperCase(), request.getDate())) {
-                
-            //     String message = String.format(
-            //         "A checklist already exists for license plate %s on %s",
-            //         request.getLicensePlate().toUpperCase(),
-            //         request.getDate().toString()
-            //     );
-                
-            //     Map<String, String> errorResponse = new HashMap<>();
-            //     errorResponse.put("error", message);
-            //     errorResponse.put("conflict", "true");
-            //     return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            // request.getLicensePlate().toUpperCase(), request.getDate())) {
+
+            // String message = String.format(
+            // "A checklist already exists for license plate %s on %s",
+            // request.getLicensePlate().toUpperCase(),
+            // request.getDate().toString()
+            // );
+
+            // Map<String, String> errorResponse = new HashMap<>();
+            // errorResponse.put("error", message);
+            // errorResponse.put("conflict", "true");
+            // return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
             // }
-            
+
             // Create ServiceChecker entity
             ServiceChecker checker = new ServiceChecker();
             checker.setDate(request.getDate());
             checker.setLicensePlate(request.getLicensePlate().toUpperCase());
             checker.setImagePath(request.getImagePath());
-            checker.setLicensePlateEstimated(request.getLicensePlateEstimated() != null ? request.getLicensePlateEstimated().toUpperCase() : null);
-            
+            checker.setLicensePlateEstimated(
+                    request.getLicensePlateEstimated() != null ? request.getLicensePlateEstimated().toUpperCase()
+                            : null);
+
             // Set device info
             if (request.getDeviceInfo() != null) {
                 checker.setDeviceId(request.getDeviceInfo().getDeviceId());
@@ -302,38 +333,47 @@ public class ServiceCheckerController {
                 checker.setDevicePlatform(request.getDeviceInfo().getPlatform());
                 checker.setAppVersion(request.getDeviceInfo().getAppVersion());
             }
-            
-            checker.setCreatedBy(currentUser);  // Set the user who created this
+
+            checker.setCreatedBy(currentUser); // Set the user who created this
             checker.setCreatedAt(LocalDateTime.now());
             checker.setUpdatedAt(LocalDateTime.now());
-            
+
             Map<Long, List<ItemNoteDTO>> categoryItems = new HashMap<>();
 
             for (CategoryItemRequest categoryRequest : request.getCategories()) {
                 List<ItemNoteDTO> itemNotes = categoryRequest.getItems().stream()
-                        .map(item -> new ItemNoteDTO(
-                                item.getItemId(),
-                                item.getPassed(),
-                                item.getNote()
-                        ))
+                        .map(item -> {
+                            Optional<InspectionItem> itemOpt = inspectionItemService
+                                    .getItemById(item.getItemId());
+                            if (itemOpt.isEmpty()) {
+                                throw new RuntimeException("Invalid item ID: " + item.getItemId());
+                            }
+                            InspectionItem inspectionItem = itemOpt.get();
+                            ItemNoteDTO noteDTO = new ItemNoteDTO();
+                            noteDTO.setItemId(item.getItemId());
+                            noteDTO.setPassed(item.getPassed());
+                            noteDTO.setNote(item.getNote());
+                            noteDTO.setIsRequired(inspectionItem.getIsRequired());
+                            return noteDTO;
+                        })
                         .collect(Collectors.toList());
 
                 categoryItems.put(categoryRequest.getCategoryId(), itemNotes);
             }
-            
+
             // Create service checker with inspections
             ServiceChecker createdChecker = serviceCheckerService.createWithInspections(checker, categoryItems);
-            
+
             Map<String, Object> successResponse = new HashMap<>();
             successResponse.put("message", "Service checker created successfully!");
             successResponse.put("id", createdChecker.getId().toString());
             successResponse.put("licensePlate", createdChecker.getLicensePlate());
             successResponse.put("date", createdChecker.getDate().toString());
-            
+
             log.info("Service checker created successfully with ID: {}", createdChecker.getId());
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(successResponse);
-            
+
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
@@ -350,20 +390,19 @@ public class ServiceCheckerController {
             @RequestBody ServiceCheckerRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
         try {
             validateToken(authHeader);
-            
+
             if (result.hasErrors()) {
                 return ResponseEntity.badRequest().body("Invalid request data");
             }
-            
+
             // Check if driver exists
             Driver driver = driverService.getDriverById(request.getDriverId())
                     .orElseThrow(() -> new RuntimeException("Driver not found with id: " + request.getDriverId()));
-            
+
             // Check if checklist already exists for this driver on the given date
             if (serviceCheckerService.existsByDriverAndDate(driver, request.getDate())) {
                 Map<String, String> errorResponse = new HashMap<>();
@@ -376,26 +415,27 @@ public class ServiceCheckerController {
             checker.setDate(request.getDate());
             checker.setDriver(driver);
             checker.setCreatedBy(user);
-            
+
             // Convert category items to the format expected by service
             Map<Long, List<ItemNoteDTO>> categoryItems = new HashMap<>();
             for (CategoryItemRequest categoryRequest : request.getCategories()) {
                 List<ItemNoteDTO> itemNotes = categoryRequest.getItems().stream()
-                        .map(item -> new ItemNoteDTO(item.getItemId(), item.getPassed(), item.getNote()))
+                        .map(item -> new ItemNoteDTO(item.getItemId(), item.getPassed(), item.getNote(),
+                                item.getIsRequired()))
                         .collect(Collectors.toList());
-                
+
                 categoryItems.put(categoryRequest.getCategoryId(), itemNotes);
             }
-            
+
             // Create service checker with inspections
             ServiceChecker createdChecker = serviceCheckerService.createWithInspections(checker, categoryItems);
-            
+
             Map<String, String> successResponse = new HashMap<>();
             successResponse.put("message", "Service checker created successfully!");
             successResponse.put("id", createdChecker.getId().toString());
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(successResponse);
-            
+
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
@@ -405,48 +445,44 @@ public class ServiceCheckerController {
         }
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<?> getServiceChecker(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long id) {
         try {
             validateToken(authHeader);
-            
+
             ServiceChecker serviceChecker = serviceCheckerService.getById(id);
-            
+
             ServiceCheckerResponseDTO responseDTO = new ServiceCheckerResponseDTO(serviceChecker);
             return ResponseEntity.ok(responseDTO);
-            
+
         } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (ResourceNotFoundException e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-            
+
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to retrieve service checker: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateServiceChecker(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long id,
             @RequestBody ServiceCheckerWithDeviceInfoRequest request,
-            BindingResult result
-    ) {
+            BindingResult result) {
         try {
-            
 
             String username = validateToken(authHeader);
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            
             if (result.hasErrors()) {
                 return ResponseEntity.badRequest().body("Invalid request data");
             }
@@ -458,14 +494,16 @@ public class ServiceCheckerController {
             ServiceChecker checker = new ServiceChecker();
             checker.setDate(request.getDate());
             checker.setLicensePlate(request.getLicensePlate().toUpperCase());
-            checker.setLicensePlateEstimated(request.getLicensePlateEstimated() != null ? request.getLicensePlateEstimated().toUpperCase() : null);
+            checker.setLicensePlateEstimated(
+                    request.getLicensePlateEstimated() != null ? request.getLicensePlateEstimated().toUpperCase()
+                            : null);
 
             // Handle image update
             if (request.getImagePath() != null) {
 
                 // Delete old image if exists
                 if (existingChecker.getImagePath() != null) {
-                    String path = request.getImagePath().replaceFirst("^/", "");
+                    String path = existingChecker.getImagePath().replaceFirst("^/", "");
                     File oldImage = new File(path);
                     if (oldImage.exists()) {
                         boolean deleted = oldImage.delete();
@@ -487,7 +525,6 @@ public class ServiceCheckerController {
             checker.setUpdatedAt(LocalDateTime.now());
             checker.setUpdatedBy(currentUser);
 
-
             // Convert category items
             Map<Long, List<ItemNoteDTO>> categoryItems = new HashMap<>();
 
@@ -497,16 +534,16 @@ public class ServiceCheckerController {
                         .map(item -> new ItemNoteDTO(
                                 item.getItemId(),
                                 item.getPassed(),
-                                item.getNote()
-                        ))
+                                item.getNote(),
+                                item.getIsRequired()))
+
                         .collect(Collectors.toList());
 
                 categoryItems.put(categoryRequest.getCategoryId(), itemNotes);
             }
 
             // Update
-            ServiceChecker updatedChecker =
-                    serviceCheckerService.updateWithInspections(id, checker, categoryItems);
+            ServiceChecker updatedChecker = serviceCheckerService.updateWithInspections(id, checker, categoryItems);
 
             Map<String, String> successResponse = new HashMap<>();
             successResponse.put("message", "Service checker updated successfully!");
@@ -529,7 +566,6 @@ public class ServiceCheckerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-
 
     @GetMapping
     public ResponseEntity<List<ServiceChecker>> getAll(@RequestHeader("Authorization") String authHeader) {
@@ -558,7 +594,7 @@ public class ServiceCheckerController {
     @PutMapping("/{id}/web")
     public ResponseEntity<ServiceChecker> update(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody ServiceChecker serviceChecker) {
         try {
             validateToken(authHeader);
@@ -588,15 +624,14 @@ public class ServiceCheckerController {
     @PutMapping("/{id}/cancel")
     public ResponseEntity<Map<String, String>> cancel(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam String reason) {
         try {
             String username = validateToken(authHeader);
-        
+
             // Get the user from repository (optional, for logging)
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            
 
             serviceCheckerService.cancel(id, reason, currentUser);
             Map<String, String> successResponse = new HashMap<>();

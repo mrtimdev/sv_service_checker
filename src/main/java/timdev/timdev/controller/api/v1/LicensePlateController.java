@@ -95,7 +95,7 @@ public class LicensePlateController {
                 // Send to FastAPI
                 PlateDetectionResult detectionResult = sendToFastApi(tempFile.toFile());
 
-                String permanentPath = saveImagePermanently(image);
+                // String permanentPath = saveImagePermanently(image);
 
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", detectionResult.isSuccess());
@@ -104,7 +104,7 @@ public class LicensePlateController {
                 response.put("results", detectionResult.getResults());
                 response.put("processing_time_ms", detectionResult.getProcessingTimeMs());
                 response.put("message", detectionResult.getMessage());
-                response.put("image_path", permanentPath);
+                // response.put("image_path", permanentPath);
 
                 if (detectionResult.getAnnotatedImageUrl() != null) {
                     response.put("annotated_image_url", "/api/plates/annotated/" +

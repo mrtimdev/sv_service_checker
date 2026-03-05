@@ -1,6 +1,5 @@
 package timdev.timdev.entity;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +34,9 @@ public class InspectionItem {
     @JoinColumn(name = "category_id", nullable = false)
     @JsonBackReference
     private InspectionCategory category;
+
+    @Column(nullable = false)
+    private Boolean isRequired = true;
 
     @OneToMany(mappedBy = "inspectionItem")
     @JsonIgnore
@@ -83,6 +85,14 @@ public class InspectionItem {
     public boolean isPassed() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'isPassed'");
+    }
+
+    public Boolean getIsRequired() {
+        return isRequired;
+    }
+
+    public void setIsRequired(Boolean isRequired) {
+        this.isRequired = isRequired;
     }
 
     // Getters and setters

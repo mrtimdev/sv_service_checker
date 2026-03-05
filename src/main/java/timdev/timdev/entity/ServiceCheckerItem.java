@@ -1,6 +1,6 @@
 package timdev.timdev.entity;
 
-
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -42,7 +42,7 @@ public class ServiceCheckerItem {
     @JoinColumn(name = "category_id")
     @JsonBackReference
     private InspectionCategory category;
-    
+
     public InspectionCategory getCategory() {
         return category;
     }
@@ -55,7 +55,8 @@ public class ServiceCheckerItem {
     @JsonBackReference
     private List<ServiceCheckerItemNote> notes;
 
-    // @OneToMany(mappedBy = "serviceCheckerItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @OneToMany(mappedBy = "serviceCheckerItem", cascade = CascadeType.ALL,
+    // orphanRemoval = true)
     // // @JsonBackReference
     // private List<ServiceCheckerNote> notes;
 
@@ -84,11 +85,11 @@ public class ServiceCheckerItem {
     }
 
     // public List<ServiceCheckerNote> getNotes() {
-    //     return notes;
+    // return notes;
     // }
 
     // public void setNotes(List<ServiceCheckerNote> notes) {
-    //     this.notes = notes;
+    // this.notes = notes;
     // }
 
     public List<ServiceCheckerItemNote> getNotes() {

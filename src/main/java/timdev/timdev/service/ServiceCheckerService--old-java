@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import timdev.timdev.dto.ExternalDriverDTO;
 import timdev.timdev.dto.ItemNoteDTO;
 import timdev.timdev.entity.Driver;
+import timdev.timdev.entity.InspectionItem;
 import timdev.timdev.entity.ServiceChecker;
 import timdev.timdev.entity.ServiceCheckerItem;
 import timdev.timdev.entity.ServiceCheckerItemNote;
@@ -282,6 +283,58 @@ public class ServiceCheckerService {
         return saved;
     }
 
+    @Transactional
+    public ServiceChecker updateWithInspections(Long id,
+            ServiceChecker updatedChecker,
+            Map<Long, List<ItemNoteDTO>> categoryItems) {
+
+        ServiceChecker existingChecker = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found"));
+
+        existingChecker.setDate(updatedChecker.getDate());
+        existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
+        existingChecker.setImagePath(updatedChecker.getImagePath());
+        existingChecker.setUpdatedAt(LocalDateTime.now());
+        existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
+
+        categoryItems.forEach((categoryId, itemNotes) -> {
+
+            ServiceCheckerItem serviceItem = existingChecker.getItems().stream()
+                    .filter(i -> i.getCategory().getId().equals(categoryId))
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+            for (ItemNoteDTO dto : itemNotes) {
+
+                InspectionItem inspectionItem = inspectionItemRepo.findById(dto.getItemId())
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "InspectionItem not found with id: " + dto.getItemId()));
+
+                // noteRepo.deleteAllByServiceCheckerItemId(serviceItem.getId());
+
+                // ✅ Try to find existing note first
+                ServiceCheckerItemNote note = new ServiceCheckerItemNote();
+                note.setServiceCheckerItem(serviceItem);
+                // ✅ Update fields
+                note.setPassed(dto.isPassed());
+                note.setNote(dto.getNote());
+                note.setIsRequired(inspectionItem.getIsRequired());
+
+                // Save (new or updated)
+                ServiceCheckerItemNote savedNote = noteRepo.save(note);
+
+                // Add to in-memory collection if not present
+                if (!serviceItem.getNotes().contains(savedNote)) {
+                    serviceItem.getNotes().add(savedNote);
+                }
+            }
+
+            itemRepo.save(serviceItem);
+        });
+
+        return repository.save(existingChecker);
+    }
+
     public ServiceChecker createWithInspectionsOld(ServiceChecker checker,
             Map<Long, List<ItemNoteDTO>> categoryItems) {
 
@@ -348,75 +401,204 @@ public class ServiceCheckerService {
         return saved;
     }
 
-    @Transactional
-    public ServiceChecker updateWithInspections(Long id,
-            ServiceChecker updatedChecker,
-            Map<Long, List<ItemNoteDTO>> categoryItems) {
+    // @Transactional
+    // public ServiceChecker updateWithInspections(Long id,
+    // ServiceChecker updatedChecker,
+    // Map<Long, List<ItemNoteDTO>> categoryItems) {
 
-        // 1. Find existing ServiceChecker
-        ServiceChecker existingChecker = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ServiceChecker not found with id: " + id));
+    // // 1. Find existing ServiceChecker
+    // ServiceChecker existingChecker = repository.findById(id)
+    // .orElseThrow(() -> new EntityNotFoundException("ServiceChecker not found with
+    // id: " + id));
 
-        // 2. Update basic ServiceChecker fields
-        existingChecker.setDate(updatedChecker.getDate());
-        existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
-        existingChecker.setUpdatedAt(LocalDateTime.now());
-        existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
-        existingChecker.setImagePath(updatedChecker.getImagePath());
-        existingChecker.setLicensePlateEstimated(updatedChecker.getLicensePlateEstimated());
-        // Update other fields as needed...
+    // // 2. Update basic ServiceChecker fields
+    // existingChecker.setDate(updatedChecker.getDate());
+    // existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
+    // existingChecker.setUpdatedAt(LocalDateTime.now());
+    // existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
+    // existingChecker.setImagePath(updatedChecker.getImagePath());
+    // // Update other fields as needed...
 
-        // 3. Process inspection updates
-        categoryItems.forEach((categoryId, itemNotes) -> {
-            // Find or create ServiceCheckerItem for this category
-            ServiceCheckerItem categoryItem = existingChecker.getItems().stream()
-                    .filter(item -> item.getCategory().getId().equals(categoryId))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        ServiceCheckerItem newItem = new ServiceCheckerItem();
-                        newItem.setServiceChecker(existingChecker);
-                        newItem.setCategory(inspectionCategoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new EntityNotFoundException("Category not found")));
-                        return itemRepo.save(newItem);
-                    });
+    // // 3. Process inspection updates
+    // categoryItems.forEach((categoryId, itemNotes) -> {
+    // // Find or create ServiceCheckerItem for this category
+    // ServiceCheckerItem categoryItem = existingChecker.getItems().stream()
+    // .filter(item -> item.getCategory().getId().equals(categoryId))
+    // .findFirst()
+    // .orElseGet(() -> {
+    // ServiceCheckerItem newItem = new ServiceCheckerItem();
+    // newItem.setServiceChecker(existingChecker);
+    // newItem.setCategory(inspectionCategoryRepository.findById(categoryId)
+    // .orElseThrow(() -> new EntityNotFoundException("Category not found")));
+    // return itemRepo.save(newItem);
+    // });
 
-            // Process each item note
-            itemNotes.forEach(itemNote -> {
-                // Find existing note or create new one
-                ServiceCheckerItemNote note = categoryItem.getNotes().stream()
-                        .filter(n -> n.getInspectionItem().getId().equals(itemNote.getItemId()))
-                        .findFirst()
-                        .orElseGet(() -> {
-                            ServiceCheckerItemNote newNote = new ServiceCheckerItemNote();
-                            newNote.setServiceCheckerItem(categoryItem);
-                            newNote.setInspectionItem(inspectionItemRepo.findById(itemNote.getItemId())
-                                    .orElseThrow(() -> new EntityNotFoundException("InspectionItem not found")));
-                            return newNote;
-                        });
+    // // Process each item note
+    // // itemNotes.forEach(itemNote -> {
+    // // // Find existing note or create new one
+    // // ServiceCheckerItemNote note = categoryItem.getNotes().stream()
+    // // .filter(n -> n.getInspectionItem().getId().equals(itemNote.getItemId()))
+    // // .findFirst()
+    // // .orElseGet(() -> {
+    // // ServiceCheckerItemNote newNote = new ServiceCheckerItemNote();
+    // // newNote.setServiceCheckerItem(categoryItem);
+    // //
+    // newNote.setInspectionItem(inspectionItemRepo.findById(itemNote.getItemId())
+    // // .orElseThrow(() -> new EntityNotFoundException("InspectionItem not
+    // found")));
+    // // return newNote;
+    // // });
 
-                // Update note values
-                note.setPassed(itemNote.isPassed());
-                note.setNote(itemNote.getNote());
-                noteRepo.save(note);
-            });
+    // // // Update note values
+    // // note.setPassed(itemNote.isPassed());
+    // // note.setNote(itemNote.getNote());
+    // // note.setIsRequired(itemNote.getIsRequired());
+    // // noteRepo.save(note);
+    // // });
 
-            // Remove notes for items not in the update
-            List<Long> updatedItemIds = itemNotes.stream()
-                    .map(ItemNoteDTO::getItemId)
-                    .collect(Collectors.toList());
+    // itemNotes.forEach(itemNote -> {
+    // // Find existing note or create new one
+    // ServiceCheckerItemNote note = categoryItem.getNotes().stream()
+    // .filter(n -> n.getInspectionItem().getId().equals(itemNote.getItemId()))
+    // .findFirst()
+    // .orElseGet(() -> {
+    // ServiceCheckerItemNote newNote = new ServiceCheckerItemNote();
+    // newNote.setServiceCheckerItem(categoryItem);
+    // newNote.setInspectionItem(inspectionItemRepo.findById(itemNote.getItemId())
+    // .orElseThrow(() -> new EntityNotFoundException("InspectionItem not found")));
 
-            categoryItem.getNotes().removeIf(note -> !updatedItemIds.contains(note.getInspectionItem().getId()));
+    // // ADD to categoryItem notes collection
+    // categoryItem.getNotes().add(newNote);
 
-            itemRepo.save(categoryItem);
-        });
+    // return newNote;
+    // });
 
-        // 4. Remove categories not in the update
-        List<Long> updatedCategoryIds = new ArrayList<>(categoryItems.keySet());
-        existingChecker.getItems().removeIf(item -> !updatedCategoryIds.contains(item.getCategory().getId()));
+    // // Update note values
+    // note.setPassed(itemNote.isPassed());
+    // note.setNote(itemNote.getNote());
+    // note.setIsRequired(itemNote.getIsRequired());
+    // noteRepo.save(note);
+    // });
 
-        // 5. Save and return
-        return repository.save(existingChecker);
-    }
+    // // Remove notes for items not in the update
+    // List<Long> updatedItemIds = itemNotes.stream()
+    // .map(ItemNoteDTO::getItemId)
+    // .collect(Collectors.toList());
+
+    // categoryItem.getNotes().removeIf(note ->
+    // !updatedItemIds.contains(note.getInspectionItem().getId()));
+
+    // itemRepo.save(categoryItem);
+    // });
+
+    // // 4. Remove categories not in the update
+    // List<Long> updatedCategoryIds = new ArrayList<>(categoryItems.keySet());
+    // existingChecker.getItems().removeIf(item ->
+    // !updatedCategoryIds.contains(item.getCategory().getId()));
+
+    // // 5. Save and return
+    // return repository.save(existingChecker);
+    // }
+
+    // @Transactional
+    // public ServiceChecker updateWithInspections(Long id,
+    // ServiceChecker updatedChecker,
+    // Map<Long, List<ItemNoteDTO>> categoryItems) {
+
+    // ServiceChecker existingChecker = repository.findById(id)
+    // .orElseThrow(() -> new EntityNotFoundException("ServiceChecker not found"));
+
+    // existingChecker.setDate(updatedChecker.getDate());
+    // existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
+    // existingChecker.setImagePath(updatedChecker.getImagePath());
+    // existingChecker.setUpdatedAt(LocalDateTime.now());
+    // existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
+
+    // // existingChecker.getItems().forEach(item -> {
+    // // noteRepo.deleteAll(item.getNotes()); // delete notes
+    // // });
+
+    // // itemRepo.deleteAll(existingChecker.getItems()); // delete category items
+    // // existingChecker.getItems().clear();
+
+    // categoryItems.forEach((categoryId, itemNotes) -> {
+
+    // ServiceCheckerItem serviceItem = existingChecker.getItems().stream()
+    // .filter(i -> i.getCategory().getId().equals(categoryId))
+    // .findFirst()
+    // .orElseThrow();
+
+    // serviceItem.getNotes().size(); // force load
+
+    // for (ItemNoteDTO dto : itemNotes) {
+
+    // Optional<InspectionItem> itemOpt = inspectionItemRepo
+    // .findById(dto.getItemId());
+    // if (itemOpt.isEmpty()) {
+    // throw new RuntimeException("Invalid item ID: " + dto.getItemId());
+    // }
+    // InspectionItem inspectionItem = itemOpt.get();
+
+    // ServiceCheckerItemNote note = serviceItem.getNotes().stream()
+    // .filter(n -> n.getInspectionItem().getId().equals(dto.getItemId()))
+    // .findFirst()
+    // .orElseThrow();
+
+    // note.setPassed(dto.isPassed());
+    // note.setNote(dto.getNote());
+    // note.setIsRequired(inspectionItem.getIsRequired());
+
+    // noteRepo.save(note);
+    // }
+    // });
+
+    // return repository.save(existingChecker);
+    // }
+
+    // @Transactional
+    // public ServiceChecker updateWithInspections(Long id,
+    // ServiceChecker updatedChecker,
+    // Map<Long, List<ItemNoteDTO>> categoryItems) {
+
+    // ServiceChecker existingChecker = repository.findById(id)
+    // .orElseThrow(() -> new EntityNotFoundException("Not found"));
+
+    // existingChecker.setDate(updatedChecker.getDate());
+    // existingChecker.setLicensePlate(updatedChecker.getLicensePlate());
+    // existingChecker.setImagePath(updatedChecker.getImagePath());
+    // existingChecker.setUpdatedAt(LocalDateTime.now());
+    // existingChecker.setUpdatedBy(updatedChecker.getUpdatedBy());
+
+    // categoryItems.forEach((categoryId, itemNotes) -> {
+
+    // ServiceCheckerItem serviceItem = existingChecker.getItems().stream()
+    // .filter(i -> i.getCategory().getId().equals(categoryId))
+    // .findFirst()
+    // .orElseThrow();
+
+    // for (ItemNoteDTO dto : itemNotes) {
+    // Optional<InspectionItem> itemOpt = inspectionItemRepo
+    // .findById(dto.getItemId());
+    // if (itemOpt.isEmpty()) {
+    // throw new RuntimeException("Invalid item ID: " + dto.getItemId());
+    // }
+    // InspectionItem inspectionItem = itemOpt.get();
+    // ServiceCheckerItemNote note = serviceItem.getNotes().stream()
+    // .filter(n -> n.getInspectionItem().getId().equals(dto.getItemId()))
+    // .findFirst()
+    // .orElseThrow();
+    // note.setServiceCheckerItem(serviceItem);
+
+    // note.setPassed(dto.isPassed());
+    // note.setNote(dto.getNote());
+    // note.setIsRequired(inspectionItem.getIsRequired());
+    // noteRepo.save(note);
+    // }
+    // itemRepo.save(serviceItem);
+    // });
+    // repository.save(existingChecker);
+    // return existingChecker;
+    // }
 
     public Page<ServiceChecker> getServiceCheckers(int page, int limit, LocalDate startDate, LocalDate endDate,
             Long driverId) {

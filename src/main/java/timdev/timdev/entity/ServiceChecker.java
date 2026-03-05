@@ -1,11 +1,9 @@
 package timdev.timdev.entity;
 
-
-
-
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -41,7 +39,7 @@ import timdev.timdev.enums.ServiceCheckerStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ServiceChecker {
 
     @Id
@@ -61,36 +59,33 @@ public class ServiceChecker {
     private List<InspectionResult> inspectionResults;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "driver_id", nullable=true)
+    @JoinColumn(name = "driver_id", nullable = true)
     private Driver driver;
 
     @Column(name = "ex_driver_id", nullable = true)
     @Convert(converter = ExternalDriverDTOConverter.class)
     private ExternalDriverDTO exDriver;
 
-
     @Column(nullable = false)
     private String licensePlate;
 
     @Column(nullable = true, columnDefinition = "TEXT")
     private String licensePlateEstimated;
-    
+
     private String imagePath;
-    
+
     // Device Info
     private String deviceId;
     private String deviceModel;
     private String devicePlatform;
     private String appVersion;
 
-
-
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by", nullable=true)
+    @JoinColumn(name = "created_by", nullable = true)
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "updated_by", nullable=true)
+    @JoinColumn(name = "updated_by", nullable = true)
     private User updatedBy;
 
     private String cancelReason;
@@ -99,11 +94,8 @@ public class ServiceChecker {
     private LocalDateTime cancelledAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "cancelled_by", nullable=true)
+    @JoinColumn(name = "cancelled_by", nullable = true)
     private User cancelledBy;
-
-    
-    
 
     public User getUpdatedBy() {
         return updatedBy;
@@ -174,8 +166,6 @@ public class ServiceChecker {
         this.driver = driver;
     }
 
-  
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -216,15 +206,13 @@ public class ServiceChecker {
         this.inspectionResults = inspectionResults;
     }
 
-
     public ServiceCheckerItemNote getResultForItem(Long itemId) {
         return this.getItems().stream()
-            .flatMap(item -> item.getNotes().stream())
-            .filter(note -> note.getInspectionItem().getId().equals(itemId))
-            .findFirst()
-            .orElse(null);
+                .flatMap(item -> item.getNotes().stream())
+                .filter(note -> note.getInspectionItem().getId().equals(itemId))
+                .findFirst()
+                .orElse(null);
     }
-
 
     public long getPassedCount() {
         return this.items.stream()
@@ -257,6 +245,7 @@ public class ServiceChecker {
     public long getTotalItems() {
         return this.items.stream().count();
     }
+
     // count item's notes
     public long getItemNoteCount() {
         return this.items.stream()
@@ -279,24 +268,28 @@ public class ServiceChecker {
         this.exDriver = exDriver;
     }
 
-
     @Transient
     public String getTimeAgo() {
         Duration duration = Duration.between(this.createdAt, LocalDateTime.now());
         long seconds = duration.getSeconds();
 
-        if (seconds < 60) return seconds + " seconds ago";
-        if (seconds < 3600) return (seconds / 60) + " minutes ago";
-        if (seconds < 86400) return (seconds / 3600) + " hours ago";
-        if (seconds < 2592000) return (seconds / 86400) + " days ago";
-        if (seconds < 31104000) return (seconds / 2592000) + " months ago";
+        if (seconds < 60)
+            return seconds + " seconds ago";
+        if (seconds < 3600)
+            return (seconds / 60) + " minutes ago";
+        if (seconds < 86400)
+            return (seconds / 3600) + " hours ago";
+        if (seconds < 2592000)
+            return (seconds / 86400) + " days ago";
+        if (seconds < 31104000)
+            return (seconds / 2592000) + " months ago";
         return (seconds / 31104000) + " years ago";
     }
 
     @Transient
     public long getHoursSinceEdit() {
         if (this.createdAt == null) {
-            return 0; 
+            return 0;
         }
         return Duration.between(this.createdAt, LocalDateTime.now()).toHours();
     }

@@ -16,7 +16,7 @@
             </div>
 
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Inspection Items Management</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Inspection Items Management</h1>
                 <a th:href="@{/admin/items/add}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -33,6 +33,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khmer Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Require Checked</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -42,6 +43,23 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${item.name}"></td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${item.khmerName}"></td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${item.category.name}"></td>
+
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+    
+                                <span th:if="${item.isRequired}"
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800"
+                                    title="This item must be checked required">
+                                    Required
+                                </span>
+
+                                <span th:if="${!item.isRequired}"
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Optional
+                                </span>
+
+                            </td>
+
+
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a th:href="@{/admin/items/edit/{id}(id=${item.id})}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                                 <form th:action="@{/admin/items/delete/{id}(id=${item.id})}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this inspection item?');">
