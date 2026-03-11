@@ -46,6 +46,10 @@ sudo systemctl enable sv_vehicle_maintenace
 sudo systemctl restart sv_vehicle_maintenace
 sudo systemctl status sv_vehicle_maintenace
 
+mysqldump -u root -p sv_vehicle_maintenace > ~/backup/sv_vehicle_maintenace_backup_feb04.sql;
+
+scp -P 2236 deverloper@154.26.134.117:~/backup/sv_vehicle_maintenace_backup_feb04.sql sv_vehicle_maintenace_backup_feb04.sql
+
 sudo journalctl -u sv_vehicle_maintenace.service -f
 
 [Unit]

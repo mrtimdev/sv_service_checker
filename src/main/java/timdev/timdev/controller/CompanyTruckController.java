@@ -306,6 +306,26 @@ public class CompanyTruckController {
             dto.setUpdatedBy(user.getId());
             service.updateTruck(dto.getId(), dto);
         }
+
+        String destinationCode = dto.getTotalDestination().trim();
+        
+        DestinationSetting destinationSetting = destinationSettingService.findByName(destinationCode);
+
+        Optional<Destination> optionalDest = destinationService.findFirstByDateAndTruckIdAndSettingId(
+            dto.getDate(),
+            truck.getId(),
+            destinationSetting.getId()
+        );
+
+        if (optionalDest.isPresent()) {
+            Destination destination = optionalDest.get();
+            if (destination.getStatus() != Status.COMPLETED) {
+                destination.setStatus(Status.COMPLETED);
+                destinationService.save(destination);
+
+            }
+        }
+
         redirectAttributes.addFlashAttribute(
             "success",
             "✅ Report for truck " + truck.getLicensePlate() + " on " + dto.getDate() + " saved successfully!"
