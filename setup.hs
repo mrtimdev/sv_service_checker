@@ -17,7 +17,7 @@ SyslogIdentifier=sv-service-checker
 WantedBy=multi-user.target
 
 
-
+D!$$&3949acq
 
 scp -P 22236 ./timdev-0.0.1-SNAPSHOT.jar deverloper@192.168.1.249:~/sv_service_checker
 

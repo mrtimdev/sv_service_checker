@@ -27,7 +27,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}") // expiration in milliseconds
+    @Value("${jwt.expiration}")
     private long expiration;
 
     @Value("${jwt.refresh-expiration:86400000}") // 24 hours default
@@ -110,7 +110,7 @@ public class JwtUtil {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            
+
             String tokenType = claims.get("tokenType", String.class);
             return "refresh".equals(tokenType);
         } catch (JwtException | IllegalArgumentException ex) {
@@ -129,10 +129,10 @@ public class JwtUtil {
     // Extract username from token
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(key)
-                            .build()
-                            .parseClaimsJws(token)
-                            .getBody();
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
         return claims.getSubject();
     }
 
@@ -170,12 +170,19 @@ public class JwtUtil {
     public UsernamePasswordAuthenticationToken getAuthentication(String token) {
         String username = getUsernameFromToken(token);
         Long employeeId = extractUserId(token);
-        
+
         String role = getRoleFromToken(token).strip();
 
-        List<SimpleGrantedAuthority> authorities =
-                Collections.singletonList(new SimpleGrantedAuthority(role));
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
 
         return new UsernamePasswordAuthenticationToken(username, employeeId, authorities);
+    }
+
+    public long getExpiration() {
+        return expiration;
+    }
+
+    public long getExpirationInSeconds() {
+        return expiration / 1000;
     }
 }

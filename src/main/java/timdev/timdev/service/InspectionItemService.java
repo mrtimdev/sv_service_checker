@@ -1,8 +1,12 @@
 package timdev.timdev.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -49,12 +53,12 @@ public class InspectionItemService {
         if (item.getCategory() == null || item.getCategory().getId() == null) {
             throw new RuntimeException("Category is required");
         }
-        
+
         InspectionCategory category = categoryRepository.findById(item.getCategory().getId())
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + item.getCategory().getId()));
-        
+
         item.setCategory(category);
-        
+
         // Check for duplicate names
         if (item.getId() == null) {
             // For new items
@@ -67,7 +71,7 @@ public class InspectionItemService {
                 throw new RuntimeException("Inspection item with name '" + item.getName() + "' already exists");
             }
         }
-        
+
         return itemRepository.save(item);
     }
 
@@ -77,14 +81,31 @@ public class InspectionItemService {
     public void deleteItem(Long id) {
         InspectionItem item = itemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Inspection item not found with id: " + id));
-        
+
         // In a real application, you would check for service record references here
         // For now, we'll just delete if no explicit service records exist
         itemRepository.deleteById(id);
     }
 
-
     public List<InspectionItem> getAllItemsOrderByCategory() {
         return itemRepository.findAllByOrderByCategory_NameAscNameAsc();
+    }
+
+    public List<InspectionItem> getAllItemsOrderByCategory(String sortBy) {
+        Sort sort = Sort.by(sortBy).ascending();
+        return itemRepository.findAll(sort);
+    }
+
+    public Map<String, List<InspectionItem>> getAllItemsGroupByCategory(String sortBy) {
+        Sort sort = Sort.by("category.id").ascending()
+                .and(Sort.by(sortBy).ascending());
+
+        List<InspectionItem> items = itemRepository.findAll(sort);
+
+        return items.stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getCategory().getName(),
+                        LinkedHashMap::new,
+                        Collectors.toList()));
     }
 }

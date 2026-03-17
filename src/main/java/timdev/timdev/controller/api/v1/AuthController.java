@@ -52,9 +52,11 @@ public class AuthController {
         User user = response.getUser();
         String accessToken = jwtUtil.generateToken(user);
         String refreshToken = jwtUtil.generateRefreshToken(user);
-        
+
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);
+
+        response.setExpiresIn((int) (jwtUtil.getExpiration() / 1000));
 
         return ResponseEntity.ok(response);
     }
@@ -64,10 +66,10 @@ public class AuthController {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         String refreshToken = authHeader.substring(7);
         LoginResponse response = authService.refreshToken(refreshToken);
-        
+
         if (response.isSuccess()) {
             return ResponseEntity.ok(response);
         } else {
@@ -82,34 +84,32 @@ public class AuthController {
                 String token = authHeader.substring(7);
                 jwtUtil.invalidateToken(token);
             }
-            
+
             return ResponseEntity.ok().body(
-                Map.of(
-                    "success", true,
-                    "message", "Logged out successfully"
-                )
-            );
+                    Map.of(
+                            "success", true,
+                            "message", "Logged out successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required=true) String authHeader) {
+    public ResponseEntity<?> me(@RequestHeader(name = "Authorization", required = true) String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             String token = authHeader.substring(7);
-            
+
             if (!jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
             String username = jwtUtil.getUsernameFromToken(token);
             Optional<User> optionalUser = userRepository.findByUsername(username);
-            
+
             if (optionalUser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
@@ -117,9 +117,8 @@ public class AuthController {
             User user = optionalUser.get(); // Get the User from Optional
 
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "user", user
-            ));
+                    "success", true,
+                    "user", user));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

@@ -1,8 +1,5 @@
 package timdev.timdev.dto.api;
 
-import lombok.AllArgsConstructor;
-
-import lombok.NoArgsConstructor;
 import timdev.timdev.entity.User;
 import timdev.timdev.enums.RoleType;
 
@@ -19,9 +16,11 @@ public class LoginResponse {
     private User user;
     private String identifyError;
     private String passwordError;
+    private int expiresIn;
 
     // Constructors
-    public LoginResponse() {}
+    public LoginResponse() {
+    }
 
     public LoginResponse(boolean success, String message) {
         this.success = success;
@@ -100,7 +99,6 @@ public class LoginResponse {
         this.message = message;
     }
 
-
     // Static factory methods for responses
     public static LoginResponse success(String token, String refreshToken, User user) {
         LoginResponse response = new LoginResponse(true, "Login successful");
@@ -115,5 +113,13 @@ public class LoginResponse {
         response.setIdentifyError(identifyError);
         response.setPasswordError(passwordError);
         return response;
+    }
+
+    public int getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(int expiresIn) {
+        this.expiresIn = expiresIn;
     }
 }
