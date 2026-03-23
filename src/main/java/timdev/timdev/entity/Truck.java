@@ -1,6 +1,5 @@
 package timdev.timdev.entity;
 
-
 import org.hibernate.envers.Audited;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,14 +17,13 @@ import jakarta.persistence.UniqueConstraint;
 import timdev.timdev.enums.TruckSize;
 import timdev.timdev.listener.AuditListener;
 
-
 @Entity
 @Table(name = "trucks", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "license_plate")
+        @UniqueConstraint(columnNames = "license_plate")
 })
 @Audited
 @EntityListeners(AuditListener.class)
-public class Truck {
+public class Truck extends AuditableUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,64 +35,62 @@ public class Truck {
     @Column(name = "truck_group", nullable = true)
     private String group;
 
-    
+    @Column(name = "route_number", nullable = true)
+    private String routeNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private TruckSize size = null;
 
-
-    @Column(name = "size_of_truck", length=50)
-    private String sizeOfTruck; // 3T, 5T, 10T, etc.
-
+    @Column(name = "size_of_truck", length = 50)
+    private String sizeOfTruck;
 
     public Long getId() {
         return id;
     }
 
-
     public void setId(Long id) {
         this.id = id;
     }
-
 
     public String getLicensePlate() {
         return licensePlate;
     }
 
-
     public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
     }
-
 
     public String getGroup() {
         return group;
     }
 
-
     public void setGroup(String group) {
         this.group = group;
     }
-
 
     public TruckSize getSize() {
         return size;
     }
 
-
     public void setSize(TruckSize size) {
         this.size = size;
     }
-
 
     public String getSizeOfTruck() {
         return sizeOfTruck;
     }
 
-
     public void setSizeOfTruck(String sizeOfTruck) {
         this.sizeOfTruck = sizeOfTruck;
     }
 
-    
+    public String getRouteNumber() {
+        return routeNumber;
+    }
+
+    public void setRouteNumber(String routeNumber) {
+        this.routeNumber = routeNumber;
+    }
+
 }

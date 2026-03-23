@@ -20,6 +20,7 @@ public class DestinationSettingService {
     public DestinationSetting findByCode(String code) {
         return repository.findByCode(code);
     }
+
     public DestinationSetting findByName(String name) {
         return repository.findByName(name);
     }
@@ -38,11 +39,12 @@ public class DestinationSettingService {
 
     public DestinationSetting save(DestinationSetting destinationSetting) {
         return repository.save(destinationSetting);
-    }   
+    }
 
     public void deleteById(Long id) {
         repository.deleteById(id);
     }
+
     public DestinationSetting findById(Long id) {
         return repository.findById(id).orElse(null);
     }
@@ -55,5 +57,17 @@ public class DestinationSettingService {
         return repository.searchSettingsByCodeAndName(query);
     }
 
-    
+    public List<DestinationSetting> findSettingsIsNotInScaleStation(Long truckId) {
+        return repository.findSettingsIsNotInScaleStation(truckId);
+    }
+
+    public List<DestinationSetting> findSettingsIsNotInPort(Long settingId) {
+        return repository.findSettingsIsNotInPort(settingId);
+    }
+
+    // public List<DestinationSetting> findTrucksWithoutAverageForMeasurement(Long
+    // measurementId) {
+    // return repository.findTrucksWithoutAverageForMeasurement(measurementId);
+    // }
+
 }

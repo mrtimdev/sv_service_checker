@@ -34,7 +34,7 @@ import timdev.timdev.listener.AuditListener;
 @Audited
 @EntityListeners(AuditListener.class)
 @Table(name = "destination_settings")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class DestinationSetting {
 
     @Id
@@ -46,7 +46,7 @@ public class DestinationSetting {
     private String code;
 
     @NotNull(message = "The Destination Name is required")
-    @Column(name = "destination_name", nullable = false, unique = true, columnDefinition="TEXT")
+    @Column(name = "destination_name", nullable = false, unique = true, columnDefinition = "TEXT")
     private String name;
 
     @Column(name = "distance", nullable = false)
@@ -56,9 +56,11 @@ public class DestinationSetting {
     @JsonIgnore
     private List<Destination> destinations = new ArrayList<>();
 
+    @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<DestinationScaleStation> destinationScaleStations = new ArrayList<>();
 
     // ==========================
-    //   AUDIT FIELDS
+    // AUDIT FIELDS
     // ==========================
 
     @CreatedDate
@@ -79,7 +81,6 @@ public class DestinationSetting {
     @JoinColumn(name = "updated_by")
     private User updatedBy;
 
-
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
@@ -89,7 +90,6 @@ public class DestinationSetting {
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 
     public Long getId() {
         return id;
@@ -125,7 +125,7 @@ public class DestinationSetting {
 
     @Transient
     public String getDistanceFormat() {
-        return String.format("%,.0f km", distance); 
+        return String.format("%,.0f km", distance);
     }
 
     public List<Destination> getDestinations() {
@@ -167,5 +167,13 @@ public class DestinationSetting {
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-    
+
+    public List<DestinationScaleStation> getDestinationScaleStations() {
+        return destinationScaleStations;
+    }
+
+    public void setDestinationScaleStations(List<DestinationScaleStation> destinationScaleStations) {
+        this.destinationScaleStations = destinationScaleStations;
+    }
+
 }

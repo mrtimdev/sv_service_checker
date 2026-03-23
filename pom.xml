@@ -207,38 +207,11 @@
 			<version>1.6.1</version>
 		</dependency>
 
-
-		<!-- Add these dependencies -->
 		<dependency>
 			<groupId>org.telegram</groupId>
 			<artifactId>telegrambots-spring-boot-starter</artifactId>
 			<version>6.9.7.1</version>
 		</dependency>
-
-		<!-- Redis -->
-		<!-- <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis</artifactId>
-			<version>4.0.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
-		</dependency> -->
-
-
-		<!-- Jackson for JSON serialization -->
-		<!-- <dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency> -->
-
-		<!-- <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency> -->
-
 
 	</dependencies>
 
@@ -261,7 +234,6 @@
 						</goals>
 					</execution>
 					
-					<!-- Build CSS for production -->
 					<execution>
 						<id>npm build</id>
 						<goals>
@@ -272,8 +244,6 @@
 							<arguments>run build</arguments>
 						</configuration>
 					</execution>
-					
-					<!-- Watch mode for development -->
 					<execution>
 						<id>npm watch</id>
 						<goals>
@@ -286,7 +256,6 @@
 				</executions>
 			</plugin>
 			
-			<!-- Updated compiler plugin configuration -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

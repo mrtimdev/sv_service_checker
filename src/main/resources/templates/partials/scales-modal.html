@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="scales-modal">
+        <!-- Scales Selection Modal - Right Side Drawer -->
+        <div id="scalesModal" class="fixed inset-0 z-50 hidden overflow-hidden" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+
+            <!-- Background overlay with fade effect -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-50 dark:bg-gray-500 dark:bg-opacity-50 transition-opacity backdrop-blur-sm"
+                aria-hidden="true" onclick="closeScalesModal()"></div>
+
+            <!-- Modal panel - sliding from right -->
+            <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <div class="relative w-screen max-w-2xl transform transition-all duration-500 ease-in-out translate-x-0 slide-in-from-right"
+                    id="scalesModalPanel">
+
+                    <!-- Close button outside panel -->
+                    <div class="absolute left-0 top-1/2 -ml-12 flex -translate-y-1/2">
+                        <button onclick="closeScalesModal()"
+                            class="rounded-full bg-white dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-300 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="fas fa-chevron-right text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Content -->
+                    <div class="flex h-full flex-col bg-white dark:bg-gray-800 shadow-xl rounded-l-2xl overflow-hidden">
+
+                        <!-- Modal Header with Gradient -->
+                        <div
+                            class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800 px-6 py-5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-white dark:bg-gray-800 p-2.5 rounded-xl shadow-md">
+                                        <i class="fas fa-weight-scale text-blue-600 dark:text-blue-400 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-white" id="scalesModalTitle"
+                                            th:text="#{select-scales}">
+                                            Select Scale Stations
+                                        </h3>
+                                        <p class="text-sm text-blue-100 flex items-center mt-1"
+                                            id="scalesDestinationName">
+                                            <i class="fas fa-location-dot mr-1 text-xs"></i>
+                                            <span>Loading...</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-1 bg-blue-400 bg-opacity-30 rounded-full text-xs text-white">
+                                        <i class="fas fa-info-circle mr-1"></i>Multi-select
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Body with flexible height -->
+                        <div class="flex-1 overflow-y-auto px-6 py-5">
+
+                            <!-- Search Bar -->
+                            <div class="mb-4">
+                                <div class="relative">
+                                    <i
+                                        class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" id="scaleSearch" placeholder="Search scale stations..."
+                                        class="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                            </div>
+
+                            <!-- Scales List -->
+                            <div class="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto pr-1 custom-scrollbar">
+                                <div class="space-y-2">
+                                    <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead class="sticky top-0 bg-gray-100 dark:bg-gray-700">
+                                            <tr>
+                                                <th
+                                                    class="border border-gray-300 dark:border-gray-700 px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                    <input type="checkbox" id="selectAllScales"
+                                                        class="scale-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                </th>
+                                                <th class="border border-gray-300 dark:border-gray-700 px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                                    th:text="#{scale-name}">#</th>
+                                                <th class="border border-gray-300 dark:border-gray-700 px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                                    th:text="#{amount}"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scalesModalBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="scalesEmptyState" class="hidden flex flex-col items-center justify-center py-12">
+                                <div
+                                    class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                    <i class="fas fa-weight-scale text-3xl text-gray-400"></i>
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Scale Stations
+                                </h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs">
+                                    No scale stations available for this destination
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Summary Footer -->
+                        <div
+                            class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 px-6 py-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Selected
+                                    Amount</span>
+                                <span class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                                    id="totalScalesAmount">0 Riel</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-3 text-sm">
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-ship mr-1"></i>
+                                    <span id="selectedScalesItemsCount">0</span> items selected
+                                </span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="closeScalesModal()"
+                                    class="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium">
+                                    Cancel
+                                </button>
+                                <button onclick="saveScalesSelection()"
+                                    class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all transform hover:scale-[1.02] shadow-md font-medium">
+                                    <i class="fas fa-check mr-2"></i>Apply Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animation Keyframes -->
+        <style>
+            .slide-in-from-right {
+                animation: slideInRight 0.3s ease-out;
+            }
+
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            /* Custom scrollbar */
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 10px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+
+            .dark .custom-scrollbar::-webkit-scrollbar-track {
+                background: #374151;
+            }
+
+            .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #4b5563;
+            }
+
+            .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+
+            /* Scale item styles */
+            .scale-item {
+                transition: all 0.2s ease;
+            }
+
+            .scale-item:hover {
+                transform: translateX(4px);
+            }
+
+            .scale-item.selected {
+                background-color: rgba(59, 130, 246, 0.1);
+                border-color: #3b82f6;
+            }
+
+            .dark .scale-item.selected {
+                background-color: rgba(59, 130, 246, 0.2);
+                border-color: #60a5fa;
+            }
+        </style>
+    </div>
+</body>
+
+</html>

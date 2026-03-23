@@ -62,6 +62,7 @@ public class DestinationService {
     public Destination findByCode(String code) {
         return repository.findByCode(code);
     }
+
     public Destination findByName(String name) {
         return repository.findByName(name);
     }
@@ -80,22 +81,21 @@ public class DestinationService {
 
     public Destination save(Destination destination) {
         return repository.save(destination);
-    }   
+    }
 
     public void deleteById(Long id) {
         repository.deleteById(id);
     }
+
     public Destination findById(Long id) {
         return repository.findById(id).orElse(null);
     }
-
-
 
     public List<Destination> readExcelFile_old(MultipartFile file) throws IOException {
         List<Destination> destinations = new ArrayList<>();
 
         try (InputStream inputStream = file.getInputStream();
-            Workbook workbook = WorkbookFactory.create(inputStream)) {
+                Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(2);
 
@@ -138,24 +138,25 @@ public class DestinationService {
         return destinations;
     }
 
-
     private boolean isRowEmpty(Row row) {
-        if (row == null) return true;
+        if (row == null)
+            return true;
 
         for (int c = 0; c <= 4; c++) { // check A–E only
             Cell cell = row.getCell(c, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
             if (cell != null && cell.getCellType() != CellType.BLANK) {
                 String value = cell.toString().trim();
-                if (!value.isEmpty()) return false;
+                if (!value.isEmpty())
+                    return false;
             }
         }
         return true;
     }
 
-
     private String getCellStringValue(Cell cell) {
-        if (cell == null) return "";
-        
+        if (cell == null)
+            return "";
+
         switch (cell.getCellType()) {
             case STRING:
                 return cell.getStringCellValue().trim();
@@ -189,8 +190,9 @@ public class DestinationService {
     }
 
     private double getCellNumericValue(Cell cell) {
-        if (cell == null) return 0.0;
-        
+        if (cell == null)
+            return 0.0;
+
         switch (cell.getCellType()) {
             case NUMERIC:
                 return cell.getNumericCellValue();
@@ -215,22 +217,21 @@ public class DestinationService {
         }
     }
 
-
     public List<String> validateAndSaveDestinations_old(List<Destination> destinations, CustomUserDetails userDetails) {
         List<String> errorMessages = new ArrayList<>();
         List<Destination> validDestinations = new ArrayList<>();
-        
+
         for (int i = 0; i < destinations.size(); i++) {
             Destination destination = destinations.get(i);
             int rowNumber = i + 2; // +2 because Excel rows start at 1 and we skipped header
-            
+
             try {
                 // Validate required fields
                 if (destination.getCode() == null || destination.getCode().trim().isEmpty()) {
                     errorMessages.add("Row " + rowNumber + ": Destination Code is required");
                     continue;
                 }
-                
+
                 if (destination.getName() == null || destination.getName().trim().isEmpty()) {
                     errorMessages.add("Row " + rowNumber + ": Destination Name is required");
                     continue;
@@ -239,7 +240,8 @@ public class DestinationService {
                 Truck truck = destination.getTruck();
 
                 if (truck == null) {
-                    errorMessages.add("Row " + rowNumber + ": Truck " + destination.getTruck().getLicensePlate() +" is required");
+                    errorMessages.add("Row " + rowNumber + ": Truck " + destination.getTruck().getLicensePlate()
+                            + " is required");
                     continue;
                 }
 
@@ -251,7 +253,7 @@ public class DestinationService {
 
                 if (setting == null) {
                     errorMessages.add("Row " + rowNumber + ": Destination '" + destination.getCode() +
-                                    "' or name '" + destination.getName() + "' not found in Destination Settings");
+                            "' or name '" + destination.getName() + "' not found in Destination Settings");
                     continue;
                 }
                 destination.setCode(setting.getCode());
@@ -259,42 +261,38 @@ public class DestinationService {
 
                 destination.setSetting(setting);
 
-
-                
-                
                 // Validate distance against DestinationSettings
                 // if (destination.getDistance() > setting.getDistance()) {
-                //     errorMessages.add("Row " + rowNumber + ": "+ truck.getLicensePlate() + " Distance " + destination.getDistance() + 
-                //                     " exceeds maximum allowed distance " + setting.getDistance() + 
-                //                     " for destination '" + destination.getCode() + "'");
-                //     continue;
+                // errorMessages.add("Row " + rowNumber + ": "+ truck.getLicensePlate() + "
+                // Distance " + destination.getDistance() +
+                // " exceeds maximum allowed distance " + setting.getDistance() +
+                // " for destination '" + destination.getCode() + "'");
+                // continue;
                 // }
 
-                
-                
                 // Validate truck license plate
                 if (truck.getLicensePlate() != null && !truck.getLicensePlate().trim().isEmpty()) {
                     Truck truckOpt = truckservice.findByLicensePlate(truck.getLicensePlate()).orElse(null);
                     if (truckOpt == null) {
-                        errorMessages.add("Row " + rowNumber + ": Truck with license plate '" + 
-                                        truck.getLicensePlate() + "' not found");
+                        errorMessages.add("Row " + rowNumber + ": Truck with license plate '" +
+                                truck.getLicensePlate() + "' not found");
                         continue;
                     }
                     destination.setTruck(truckOpt);
                 }
-                
+
                 // Set audit fields
                 User user = userDetails.getUser();
                 destination.setCreatedBy(user);
                 // destination.setUpdatedBy(userDetails.getUser());
-                
+
                 validDestinations.add(destination);
-                
+
             } catch (Exception e) {
                 errorMessages.add("Row " + rowNumber + ": Error processing row - " + e.getMessage());
             }
         }
-        
+
         // Save all valid destinations
         if (!validDestinations.isEmpty()) {
             try {
@@ -303,16 +301,15 @@ public class DestinationService {
                 errorMessages.add("Error saving destinations to database: " + e.getMessage());
             }
         }
-        
+
         return errorMessages;
     }
-
 
     public ExcelImportResult readExcelFile(MultipartFile file) throws IOException {
         ExcelImportResult result = new ExcelImportResult();
 
         try (InputStream inputStream = file.getInputStream();
-            Workbook workbook = WorkbookFactory.create(inputStream)) {
+                Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(2);
 
@@ -333,7 +330,7 @@ public class DestinationService {
                     continue;
                 }
                 LocalDate date = parseDate(dateString);
-                
+
                 destination.setDate(date);
 
                 // A → License Plate
@@ -371,10 +368,8 @@ public class DestinationService {
                 double distance = getCellNumericValue(currentRow.getCell(4));
                 destination.setDistance(distance);
 
-
                 // Find DestinationSetting
-                DestinationSetting setting =
-                        destinationSettingService.findByCode(destination.getCode());
+                DestinationSetting setting = destinationSettingService.findByCode(destination.getCode());
 
                 if (setting != null) {
                     setting = destinationSettingService.findByName(destination.getName());
@@ -400,16 +395,15 @@ public class DestinationService {
         }
 
         // Java Date.toString() format: Fri Oct 03 00:00:00 ICT 2025
-        DateTimeFormatter javaDateFormatter =
-                DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+        DateTimeFormatter javaDateFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
 
         DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            javaDateFormatter
+                DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+                javaDateFormatter
         };
 
         for (DateTimeFormatter formatter : formatters) {
@@ -421,52 +415,52 @@ public class DestinationService {
                 }
 
                 return LocalDate.parse(dateString, formatter);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         throw new RuntimeException("Invalid date format: " + dateString);
     }
 
     public List<String> validateAndSaveDestinations(ExcelImportResult excelResult,
-                                                CustomUserDetails userDetails) {
+            CustomUserDetails userDetails) {
 
         List<String> dbErrors = new ArrayList<>();
         List<Destination> validDestinations = new ArrayList<>();
-        
+
         // Track unique combinations to avoid duplicates in the same batch
         Set<String> uniqueKeys = new HashSet<>();
-        
+
         List<Destination> destinations = excelResult.getDestinations();
 
         for (int i = 0; i < destinations.size(); i++) {
             Destination destination = destinations.get(i);
             int rowNumber = i + 2;
-            
+
             // Check for duplicates in the current batch
-            String uniqueKey = destination.getDate() + "-" + 
-                            destination.getTruck().getId() + "-" + 
-                            destination.getSetting().getId();
-            
+            String uniqueKey = destination.getDate() + "-" +
+                    destination.getTruck().getId() + "-" +
+                    destination.getSetting().getId();
+
             if (uniqueKeys.contains(uniqueKey)) {
-                dbErrors.add("Row " + rowNumber + ": Duplicate entry for date " + 
-                            destination.getDate() + ", truck " + 
-                            destination.getTruck().getLicensePlate() + 
-                            " and setting " + destination.getSetting().getCode());
+                dbErrors.add("Row " + rowNumber + ": Duplicate entry for date " +
+                        destination.getDate() + ", truck " +
+                        destination.getTruck().getLicensePlate() +
+                        " and setting " + destination.getSetting().getCode());
                 continue;
             }
-            
+
             // Check if combination already exists in database
             boolean exists = repository.existsByDateAndTruckIdAndSettingId(
-                destination.getDate(),
-                destination.getTruck().getId(),
-                destination.getSetting().getId()
-            );
-            
+                    destination.getDate(),
+                    destination.getTruck().getId(),
+                    destination.getSetting().getId());
+
             if (exists) {
-                dbErrors.add("Row " + rowNumber + ": Destination already exists for date " + 
-                            destination.getDate() + ", truck " + 
-                            destination.getTruck().getLicensePlate() + 
-                            " and setting " + destination.getSetting().getCode());
+                dbErrors.add("Row " + rowNumber + ": Destination already exists for date " +
+                        destination.getDate() + ", truck " +
+                        destination.getTruck().getLicensePlate() +
+                        " and setting " + destination.getSetting().getCode());
                 continue;
             }
 
@@ -495,41 +489,43 @@ public class DestinationService {
         return dbErrors;
     }
 
-    // public List<String> validateAndSaveDestinations(ExcelImportResult excelResult,
-    //                                             CustomUserDetails userDetails) {
+    // public List<String> validateAndSaveDestinations(ExcelImportResult
+    // excelResult,
+    // CustomUserDetails userDetails) {
 
-    //     List<String> dbErrors = new ArrayList<>();
-    //     List<Destination> validDestinations = new ArrayList<>();
+    // List<String> dbErrors = new ArrayList<>();
+    // List<Destination> validDestinations = new ArrayList<>();
 
-    //     List<Destination> destinations = excelResult.getDestinations();
+    // List<Destination> destinations = excelResult.getDestinations();
 
-    //     for (int i = 0; i < destinations.size(); i++) {
-    //         Destination destination = destinations.get(i);
-    //         int rowNumber = i + 2;
+    // for (int i = 0; i < destinations.size(); i++) {
+    // Destination destination = destinations.get(i);
+    // int rowNumber = i + 2;
 
-    //         try {
-    //             destination.setCreatedBy(userDetails.getUser());
+    // try {
+    // destination.setCreatedBy(userDetails.getUser());
 
-    //             validDestinations.add(destination);
+    // validDestinations.add(destination);
 
-    //         } catch (Exception e) {
-    //             dbErrors.add("Row " + rowNumber + ": Error - " + e.getMessage());
-    //         }
-    //     }
-
-    //     // Save valid rows
-    //     if (!validDestinations.isEmpty()) {
-    //         try {
-    //             repository.saveAll(validDestinations);
-    //         } catch (Exception e) {
-    //             dbErrors.add("Database error: " + e.getMessage());
-    //         }
-    //     }
-
-    //     return dbErrors; // ONLY DB validation errors
+    // } catch (Exception e) {
+    // dbErrors.add("Row " + rowNumber + ": Error - " + e.getMessage());
+    // }
     // }
 
-    public void exportExcelForImportCompanyTruck(List<Destination> destinations, HttpServletResponse response) throws IOException {
+    // // Save valid rows
+    // if (!validDestinations.isEmpty()) {
+    // try {
+    // repository.saveAll(validDestinations);
+    // } catch (Exception e) {
+    // dbErrors.add("Database error: " + e.getMessage());
+    // }
+    // }
+
+    // return dbErrors; // ONLY DB validation errors
+    // }
+
+    public void exportExcelForImportCompanyTruck(List<Destination> destinations, HttpServletResponse response)
+            throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=Trucks-destinations.xlsx");
 
@@ -537,8 +533,9 @@ public class DestinationService {
         Sheet sheet = workbook.createSheet("Truck Destinations Report");
 
         // Column widths
-        int[] widths = {5000, 6000, 6000, 15000, 5000, 4000, 4000, 4000, 8000, 6000, 8000, 6000, 6000, 6000};
-        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i]);
+        int[] widths = { 5000, 6000, 6000, 15000, 5000, 4000, 4000, 4000, 8000, 6000, 8000, 6000, 6000, 6000 };
+        for (int i = 0; i < widths.length; i++)
+            sheet.setColumnWidth(i, widths[i]);
 
         // ===== STYLES =====
         CellStyle headerStyle = workbook.createCellStyle();
@@ -571,7 +568,7 @@ public class DestinationService {
         // ===== HEADER ROWS =====
         // Row 0: Title
         Row titleRow = sheet.createRow(0);
-        titleRow.setHeightInPoints(30); 
+        titleRow.setHeightInPoints(30);
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("របាយការណ៏តួរលេខចាក់ប្រេងឡាន");
         titleCell.setCellStyle(headerStyle);
@@ -580,17 +577,17 @@ public class DestinationService {
         // Row 1: Khmer headers
         Row headerRow1 = sheet.createRow(1);
         String[] khmerHeaders = {
-            "កាលបរិច្ឆេទ",
-            "ស្លាកលេខឡាន",
-            "ប្រភេទឡាន",
-            "គោលដៅសរុប",
-            "ចម្ងាយ (KM)",
-            "កម្រិតស៊ីប្រេង",
-            "ចំនួនប្រេង",
-            "ចំនួនប្រេង",
-            "ប្រេងផ្សេងៗ",
-            "សរុបប្រេងចាក់អោយឡាន",
-            "ផ្សេងៗ"
+                "កាលបរិច្ឆេទ",
+                "ស្លាកលេខឡាន",
+                "ប្រភេទឡាន",
+                "គោលដៅសរុប",
+                "ចម្ងាយ (KM)",
+                "កម្រិតស៊ីប្រេង",
+                "ចំនួនប្រេង",
+                "ចំនួនប្រេង",
+                "ប្រេងផ្សេងៗ",
+                "សរុបប្រេងចាក់អោយឡាន",
+                "ផ្សេងៗ"
         };
 
         for (int i = 0; i < khmerHeaders.length; i++) {
@@ -599,24 +596,25 @@ public class DestinationService {
             cell.setCellStyle(headerStyle);
         }
 
-        // Merge fuel-related columns only (example: "កម្រិតស៊ីប្រេង" spans 2 subcolumns)
-        sheet.addMergedRegion(new CellRangeAddress(1,1,5,6));
+        // Merge fuel-related columns only (example: "កម្រិតស៊ីប្រេង" spans 2
+        // subcolumns)
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 5, 6));
         // Merge last 3 headers with row 3
-        sheet.addMergedRegion(new CellRangeAddress(1,2,8,8)); 
-        sheet.addMergedRegion(new CellRangeAddress(1,2,9,9)); 
-        sheet.addMergedRegion(new CellRangeAddress(1,2,10,10)); 
+        sheet.addMergedRegion(new CellRangeAddress(1, 2, 8, 8));
+        sheet.addMergedRegion(new CellRangeAddress(1, 2, 9, 9));
+        sheet.addMergedRegion(new CellRangeAddress(1, 2, 10, 10));
 
         // Row 2: English headers
         Row headerRow2 = sheet.createRow(2);
         String[] englishHeaders = {
-            "Date",
-            "License plate",
-            "Type Of Truck",
-            "Total Destination",
-            "Total KM",
-            "មធ្យមភាគ",
-            "កម្រិតស៊ី",
-            "Litre"
+                "Date",
+                "License plate",
+                "Type Of Truck",
+                "Total Destination",
+                "Total KM",
+                "មធ្យមភាគ",
+                "កម្រិតស៊ី",
+                "Litre"
         };
 
         for (int i = 0; i < englishHeaders.length; i++) {
@@ -628,7 +626,8 @@ public class DestinationService {
         // ===== NEW HEADER ROW (row 4) =====
         Row headerRow4 = sheet.createRow(3); // row index = 3
         String[] newColumns = {
-            "Column3", "Column5","Column6","Column7","Column8","Column9","Column10","Column11","Column12","Column13","Column14"
+                "Column3", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12",
+                "Column13", "Column14"
         };
         for (int i = 0; i < newColumns.length; i++) {
             Cell cell = headerRow4.createCell(i);
@@ -665,12 +664,12 @@ public class DestinationService {
             row.createCell(2).setCellValue(d.getTruck() != null ? d.getTruck().getGroup() : "");
             row.createCell(3).setCellValue(d.getSetting() != null ? d.getSetting().getName() : "");
             row.createCell(4).setCellValue(d.getSetting() != null ? d.getSetting().getDistance() : 0);
-            row.createCell(5).setCellValue(""); 
-            row.createCell(6).setCellValue(""); 
-            row.createCell(7).setCellValue(""); 
-            row.createCell(8).setCellValue(""); 
+            row.createCell(5).setCellValue("");
+            row.createCell(6).setCellValue("");
+            row.createCell(7).setCellValue("");
+            row.createCell(8).setCellValue("");
             row.createCell(9).setCellValue("");
-            row.createCell(10).setCellValue(""); 
+            row.createCell(10).setCellValue("");
 
             for (int i = 0; i <= 10; i++) {
                 row.getCell(i).setCellStyle(bodyStyle);
@@ -681,16 +680,15 @@ public class DestinationService {
         workbook.close();
     }
 
-
     // for report
 
     public void exportExcel(List<Destination> destinations, HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=Truck-Destinations-Detailed-Report.xlsx");
-        
+
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Destinations Detailed Report");
-            
+
             // Create styles
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle titleStyle = createTitleStyle(workbook);
@@ -698,25 +696,25 @@ public class DestinationService {
             CellStyle dataStyle = createDataStyle(workbook);
             CellStyle dateStyle = createDateStyle(workbook);
             CellStyle numericStyle = createNumericStyle(workbook);
-            
+
             // Create main header with logo
             createMainHeader(sheet, workbook, titleStyle);
-            
+
             // Create report info section
             int currentRow = createReportInfoSection(sheet, destinations, subHeaderStyle, dataStyle);
-            
+
             // Create column headers
             currentRow = createColumnHeaders(sheet, currentRow, headerStyle);
-            
+
             // Populate data
             populateDestinationData(sheet, destinations, currentRow, dataStyle, dateStyle, numericStyle);
-            
+
             // Auto-size columns
             autoSizeColumns(sheet);
-            
+
             // Add footer
             addFooter(sheet, workbook, dataStyle);
-            
+
             workbook.write(response.getOutputStream());
         } catch (Exception e) {
             throw new IOException("Error generating Excel report", e);
@@ -725,11 +723,11 @@ public class DestinationService {
 
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        
+
         // Background color
         style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        
+
         // Font
         Font font = workbook.createFont();
         font.setBold(true);
@@ -737,7 +735,7 @@ public class DestinationService {
         font.setFontHeightInPoints((short) 11);
         font.setFontName("Arial");
         style.setFont(font);
-        
+
         // Borders
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
@@ -745,56 +743,56 @@ public class DestinationService {
         style.setBorderRight(BorderStyle.THIN);
         style.setTopBorderColor(IndexedColors.BLACK.getIndex());
         style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
-        
+
         // Alignment
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        
+
         return style;
     }
 
     private CellStyle createTitleStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        
+
         Font font = workbook.createFont();
         font.setBold(true);
         font.setColor(IndexedColors.DARK_BLUE.getIndex());
         font.setFontHeightInPoints((short) 18);
         font.setFontName("Calibri");
         style.setFont(font);
-        
+
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        
+
         return style;
     }
 
     private CellStyle createSubHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        
+
         Font font = workbook.createFont();
         font.setBold(true);
         font.setColor(IndexedColors.DARK_GREEN.getIndex());
         font.setFontHeightInPoints((short) 10);
         style.setFont(font);
-        
+
         style.setAlignment(HorizontalAlignment.LEFT);
-        
+
         return style;
     }
 
     private CellStyle createDataStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        
+
         // Borders
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
-        
+
         // Wrap text
         style.setWrapText(true);
-        
+
         return style;
     }
 
@@ -816,19 +814,19 @@ public class DestinationService {
     private void createMainHeader(Sheet sheet, Workbook workbook, CellStyle titleStyle) {
         // Merge cells for main title
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
-        
+
         Row titleRow = sheet.createRow(0);
         titleRow.setHeightInPoints(30);
-        
+
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("🚚 TRUCK DESTINATIONS DETAILED REPORT");
         titleCell.setCellStyle(titleStyle);
-        
+
         // Add subtitle
         Row subtitleRow = sheet.createRow(1);
         subtitleRow.setHeightInPoints(20);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 12));
-        
+
         CellStyle subtitleStyle = workbook.createCellStyle();
         Font subtitleFont = workbook.createFont();
         subtitleFont.setItalic(true);
@@ -836,16 +834,16 @@ public class DestinationService {
         subtitleFont.setFontHeightInPoints((short) 10);
         subtitleStyle.setFont(subtitleFont);
         subtitleStyle.setAlignment(HorizontalAlignment.CENTER);
-        
+
         Cell subtitleCell = subtitleRow.createCell(0);
         subtitleCell.setCellValue("Comprehensive Destination Tracking & Logistics Management");
         subtitleCell.setCellStyle(subtitleStyle);
-        
+
         // Add decorative separator
         Row separatorRow = sheet.createRow(2);
         separatorRow.setHeightInPoints(15);
         sheet.addMergedRegion(new CellRangeAddress(2, 2, 0, 12));
-        
+
         Cell separatorCell = separatorRow.createCell(0);
         CellStyle separatorStyle = workbook.createCellStyle();
         separatorStyle.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
@@ -853,87 +851,88 @@ public class DestinationService {
         separatorCell.setCellStyle(separatorStyle);
     }
 
-    private int createReportInfoSection(Sheet sheet, List<Destination> destinations, CellStyle subHeaderStyle, CellStyle dataStyle) {
+    private int createReportInfoSection(Sheet sheet, List<Destination> destinations, CellStyle subHeaderStyle,
+            CellStyle dataStyle) {
         int rowIndex = 3;
-        
+
         Row infoRow1 = sheet.createRow(rowIndex++);
         Row infoRow2 = sheet.createRow(rowIndex++);
         Row infoRow3 = sheet.createRow(rowIndex++);
-        
+
         // Report Generated Date
         Cell dateLabelCell = infoRow1.createCell(0);
         dateLabelCell.setCellValue("Report Generated:");
         dateLabelCell.setCellStyle(subHeaderStyle);
-        
+
         Cell dateValueCell = infoRow1.createCell(1);
         dateValueCell.setCellValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm a")));
         dateValueCell.setCellStyle(dataStyle);
-        
+
         // Total Records
         Cell totalLabelCell = infoRow1.createCell(3);
         totalLabelCell.setCellValue("Total Destinations:");
         totalLabelCell.setCellStyle(subHeaderStyle);
-        
+
         Cell totalValueCell = infoRow1.createCell(4);
         totalValueCell.setCellValue(destinations.size());
         totalValueCell.setCellStyle(dataStyle);
-        
+
         // Report Period
         if (!destinations.isEmpty()) {
             LocalDate minDate = destinations.stream()
-                .map(Destination::getDate)
-                .min(LocalDate::compareTo)
-                .orElse(LocalDate.now());
-            
+                    .map(Destination::getDate)
+                    .min(LocalDate::compareTo)
+                    .orElse(LocalDate.now());
+
             LocalDate maxDate = destinations.stream()
-                .map(Destination::getDate)
-                .max(LocalDate::compareTo)
-                .orElse(LocalDate.now());
-            
+                    .map(Destination::getDate)
+                    .max(LocalDate::compareTo)
+                    .orElse(LocalDate.now());
+
             Cell periodLabelCell = infoRow2.createCell(0);
             periodLabelCell.setCellValue("Report Period:");
             periodLabelCell.setCellStyle(subHeaderStyle);
-            
+
             Cell periodValueCell = infoRow2.createCell(1);
-            periodValueCell.setCellValue(minDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) + 
-                                    " to " + maxDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")));
+            periodValueCell.setCellValue(minDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) +
+                    " to " + maxDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")));
             periodValueCell.setCellStyle(dataStyle);
         }
-        
+
         // Add empty row before data table
         sheet.createRow(rowIndex++).setHeightInPoints(10);
-        
+
         return rowIndex;
     }
 
     private int createColumnHeaders(Sheet sheet, int startRow, CellStyle headerStyle) {
         Row headerRow = sheet.createRow(startRow);
         headerRow.setHeightInPoints(25);
-        
+
         String[] headers = {
-            "Date", "Truck","Destination Code", "Destination Name", 
-            "Distance (km)", "Created At", "Created By", "Last Updated"
+                "Date", "Truck", "Destination Code", "Destination Name",
+                "Distance (km)", "Created At", "Created By", "Last Updated"
         };
-        
+
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
             cell.setCellStyle(headerStyle);
         }
-        
+
         return startRow + 1;
     }
 
-    private void populateDestinationData(Sheet sheet, List<Destination> destinations, int startRow, 
-                                        CellStyle dataStyle, CellStyle dateStyle, CellStyle numericStyle) {
+    private void populateDestinationData(Sheet sheet, List<Destination> destinations, int startRow,
+            CellStyle dataStyle, CellStyle dateStyle, CellStyle numericStyle) {
         int rowIndex = startRow;
-        
+
         for (Destination destination : destinations) {
             Row row = sheet.createRow(rowIndex++);
             row.setHeightInPoints(20);
-            
+
             int colIndex = 0;
-            
+
             // Date
             Cell dateCell = row.createCell(colIndex++);
             if (destination.getDate() != null) {
@@ -944,33 +943,33 @@ public class DestinationService {
                 dateCell.setCellStyle(dataStyle);
             }
 
-             // Truck Info
+            // Truck Info
             Cell licensePlate = row.createCell(colIndex++);
             if (destination.getTruck() != null) {
-                licensePlate.setCellValue(destination.getTruck().getLicensePlate() != null ? 
-                                        destination.getTruck().getLicensePlate() : "");
+                licensePlate.setCellValue(
+                        destination.getTruck().getLicensePlate() != null ? destination.getTruck().getLicensePlate()
+                                : "");
             } else {
                 licensePlate.setCellValue("N/A");
             }
-            
+
             // Destination Code
             Cell codeCell = row.createCell(colIndex++);
             codeCell.setCellValue(destination.getCode() != null ? destination.getCode() : "");
             codeCell.setCellStyle(dataStyle);
-            
+
             // Destination Name
             Cell nameCell = row.createCell(colIndex++);
             nameCell.setCellValue(destination.getSetting() != null ? destination.getSetting().getName() : "");
             nameCell.setCellStyle(dataStyle);
-            
+
             // Distance
             Cell distanceCell = row.createCell(colIndex++);
             distanceCell.setCellValue(destination.getSetting().getDistanceFormat());
             distanceCell.setCellStyle(numericStyle);
-            
-            
+
             licensePlate.setCellStyle(dataStyle);
-            
+
             // Created At
             Cell createdAtCell = row.createCell(colIndex++);
             if (destination.getCreatedAt() != null) {
@@ -984,13 +983,13 @@ public class DestinationService {
                 createdAtCell.setCellValue("N/A");
                 createdAtCell.setCellStyle(dataStyle);
             }
-            
+
             // Created By
             Cell createdByCell = row.createCell(colIndex++);
-            createdByCell.setCellValue(destination.getCreatedBy() != null ? 
-                                    destination.getCreatedBy().getUsername() : "System");
+            createdByCell.setCellValue(
+                    destination.getCreatedBy() != null ? destination.getCreatedBy().getUsername() : "System");
             createdByCell.setCellStyle(dataStyle);
-            
+
             // Updated At
             Cell updatedAtCell = row.createCell(colIndex);
             if (destination.getUpdatedAt() != null) {
@@ -1018,21 +1017,18 @@ public class DestinationService {
     private void addFooter(Sheet sheet, Workbook workbook, CellStyle dataStyle) {
         int lastRowNum = sheet.getLastRowNum();
         Row footerRow = sheet.createRow(lastRowNum + 2);
-        
+
         CellStyle footerStyle = workbook.createCellStyle();
         Font footerFont = workbook.createFont();
         footerFont.setItalic(true);
         footerFont.setColor(IndexedColors.GREY_40_PERCENT.getIndex());
         footerStyle.setFont(footerFont);
-        
+
         Cell footerCell = footerRow.createCell(0);
         footerCell.setCellValue("Confidential - Generated by Vehicle Fuel Maintenance.");
         footerCell.setCellStyle(footerStyle);
         sheet.addMergedRegion(new CellRangeAddress(lastRowNum + 2, lastRowNum + 2, 0, 12));
     }
-
-
-
 
     // ----------------------------
     // PAGINATION + FILTER + SORT
@@ -1042,14 +1038,12 @@ public class DestinationService {
             String query,
             LocalDate startDate,
             LocalDate endDate,
-            Sort sort
-    ) {
+            Sort sort) {
         return repository.findByFilterQueriesAndSort(
                 startDate,
                 endDate,
                 query,
-                sort
-        );
+                sort);
     }
 
     // Overload with date filters
@@ -1057,24 +1051,22 @@ public class DestinationService {
             String query,
             LocalDate startDate,
             LocalDate endDate,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         return repository.findByFilterQueriesWithPage(
                 startDate,
                 endDate,
                 query,
-                pageable
-        );
+                pageable);
     }
 
     // List version
     public List<Destination> findByFilterQueriesWithStatus(
             String query,
             LocalDate startDate,
-            LocalDate endDate
-    ) {
+            LocalDate endDate) {
         List<Status> statuses = List.of(Status.PENDING, Status.COMPLETED);
-        return repository.findByFilterQueriesAndStatus(startDate, endDate, query, statuses, Sort.by("date").ascending());
+        return repository.findByFilterQueriesAndStatus(startDate, endDate, query, statuses,
+                Sort.by("date").ascending());
     }
 
     // Page version
@@ -1083,20 +1075,17 @@ public class DestinationService {
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable,
-            List<Status> statuses
-    ) {
-        
+            List<Status> statuses) {
+
         return repository.findByFilterQueriesWithStatus(startDate, endDate, query, statuses, pageable);
     }
 
-
     public List<Destination> findByFilterQueriesAndSortWithStatus(
-        LocalDate startDate,
-        LocalDate endDate,
-        String query,
-        List<Status> statuses,
-        Sort sort
-    ) {
+            LocalDate startDate,
+            LocalDate endDate,
+            String query,
+            List<Status> statuses,
+            Sort sort) {
         return repository.findByFilterQueriesAndSortWithStatus(startDate, endDate, query, statuses, sort);
     }
 
@@ -1104,16 +1093,15 @@ public class DestinationService {
         return repository.findFirstByDateAndTruckIdAndSettingId(date, truckId, settingId);
     }
 
-
     public Page<Destination> findByFilters(
-        String query,
-        LocalDate startDate,
-        LocalDate endDate,
-        List<Status> statuses,
-        Pageable pageable) {
+            String query,
+            LocalDate startDate,
+            LocalDate endDate,
+            List<Status> statuses,
+            Pageable pageable) {
 
         return repository.findByFilters(
-            query, startDate, endDate, statuses, pageable);
+                query, startDate, endDate, statuses, pageable);
     }
 
     public List<Destination> searchPending(String query, Long destinationId) {
@@ -1124,14 +1112,14 @@ public class DestinationService {
         return destinationSettingService.searchSettingsByCodeAndName(query);
     }
 
-    public boolean existsByDateAndTruckAndSetting(LocalDate destinationDate, Long truckId, Long settingId, Long destinationId) {
+    public boolean existsByDateAndTruckAndSetting(LocalDate destinationDate, Long truckId, Long settingId,
+            Long destinationId) {
 
         return repository.existsByDateAndTruckAndSetting(
                 destinationDate,
                 truckId,
                 settingId,
-                destinationId
-            );
+                destinationId);
     }
-    
+
 }

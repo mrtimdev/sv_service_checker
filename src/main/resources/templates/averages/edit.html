@@ -22,7 +22,7 @@
                     <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">New Average setting</h1>
 
                     <div class="flex gap-2 items-center">
-                        <a th:href="@{/averages}" 
+                        <a th:href="@{/truck-scale-stations}" 
                             th:text="#{back_to_list}"
                             class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-200">
                             
@@ -32,7 +32,7 @@
                 </div>
 
                 <div class="p-5 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-300">
-                    <form th:action="@{/averages/save}" method="post" class="space-y-4">
+                    <form th:action="@{/truck-scale-stations/save}" method="post" class="space-y-4">
 
                         <!-- Hidden field for ID (update) -->
                         <input type="hidden" name="id" th:value="${average?.id}">
@@ -86,7 +86,7 @@
 
                         <!-- Form Buttons -->
                         <div class="flex justify-start gap-5">
-                            <a href="/averages" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            <a href="/truck-scale-stations" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                                 <i class="fa fa-arrow-circle-left"></i>
                                 Cancel
                             </a>

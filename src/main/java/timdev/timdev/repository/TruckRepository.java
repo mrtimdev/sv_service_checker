@@ -12,37 +12,31 @@ import org.springframework.stereotype.Repository;
 
 import timdev.timdev.entity.Truck;
 
-
-
-
 @Repository
 public interface TruckRepository extends JpaRepository<Truck, Long> {
 
-  
     Optional<Truck> findByLicensePlate(String licensePlate);
-    boolean existsByLicensePlate(String licensePlate);
 
+    boolean existsByLicensePlate(String licensePlate);
 
     List<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate);
 
     Page<Truck> findByLicensePlateContainingIgnoreCase(String licensePlate, Pageable pageable);
 
     @Query("""
-        SELECT t FROM Truck t
-        WHERE t.id NOT IN (
-            SELECT a.truck.id FROM Average a WHERE (:truckId IS NULL OR a.truck.id != :truckId)
-        )
-        """)
+            SELECT t FROM Truck t
+            WHERE t.id NOT IN (
+                SELECT a.truck.id FROM Average a WHERE (:truckId IS NULL OR a.truck.id != :truckId)
+            )
+            """)
     List<Truck> findTrucksWithoutAverages(
-            @Param("truckId") Long truckId
-    );
+            @Param("truckId") Long truckId);
 
-
-    
     // Or if you want trucks without averages for specific measurements:
     @Query("SELECT t FROM Truck t WHERE t.id NOT IN " +
-        "(SELECT a.truck.id FROM Average a WHERE a.measurement.id = :measurementId)")
+            "(SELECT a.truck.id FROM Average a WHERE a.measurement.id = :measurementId)")
     List<Truck> findTrucksWithoutAverageForMeasurement(@Param("measurementId") Long measurementId);
-    
 
+    @Query("SELECT t.routeNumber FROM Truck t WHERE t.licensePlate = :licensePlate")
+    Optional<String> findRouteNumberByLicensePlate(@Param("licensePlate") String licensePlate);
 }

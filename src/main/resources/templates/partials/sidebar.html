@@ -1,8 +1,7 @@
-
-
 <th:block th:fragment="sidebar">
     <!-- Sidebar -->
-    <aside style="height: 100vh;" class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200 transition-all duration-300 overflow-y-auto scrollbar-hide">
+    <aside style="height: 100vh;"
+        class="w-64 bg-gray-600 text-white min-h-screen p-4 flex flex-col dark:bg-gray-800 dark:text-gray-200 transition-all duration-300 overflow-y-auto scrollbar-hide">
         <!-- Menu Header -->
         <div class="mb-6 pt-[72px]" id="custom-padding-top_">
             <h2 class="text-sm uppercase tracking-wide text-gray-200 dark:text-gray-400">
@@ -30,215 +29,19 @@
             <div class="mb-4">
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1">Transactions</h3>
                 <ul sec:authorize="!hasRole('USER') and hasRole('ADMIN')">
-                    <li >
-                        <a href="/destinations"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/destinations') 
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
-                                    && !#strings.startsWith(requestURI, '/destinations/u/report')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-exchange"></i>
-                            <span th:text="#{destinations}"></span>
-                        </a>
-                    </li>
+
 
                     <li>
-                        <a href="/company-trucks"
-                            th:classappend="${requestURI.startsWith('/company-trucks') and requestURI != '/company-trucks/deduction/status' and requestURI != '/company-trucks/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                        <a href="/web/scale-reports"
+                            th:classappend="${requestURI.startsWith('/scales/trucks/report') or requestURI.startsWith('/web/scale-reports') and requestURI != '/scales/trucks/report/deduction/status' and requestURI != '/scales/trucks/report/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span th:text="#{company_trucks}"></span>
-                        </a>
-                    </li>
-                    <!-- <li>
-                        <a href="/company-trucks/deduction/status"
-                            th:classappend="${requestURI == '/company-trucks/deduction/status'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span th:text="#{company_trucks_status}"></span>
-                        </a>
-                    </li> -->
-                    <li>
-                        <a href="/company-small-trucks"
-                            th:classappend="${requestURI.startsWith('/company-small-trucks') and requestURI != '/company-small-trucks/deduction/status'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sign-out"></i>
-                            <span th:text="#{company_small_trucks}"></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/sub-trucks"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/sub-trucks') 
-                                    && !#strings.startsWith(requestURI, '/sub-trucks/reports')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sitemap"></i>
-                            <span th:text="#{sub_trucks}">Sub Trucks</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/fuel-requests"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/fuel-requests') 
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/user/fill-km/report')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span th:text="#{fuel_requests}">Fuel Requests</span>
-                        </a>
-                    </li>
-                </ul>
-
-            <!-- Group: User Dashboard -->
-                <ul sec:authorize="hasRole('USER')">
-                    <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
-                        <a href="/destinations/u"
-                            th:classappend="${requestURI == '/destinations/u' || requestURI == '/destinations/import'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-exchange"></i>
-                            <span th:text="#{destinations}"></span>
-                        </a>
-                    </li>
-                    <!-- <li sec:authorize="hasAuthority('FUEL_REQUEST_USER_RECORD')">
-                        <a href="/fuel-requests/own-record"
-                            th:classappend="${requestURI.startsWith('/fuel-requests/own-record')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-share"></i>
-                            <span th:text="#{fuel_requests}">Fuel Requests</span>
-                        </a>
-                    </li> -->
-
-                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
-                        <a href="/company-trucks/user-record"
-                            th:classappend="${requestURI == '/company-trucks/user-record'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span th:text="#{company_trucks}"></span>
-                        </a>
-                    </li>
-                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
-                        <a href="/company-small-trucks/user-record"
-                            th:classappend="${requestURI == '/company-small-trucks/user-record'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sign-out"></i>
-                            <span th:text="#{company_small_trucks}"></span>
-                        </a>
-                    </li>
-                    <li sec:authorize="hasAuthority('SUB_TRUCK_Fill')">
-                        <a href="/sub-trucks/user-record"
-                            th:classappend="${requestURI == '/sub-trucks/user-record'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sitemap"></i>
-                            <span th:text="#{sub_trucks}">Sub Trucks</span>
-                        </a>
-                    </li>
-
-
-                    <li sec:authorize="hasAuthority('SUB_TRUCK_CREATE')">
-                        <a href="/sub-trucks"
-                            th:classappend="${requestURI.startsWith('/sub-trucks')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sitemap"></i>
-                            <span th:text="#{sub_trucks}">Sub Trucks</span>
-                        </a>
-                    </li>
-
-
-                    <!-- for user fill fuel -->
-                    <li sec:authorize="hasAuthority('FUEL_REQUEST_VIEW')">
-                        <a href="/fuel-requests/user-record"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/fuel-requests/user-record') 
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/user-record/report')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span th:text="#{fuel_requests}">Fuel Requests</span>
-                        </a>
-                    </li>
-                    <!-- for user Create fuel request and fill km -->
-                    <li sec:authorize="hasAuthority('FUEL_REQUEST_USER_RECORD')">
-                        <a href="/fuel-requests"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/fuel-requests') 
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/user-record/report')
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/user/fill-km/report')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span th:text="#{fuel_requests}">Fuel Requests</span>
+                            <i class="menu-icon fas fa-balance-scale"></i>
+                            <span th:text="#{scales-reports}"></span>
                         </a>
                     </li>
                 </ul>
 
 
-            </div>
-
-            <!-- Fuel Group -->
-            <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('COMPANY_TRUCK_VIEW') || hasAuthority('SUB_TRUCK_Fill') || hasAuthority('FUEL_REQUEST_VIEW') || hasAuthority('FUEL_REQUEST_USER_RECORD'))">
-                <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
-                <ul>
-                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
-                        <a href="/company-trucks/user-record/report"
-                            th:classappend="${requestURI == '/company-trucks/user-record/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-truck"></i>
-                            <span th:text="#{company_trucks_reports}"></span>
-                        </a>
-                    </li>
-
-                    <li sec:authorize="hasAuthority('COMPANY_TRUCK_VIEW')">
-                        <a href="/company-small-trucks/user-record/report"
-                            th:classappend="${requestURI == '/company-small-trucks/user-record/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sign-out"></i>
-                            <span th:text="#{company_small_trucks_reports}"></span>
-                        </a>
-                    </li>
-
-                    <li sec:authorize="hasAuthority('SUB_TRUCK_Fill')">
-                        <a href="/sub-trucks/user-record/report"
-                            th:classappend="${requestURI == '/sub-trucks/user-record/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sitemap"></i>
-                            <span th:text="#{sub_trucks_reports}">Sub Trucks</span>
-                        </a>
-                    </li>
-                    <li sec:authorize="hasAuthority('FUEL_REQUEST_VIEW')">
-                        <a href="/fuel-requests/user-record/report"
-                            th:classappend="${
-                                    #strings.startsWith(requestURI, '/fuel-requests/user-record/report') 
-                                    && !#strings.startsWith(requestURI, '/fuel-requests/reports')
-                                } ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span th:text="#{fuel_requests_reports}">Fuel Requests</span>
-                        </a>
-                    </li>
-
-                    <li sec:authorize="hasAuthority('FUEL_REQUEST_USER_RECORD')">
-                        <a href="/fuel-requests/user/fill-km/report"
-                            th:classappend="${requestURI == '/fuel-requests/user/fill-km/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span class="flex items-center space-x-2">
-                                <span th:text="#{fuel_requests_km_report}">Fuel Requests KM Status</span>
-
-                                <!-- Absolute Badge -->
-                                <!-- <span class="absolute top-1 right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                                    KM Status
-                                </span> -->
-                            </span>
-                        </a>
-                    </li>
-                </ul>
             </div>
 
             <!-- Group: Reports -->
@@ -246,46 +49,22 @@
                 <h3 class="text-xs uppercase text-gray-400 px-2 mb-1" th:text="#{reports}">Reports</h3>
                 <ul>
 
-                    
 
-                    <li sec:authorize="hasAuthority('DESTINATION_VIEW')">
-                        <a href="/destinations/u/report"
-                            th:classappend="${requestURI == '/destinations/u/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-exchange"></i>
-                            <span th:text="#{destinations_report}"></span>
-                        </a>
-                    </li>
 
                     <li>
-                        <a href="/company-trucks/main/reports"
-                            th:classappend="${requestURI == '/company-trucks/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                        <a href="/web/scale-reports"
+                            th:classappend="${requestURI.startsWith('/scales/trucks/report') or requestURI.startsWith('/web/scale-reports') and requestURI != '/scales/trucks/report/deduction/status' and requestURI != '/scales/trucks/report/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-th"></i>
-                            <span th:text="#{big_and_small_trucks_reports}"></span>
+                            <i class="menu-icon fas fa-balance-scale"></i>
+                            <span th:text="#{scales-reports}"></span>
                         </a>
                     </li>
 
-                    <li>
-                        <a href="/sub-trucks/reports?reportPage=true"
-                            th:classappend="${requestURI == '/sub-trucks/reports' && requestURI != '/sub-trucks'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-sitemap"></i>
-                            <span th:text="#{sub_trucks_reports}"></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/fuel-requests/reports?reportPage=true"
-                            th:classappend="${requestURI == '/fuel-requests/reports' && requestURI != '/fuel-requests'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
-                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-random"></i>
-                            <span th:text="#{fuel_requests_reports}"></span>
-                        </a>
-                    </li>
+
                 </ul>
             </div>
 
-            
+
 
             <!-- Destinations settings Group -->
             <div class="mb-4" sec:authorize="hasRole('USER') && (hasAuthority('DESTINATION_SETTINGS'))">
@@ -308,12 +87,30 @@
                 <ul>
                     <li>
                         <a href="/admin/trucks"
-                            th:classappend="${requestURI.startsWith('/admin/trucks')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI.startsWith('/admin/trucks') && requestURI != '/admin/trucks-scale-station'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-sitemap"></i>
                             <span th:text="#{trucks}"></span>
                         </a>
                     </li>
+                    <li>
+                        <a href="/admin/scale-stations"
+                            th:classappend="${requestURI.startsWith('/admin/scale-stations') && requestURI != '/scale-stations-destination' && requestURI != '/scale-stations-destination/form'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-sitemap"></i>
+                            <span th:text="#{scale-stations}"></span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/admin/ports"
+                            th:classappend="${requestURI.startsWith('/admin/ports') && requestURI != '/ports-destination' && requestURI != '/ports-destination/form'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
+                            <i class="menu-icon fas fa-location"></i>
+                            <span th:text="#{ports}"></span>
+                        </a>
+                    </li>
+
                     <li>
                         <a href="/destination-settings"
                             th:classappend="${requestURI.startsWith('/destination-settings')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
@@ -324,20 +121,21 @@
                     </li>
 
                     <li>
-                        <a href="/averages"
-                            th:classappend="${requestURI.startsWith('/averages')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                        <a href="/scale-stations-destination"
+                            th:classappend="${requestURI.startsWith('/scale-stations-destination')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
-                            <i class="menu-icon fas fa-key"></i>
-                            <span th:text="#{averages}"></span>
+                            <i class="menu-icon fas fa-balance-scale"></i>
+                            <span th:text="#{destinations-scales-ports}"></span>
                         </a>
                     </li>
+
 
                     <li>
                         <a href="/admin/sessions"
                             th:classappend="${requestURI.startsWith('/admin/sessions')} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-user-clock"></i>
-                            <span >Session Management</span>
+                            <span>Session Management</span>
                         </a>
                     </li>
 
@@ -349,7 +147,7 @@
                             <span th:text="#{telegram_bot_settings}"></span>
                         </a>
                     </li>
-                    
+
                 </ul>
             </div>
 
@@ -374,12 +172,15 @@
 
         <!-- Theme Toggle -->
         <div th:if="${isDesktop}" class="mt-auto pt-4 border-t border-gray-500 dark:border-gray-700">
-            <button id="theme-toggle" class="flex items-center space-x-2 w-full p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
+            <button id="theme-toggle"
+                class="flex items-center space-x-2 w-full p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
                 <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                 </svg>
                 <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z">
+                    </path>
                 </svg>
                 <span id="theme-toggle-text" class="text-sm">Toggle theme</span>
             </button>
@@ -389,7 +190,7 @@
 
 
 <script>
-    $(function() {
+    $(function () {
         $('[is-show="true"]').removeAtt('style');
     })
 
