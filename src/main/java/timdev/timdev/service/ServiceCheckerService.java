@@ -430,6 +430,31 @@ public class ServiceCheckerService {
         return repository.findByDeviceIdFilters(deviceId, startDate, endDate, pageable);
     }
 
+    public Page<ServiceChecker> getAllChecklists(int page, int limit, LocalDate startDate, LocalDate endDate) {
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
+
+        if (startDate != null && endDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            return repository.findAllByCreatedAtBetween(startDateTime, endDateTime, pageable);
+        } else {
+            return repository.findAll(pageable);
+        }
+    }
+
+    public Page<ServiceChecker> getAllNonCancelledChecklists(int page, int limit, LocalDate startDate,
+            LocalDate endDate) {
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
+
+        if (startDate != null && endDate != null) {
+            LocalDateTime startDateTime = startDate.atStartOfDay();
+            LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+            return repository.findAllNonCancelledByDateRange(startDateTime, endDateTime, pageable);
+        } else {
+            return repository.findAllNonCancelled(pageable);
+        }
+    }
+
     // get and set external driver dto
 
     public ServiceChecker refreshExDriver(ServiceChecker sc) {

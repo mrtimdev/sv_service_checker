@@ -102,43 +102,50 @@ public class ServiceCheckerController {
     public ResponseEntity<?> getServiceCheckers(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int limit,
-            @RequestParam(required = false) String dateFilter,
-            @RequestParam(required = true) String deviceId) {
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) String dateFilter) {
 
         try {
             validateToken(authHeader);
+
+            System.out.println("📡 Received request - Page: " + page +
+                    ", Limit: " + limit +
+                    ", DateFilter: " + dateFilter);
 
             // Calculate date range based on filter
             LocalDate startDate = null;
             LocalDate endDate = null;
 
-            if (dateFilter != null) {
+            if (dateFilter != null && !dateFilter.isEmpty() && !dateFilter.equals("all")) {
                 LocalDate today = LocalDate.now();
 
                 switch (dateFilter) {
-                    case "today" -> {
+                    case "today":
                         startDate = today;
                         endDate = today;
-                    }
-                    case "yesterday" -> {
+                        break;
+                    case "yesterday":
                         LocalDate yesterday = today.minusDays(1);
                         startDate = yesterday;
                         endDate = yesterday;
-                    }
-                    case "last7Days" -> {
+                        break;
+                    case "last7Days":
                         startDate = today.minusDays(7);
                         endDate = today;
-                    }
-                    case "last30Days" -> {
+                        break;
+                    case "last30Days":
                         startDate = today.minusDays(30);
                         endDate = today;
-                    }
+                        break;
+                    default:
+                        startDate = null;
+                        endDate = null;
+                        break;
                 }
             }
 
-            Page<ServiceChecker> serviceCheckersPage = serviceCheckerService.getByDeviceId(page, limit, startDate,
-                    endDate, null);
+            Page<ServiceChecker> serviceCheckersPage = serviceCheckerService.getAllNonCancelledChecklists(
+                    page, limit, startDate, endDate);
 
             // Convert to DTOs
             List<ServiceCheckerResponseDTO> serviceCheckerDTOs = serviceCheckersPage.getContent()
@@ -149,16 +156,24 @@ public class ServiceCheckerController {
             // Prepare response
             Map<String, Object> response = new HashMap<>();
             response.put("data", serviceCheckerDTOs);
-            response.put("currentPage", serviceCheckersPage.getNumber());
+            response.put("currentPage", serviceCheckersPage.getNumber()); // 0-indexed
             response.put("totalItems", serviceCheckersPage.getTotalElements());
             response.put("totalPages", serviceCheckersPage.getTotalPages());
-            response.put("hasMore", serviceCheckersPage.getNumber() < serviceCheckersPage.getTotalPages() - 1);
+            response.put("hasMore", serviceCheckersPage.hasNext());
+
+            System.out.println("📦 Sending response - CurrentPage: " + serviceCheckersPage.getNumber() +
+                    ", TotalPages: " + serviceCheckersPage.getTotalPages() +
+                    ", HasMore: " + serviceCheckersPage.hasNext() +
+                    ", ItemsInPage: " + serviceCheckerDTOs.size());
 
             return ResponseEntity.ok(response);
 
         } catch (UnauthorizedException e) {
+            System.err.println("❌ Unauthorized access: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         } catch (Exception e) {
+            System.err.println("❌ Error retrieving service checkers: " + e.getMessage());
+            e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to retrieve service checkers: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
