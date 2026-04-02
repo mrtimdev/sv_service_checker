@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="~{layouts/main :: head}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+    <style>
+        .filter-card {
+            transition: all 0.3s ease;
+        }
+
+        .filter-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .pagination-btn {
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Checkbox styling */
+        .checkbox-row {
+            cursor: pointer;
+        }
+
+        .checkbox-row:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .checkbox-row.selected {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .select-all-checkbox {
+            cursor: pointer;
+        }
+
+        /* Selected count badge */
+        .selected-count-badge {
+            transition: all 0.2s ease;
+        }
+    </style>
+</th:block>
+
+<th:block th:insert="~{layouts/main :: layout(~{::content}, 'Scale Reports List')}">
+    <th:block th:fragment="content">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center mb-4 sm:mb-0">
+                    <i class="fas fa-chart-bar mr-3 text-blue-500"></i>
+                    Scale Reports List
+                </h1>
+                <div class="flex gap-2">
+                    <a href="/web/scale-reports/export"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </a>
+                    <a href="/scales/trucks/report/form"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fas fa-plus"></i>
+                        New Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-blue-600">Total Reports</p>
+                            <p class="text-2xl font-bold text-blue-800" th:text="${totalItems}">0</p>
+                        </div>
+                        <i class="fas fa-file-alt text-3xl text-blue-400"></i>
+                    </div>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-green-600">Total Scale Fees</p>
+                            <p class="text-2xl font-bold text-green-800"
+                                th:text="${#numbers.formatDecimal(totalScaleFees, 0, 'COMMA', 0, 'POINT')} + ' Riel'">0
+                            </p>
+                        </div>
+                        <i class="fas fa-weight-scale text-3xl text-green-400"></i>
+                    </div>
+                </div>
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-purple-600">Total Port Fees</p>
+                            <p class="text-2xl font-bold text-purple-800"
+                                th:text="${#numbers.formatDecimal(totalPortFees, 0, 'COMMA', 0, 'POINT')} + ' Riel'">0
+                            </p>
+                        </div>
+                        <i class="fas fa-ship text-3xl text-purple-400"></i>
+                    </div>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-amber-600">Total Expenses</p>
+                            <p class="text-2xl font-bold text-amber-800"
+                                th:text="${#numbers.formatDecimal(totalExpenses, 0, 'COMMA', 0, 'POINT')} + ' Riel'">0
+                            </p>
+                        </div>
+                        <i class="fas fa-coins text-3xl text-amber-400"></i>
+                    </div>
+                </div>
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-red-600">Total Weight</p>
+                            <p class="text-2xl font-bold text-red-800"
+                                th:text="${#numbers.formatDecimal(totalWeight, 1, 'COMMA', 2, 'POINT')} + ' kg'">0</p>
+                        </div>
+                        <i class="fas fa-weight text-3xl text-red-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 filter-card">
+                <form method="get" action="/web/scale-reports/report" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <i class="far fa-calendar-alt mr-2 text-primary-600"></i>Start Date
+                            </label>
+                            <input type="text" name="startDate"
+                                th:value="${startDate != null} ? ${#temporals.format(startDate, 'MMM dd, yyyy')} : ''"
+                                class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                placeholder="Select start date" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                <i class="far fa-calendar-alt mr-2 text-primary-600"></i>End Date
+                            </label>
+                            <input type="text" name="endDate"
+                                th:value="${endDate != null} ? ${#temporals.format(endDate, 'MMM dd, yyyy')} : ''"
+                                class="datepicker w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                placeholder="Select end date" />
+                        </div>
+
+                        <!-- Search Query -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <i class="fas fa-search mr-1"></i> Search (Truck, Destination, Product)
+                            </label>
+                            <input type="text" name="query" th:value="${query}" placeholder="Search..."
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        </div>
+
+                        <!-- Filters Row 2 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <i class="fas fa-truck mr-1"></i> Truck
+                            </label>
+                            <select name="truckId"
+                                class="select w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="">All Trucks</option>
+                                <option th:each="truck : ${trucks}" th:value="${truck.id}"
+                                    th:text="${truck.licensePlate}" th:selected="${truckId == truck.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i> Destination
+                            </label>
+                            <select name="destinationId"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="">All Destinations</option>
+                                <option th:each="dest : ${destinations}" th:value="${dest.id}" th:text="${dest.name}"
+                                    th:selected="${destinationId == dest.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <i class="fas fa-weight-scale mr-1"></i> Scale Station
+                            </label>
+                            <select name="scaleStationId"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="">All Scale Stations</option>
+                                <option th:each="station : ${scaleStations}" th:value="${station.id}"
+                                    th:text="${station.name}" th:selected="${scaleStationId == station.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <i class="fas fa-ship mr-1"></i> Port
+                            </label>
+                            <select name="portId"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="">All Ports</option>
+                                <option th:each="port : ${ports}" th:value="${port.id}" th:text="${port.name}"
+                                    th:selected="${portId == port.id}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Filters Row 3 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Min Scale Fee
+                            </label>
+                            <input type="number" name="minScaleFee" th:value="${minScaleFee}" step="1000"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Max Scale Fee
+                            </label>
+                            <input type="number" name="maxScaleFee" th:value="${maxScaleFee}" step="1000"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Min Total Weight
+                            </label>
+                            <input type="number" name="minTotalWeight" th:value="${minTotalWeight}" step="100"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Max Total Weight
+                            </label>
+                            <input type="number" name="maxTotalWeight" th:value="${maxTotalWeight}" step="100"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        </div>
+
+                        <!-- Page Size and Sort -->
+                        <!-- Page Size and Sort -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Page Size
+                            </label>
+                            <select name="pageSize"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                                onchange="this.form.submit()"> <!-- Auto-submit when changed -->
+                                <option th:each="s : ${pageSizes}" th:value="${s}" th:text="${s}"
+                                    th:selected="${pageSize != null && pageSize.toString() == s.toString()}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Sort By
+                            </label>
+                            <select name="sortBy"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="reportDate" th:selected="${sortBy == 'reportDate'}">Report Date</option>
+                                <option value="totalWeight" th:selected="${sortBy == 'totalWeight'}">Total Weight
+                                </option>
+                                <option value="scaleFee" th:selected="${sortBy == 'scaleFee'}">Scale Fee</option>
+                                <option value="portFee" th:selected="${sortBy == 'portFee'}">Port Fee</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Sort Direction
+                            </label>
+                            <select name="sortDir"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                                <option value="desc" th:selected="${sortDir == 'desc'}">Descending</option>
+                                <option value="asc" th:selected="${sortDir == 'asc'}">Ascending</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end gap-2 pt-4">
+                        <a href="/web/scale-reports/report"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                            <i class="fas fa-undo mr-2"></i>Reset
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                            <i class="fas fa-filter mr-2"></i>Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-200 dark:bg-gray-700 text-left transition-colors duration-300">
+                            <tr>
+                                <!-- Checkbox header -->
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    <input type="checkbox" id="selectAllCheckbox"
+                                        class="select-all-checkbox w-4 h-4 rounded border-gray-300">
+                                </th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    #</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Date</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Truck</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Route Number</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Destination
+                                </th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Cargo</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Total Weight
+                                </th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Scale Fee
+                                </th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Port Fee
+                                </th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Other</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Total</th>
+                                <th
+                                    class="p-3 text-center text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr th:each="report, iterStat : ${reports}" th:data-report-id="${report.id}"
+                                class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors checkbox-row">
+                                <!-- Checkbox cell -->
+                                <td class="text-center p-3 border border-gray-300 dark:border-gray-700">
+                                    <input type="checkbox" class="report-checkbox w-4 h-4 rounded border-gray-300"
+                                        th:value="${report.id}">
+                                </td>
+                                <!-- Serial Number - Safely handle when in "all" mode -->
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${isAllMode ? iterStat.index + 1 : (currentPage * currentPageSize) + iterStat.index + 1}">
+                                    1
+                                </td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${#temporals.format(report.reportDate, 'dd/MM/yyyy')}">
+                                    01/01/2024</td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${report.truck?.licensePlate}">ABC-123</td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${report.truck?.routeNumber}">Route Number</td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${report.totalDestination}">Phnom Penh</td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${report.cargoWeight != null ? #numbers.formatDecimal(report.cargoWeight, 1, 'COMMA', 2, 'POINT') : '0'} + ' kg'">
+                                    1000 kg</td>
+                                <td class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700"
+                                    th:text="${report.totalWeight != null ? #numbers.formatDecimal(report.totalWeight, 1, 'COMMA', 2, 'POINT') : '0'} + ' kg'">
+                                    2000 kg</td>
+                                <td class="px-4 py-3 text-blue-600 font-medium"
+                                    th:text="${report.scaleFee != null ? #numbers.formatDecimal(report.scaleFee, 0, 'COMMA', 0, 'POINT') : '0'} + ' R'">
+                                    5000</td>
+                                <td class="px-4 py-3 text-green-600 font-medium"
+                                    th:text="${report.portFee != null ? #numbers.formatDecimal(report.portFee, 0, 'COMMA', 0, 'POINT') : '0'} + ' R'">
+                                    3000</td>
+                                <td class="px-4 py-3 text-amber-600 font-medium"
+                                    th:text="${report.otherExpense != null ? #numbers.formatDecimal(report.otherExpense, 0, 'COMMA', 0, 'POINT') : '0'} + ' R'">
+                                    1000</td>
+                                <td class="px-4 py-3 text-purple-600 font-bold">
+                                    <span th:text="${#numbers.formatDecimal(
+                                        (report.scaleFee != null ? report.scaleFee : 0) + 
+                                        (report.portFee != null ? report.portFee : 0) + 
+                                        (report.otherExpense != null ? report.otherExpense : 0), 
+                                        0, 'COMMA', 0, 'POINT')}">9000</span> R
+                                </td>
+                                <td
+                                    class="text-center p-3 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700">
+                                    <a target="_blank" th:href="@{/web/scale-reports/{id}(id=${report.id})}"
+                                        class="text-blue-600 hover:text-blue-800 mr-2" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <!-- Empty state -->
+                            <tr th:if="${reports.empty}">
+                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-folder-open text-4xl mb-2 block"></i>
+                                    No reports found
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${!isAllMode and totalPages > 1}"
+                    class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t flex items-center justify-between">
+                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                        Showing
+                        <span th:text="${currentPage * currentPageSize + 1}">1</span>
+                        to
+                        <span
+                            th:text="${(currentPage + 1) * currentPageSize > totalItems ? totalItems : (currentPage + 1) * currentPageSize}">10</span>
+                        of
+                        <span th:text="${totalItems}">100</span>
+                        results
+                    </div>
+
+                    <div class="flex gap-1">
+                        <!-- Previous button -->
+                        <a th:if="${currentPage > 0}"
+                            th:href="@{/web/scale-reports/report(page=${currentPage - 1}, pageSize=${pageSize}, startDate=${startDate}, endDate=${endDate}, query=${query}, truckId=${truckId}, destinationId=${destinationId}, scaleStationId=${scaleStationId}, portId=${portId}, minScaleFee=${minScaleFee}, maxScaleFee=${maxScaleFee}, minTotalWeight=${minTotalWeight}, maxTotalWeight=${maxTotalWeight}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                            class="pagination-btn px-3 py-1 bg-white dark:bg-gray-800 border rounded-lg hover:bg-blue-50">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        <span th:unless="${currentPage > 0}"
+                            class="px-3 py-1 bg-gray-200 dark:bg-gray-600 border rounded-lg cursor-not-allowed">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+
+                        <!-- Page numbers -->
+                        <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                            <a th:if="${i == 0 or i == totalPages - 1 or (i >= currentPage - 2 and i <= currentPage + 2)}"
+                                th:href="@{/web/scale-reports/report(page=${i}, pageSize=${pageSize}, startDate=${startDate}, endDate=${endDate}, query=${query}, truckId=${truckId}, destinationId=${destinationId}, scaleStationId=${scaleStationId}, portId=${portId}, minScaleFee=${minScaleFee}, maxScaleFee=${maxScaleFee}, minTotalWeight=${minTotalWeight}, maxTotalWeight=${maxTotalWeight}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                                th:classappend="${i == currentPage} ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-800'"
+                                class="pagination-btn px-3 py-1 border rounded-lg hover:bg-blue-50">
+                                <span th:text="${i + 1}">1</span>
+                            </a>
+                        </th:block>
+
+                        <!-- Ellipsis -->
+                        <span th:if="${currentPage < totalPages - 3 and totalPages > 5}" class="px-3 py-1">...</span>
+
+                        <!-- Next button -->
+                        <a th:if="${currentPage < totalPages - 1}"
+                            th:href="@{/web/scale-reports/report(page=${currentPage + 1}, pageSize=${pageSize}, startDate=${startDate}, endDate=${endDate}, query=${query}, truckId=${truckId}, destinationId=${destinationId}, scaleStationId=${scaleStationId}, portId=${portId}, minScaleFee=${minScaleFee}, maxScaleFee=${maxScaleFee}, minTotalWeight=${minTotalWeight}, maxTotalWeight=${maxTotalWeight}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                            class="pagination-btn px-3 py-1 bg-white dark:bg-gray-800 border rounded-lg hover:bg-blue-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <span th:unless="${currentPage < totalPages - 1}"
+                            class="px-3 py-1 bg-gray-200 dark:bg-gray-600 border rounded-lg cursor-not-allowed">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Show info when in "all" mode -->
+                <div th:if="${isAllMode}"
+                    class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t text-center text-sm text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-list mr-2"></i>
+                    Showing all <span th:text="${totalItems}"></span> records
+                    <span th:if="${totalItems > 0}">(page size: <span th:text="${actualPageSize}"></span>)</span>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="~{layouts/main :: body-scripts}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        $(function () {
+            $('select').select2({
+                width: '100%'
+            });
+
+            $("#toggleFilter").click(function (e) {
+                e.preventDefault();
+                $("#filterContent").slideToggle();
+            });
+
+            $(".datepicker").flatpickr({
+                dateFormat: "M d, Y",
+                allowInput: true
+            });
+
+            // Variables for selection management
+            let selectedReports = new Set();
+
+            // Function to update selected count and UI
+            function updateSelectedCount() {
+                const count = selectedReports.size;
+                $('#selectedCount').text(count);
+
+                // Update select all checkbox state
+                const totalCheckboxes = $('.report-checkbox').length;
+                const checkedCheckboxes = $('.report-checkbox:checked').length;
+
+                if (totalCheckboxes > 0 && checkedCheckboxes === totalCheckboxes) {
+                    $('#selectAllCheckbox').prop('checked', true).prop('indeterminate', false);
+                } else if (checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes) {
+                    $('#selectAllCheckbox').prop('checked', false).prop('indeterminate', true);
+                } else {
+                    $('#selectAllCheckbox').prop('checked', false).prop('indeterminate', false);
+                }
+
+                // Add/remove selected class to rows
+                $('.report-checkbox').each(function () {
+                    const row = $(this).closest('tr');
+                    if ($(this).is(':checked')) {
+                        row.addClass('selected');
+                    } else {
+                        row.removeClass('selected');
+                    }
+                });
+            }
+
+            // Handle individual checkbox changes
+            $(document).on('change', '.report-checkbox', function () {
+                const reportId = $(this).val();
+                if ($(this).is(':checked')) {
+                    selectedReports.add(reportId);
+                } else {
+                    selectedReports.delete(reportId);
+                }
+                updateSelectedCount();
+            });
+
+            // Handle select all checkbox
+            $('#selectAllCheckbox').on('change', function () {
+                const isChecked = $(this).is(':checked');
+                $('.report-checkbox').each(function () {
+                    $(this).prop('checked', isChecked);
+                    const reportId = $(this).val();
+                    if (isChecked) {
+                        selectedReports.add(reportId);
+                    } else {
+                        selectedReports.delete(reportId);
+                    }
+                });
+                updateSelectedCount();
+            });
+
+            // Handle click on table row to toggle checkbox
+            $(document).on('click', '.checkbox-row', function (e) {
+                // Don't toggle if clicking on action buttons or the checkbox itself
+                if ($(e.target).is('.report-checkbox')) {
+                    return;
+                }
+                const checkbox = $(this).find('.report-checkbox');
+                checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
+            });
+
+
+        });
+    </script>
+</th:block>
+
+</html>

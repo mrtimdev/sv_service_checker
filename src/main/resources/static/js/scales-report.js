@@ -60,11 +60,12 @@ $(function () {
             }
 
             rowData.date = formatExcelDate(rowData.date) || getCurrentDate();
-
+            let tr = '';
             console.log(rowData.date)
-            const tr = `
+            if (rowData.truckNo != "") {
+                tr = `
                 <tr class="${ rowClass } hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-150" data-row-id="${ actualIndex }" data-row-index="${ index }">
-                    <td class="text-center border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-800 dark:text-gray-200">${ rowData.no ?? '' }</td>
+                    <td class="text-center border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-800 dark:text-gray-200">${ index ?? '#' }</td>
                     
                     <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-800 dark:text-gray-200">
                         <input type="text" 
@@ -87,25 +88,27 @@ $(function () {
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <div 
+                                title="View Scale Fees"
                                 class="badge-scales btn-show-scales cursor-pointer flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:scale-105 transition"
                                 data-row-id="${ actualIndex }"
                                 data-row-index="${ index }"
                                 data-destination="${ rowData.destination }"
                             >
                                 <i class="fas fa-weight-hanging text-xs"></i>
-                                <span>Scales</span>
+                                <span>ជញ្ជីង</span>
                                 <span class="ml-1 text-xs bg-blue-600 text-white px-2 rounded-full">
                                     ${ rowData.scaleIds?.length || 0 }
                                 </span>
                             </div>
                             <div 
+                                title="View Ports and Ben Fees"
                                 class="badge-ports btn-show-ports cursor-pointer flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 hover:scale-105 transition"
                                 data-row-id="${ actualIndex }"
                                 data-row-index="${ index }"
                                 data-destination="${ rowData.destination }"
                             >
                                 <i class="fas fa-ship text-xs"></i>
-                                <span>Ports</span>
+                                <span>ផែ នឹង បេន</span>
                                 <span class="ml-1 text-xs bg-green-600 text-white px-2 rounded-full">
                                     ${ rowData.portIds?.length || 0 }
                                 </span>
@@ -134,7 +137,7 @@ $(function () {
                             data-row-index="${ index }">
                     </td>
                     <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-right text-gray-800 dark:text-gray-200 total-expense" id="totalExpense-${ actualIndex }">${ formatNumber(rowData.totalExpense, 0) }</td>
-                    <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-right text-gray-800 dark:text-gray-200">${ formatNumber(rowData.nationalRoadValue, 0) }</td>
+                    <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-right text-gray-800 dark:text-gray-200">${ rowData.nationalRoadValue }</td>
                     <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-800 dark:text-gray-200">${ rowData.markValue }</td>
                     <td class="border border-gray-200 dark:border-gray-700 px-4 py-2 text-right text-gray-800 dark:text-gray-200">
                         <input 
@@ -143,13 +146,14 @@ $(function () {
                     </td>
                 </tr>
             `;
+            }
+
             tbody.append(tr);
         });
 
         // Reattach event listeners
         attachOtherInputListeners();
         initializeDateInputs();
-        calculateGrandTotals();
     }
     // ==================== END RENDER FUNCTION ====================
 
@@ -171,17 +175,19 @@ $(function () {
         });
     }
 
-    // Save data to localStorage
     function saveToLocalStorage() {
         try {
             const dataForStorage = {
-                displayData: window.scalesReportData.displayData.map(item => ({
-                    ...item,
-                    scaleAmounts: Object.fromEntries(item.scaleAmounts || new Map()),
-                    portAmounts: Object.fromEntries(item.portAmounts || new Map())
-                })),
+                displayData: window.scalesReportData.displayData
+                    .filter(item => item.truckNo && item.truckNo.trim() !== '') // ✅ keep only valid truckNo
+                    .map(item => ({
+                        ...item,
+                        scaleAmounts: Object.fromEntries(item.scaleAmounts || new Map()),
+                        portAmounts: Object.fromEntries(item.portAmounts || new Map())
+                    })),
                 timestamp: new Date().toISOString()
             };
+
             localStorage.setItem('scales-report', JSON.stringify(dataForStorage));
             console.log('Data saved to localStorage');
         } catch (error) {
@@ -239,7 +245,6 @@ $(function () {
                     window.scalesReportData.displayData[rowIndex].totalExpense = totalExpense;
                     $(`#totalExpense-${ rowId }`).text(formatNumber(totalExpense, 0));
                     saveToLocalStorage();
-                    calculateGrandTotals();
                 }
             });
 
@@ -269,7 +274,6 @@ $(function () {
 
                     $(`#totalExpense-${ rowId }`).text(formatNumber(totalExpense, 0));
                     saveToLocalStorage();
-                    calculateGrandTotals();
                 }
             });
 
@@ -282,7 +286,6 @@ $(function () {
             if (window.scalesReportData.displayData[rowIndex]) {
                 window.scalesReportData.displayData[rowIndex].noteValue = value;
                 saveToLocalStorage();
-                calculateGrandTotals();
             }
         });
 
@@ -332,125 +335,118 @@ $(function () {
         const processedData = [];
         const batchSize = 10;
 
+        // 🔹 Helper: filter + map + create Map
+        const extractValidItems = (items, idKey) => {
+            if (!items?.length) return { ids: [], amounts: new Map() };
+
+            const valid = items.reduce((acc, item) => {
+                const amount = parseFloat(item.amount);
+                if (!isNaN(amount) && amount > 0) {
+                    acc.ids.push(item[idKey]);
+                    acc.amounts.set(item[idKey], amount);
+                }
+                return acc;
+            }, { ids: [], amounts: new Map() });
+
+            return valid;
+        };
+
         for (let i = startIndex; i < rows.length; i += batchSize) {
-            const batch = rows.slice(i, Math.min(i + batchSize, rows.length));
-            const batchPromises = batch.map(async (r, index) => {
-                if (!r || r.length === 0 || !r[0]) return null;
+            const batch = rows.slice(i, i + batchSize);
 
-                const actualIndex = i + index;
-                const licensePlate = r[2]?.toString().trim() || '';
-                const routeNumber = await getTruckRouteNumber(licensePlate);
+            const batchResults = await Promise.all(
+                batch.map(async (r, index) => {
+                    if (!r || !r[0]) return null;
 
-                return {
-                    row: r,
-                    index: actualIndex,
-                    licensePlate,
-                    routeNumber
-                };
-            });
+                    const actualIndex = i + index;
+                    const licensePlate = r[2]?.toString().trim();
+                    if (!licensePlate) return null;
 
-            const batchResults = await Promise.all(batchPromises);
+                    try {
+                        const data = await getTruckRouteNumber(licensePlate);
+
+                        return {
+                            row: r,
+                            index: actualIndex,
+                            licensePlate: data?.found ? licensePlate : '',
+                            routeNumber: data?.found ? data.routeNumber : null
+                        };
+                    } catch (err) {
+                        console.error('Truck route error:', err);
+                        return null;
+                    }
+                })
+            );
 
             for (const result of batchResults) {
                 if (!result) continue;
 
-                const { row: r, index: actualIndex, licensePlate, routeNumber } = result;
+                const { row: r, index, licensePlate, routeNumber } = result;
 
-                let cargoWeight = cleanNumber(r[9]);
-                let truckWeight = cleanNumber(r[10]);
-                let totalWeight = calcTotalWeight(cargoWeight, truckWeight);
-                let scaleStation = r[12]?.toString() || "";
-                let destination = r[8]?.toString() || "";
-                let policeValue = cleanNumber(r[15]);
-                let nationalRoadValue = cleanNumber(r[18]);
-                let markValue = r[19]?.toString() || "";
-                let noteValue = r[20]?.toString() || "";
+                // 🔹 Basic fields
+                const cargoWeight = cleanNumber(r[9]);
+                const truckWeight = cleanNumber(r[10]);
+                const totalWeight = calcTotalWeight(cargoWeight, truckWeight);
 
-                // Calculate scale fee
-                let scaleFee = await calcScaleFee(licensePlate, scaleStation, totalWeight);
+                const destination = r[8]?.toString() || '';
+                const scaleStation = r[12]?.toString() || '';
 
-                // Fetch destination data for auto-selection
-                let destinationData = null;
-                let scaleIds = [];
-                let scaleAmounts = new Map();
-                let portIds = [];
-                let portAmounts = new Map();
+                // 🔹 Parallel async (faster)
+                const [scaleFee, destinationData] = await Promise.all([
+                    calcScaleFee(licensePlate, scaleStation, totalWeight),
+                    destination ? getDestinationData(destination).catch(err => {
+                        console.error('Destination error:', err);
+                        return null;
+                    }) : Promise.resolve(null)
+                ]);
 
-                if (destination) {
-                    try {
-                        destinationData = await getDestinationData(destination);
+                // 🔹 Extract scale/port data
+                const { ids: scaleIds, amounts: scaleAmounts } =
+                    extractValidItems(destinationData?.scales, 'scaleStationId');
 
-                        if (destinationData?.scales && destinationData.scales.length > 0) {
-                            scaleIds = destinationData.scales.map(scale => scale.scaleStationId);
-                            scaleAmounts = new Map(
-                                destinationData.scales.map(scale => [
-                                    scale.scaleStationId,
-                                    parseFloat(scale.amount) || 0
-                                ])
-                            );
-                        }
+                const { ids: portIds, amounts: portAmounts } =
+                    extractValidItems(destinationData?.ports, 'portId');
 
-                        if (destinationData?.ports && destinationData.ports.length > 0) {
-                            portIds = destinationData.ports.map(port => port.portId);
-                            portAmounts = new Map(
-                                destinationData.ports.map(port => [
-                                    port.portId,
-                                    parseFloat(port.amount) || 0
-                                ])
-                            );
-                        }
-                    } catch (error) {
-                        console.error('Error fetching destination data:', error);
-                    }
-                }
-
-                console.log(r[1])
-
-                const rowData = {
-                    rowIndex: actualIndex,
+                // 🔹 Final object
+                processedData.push({
+                    rowIndex: index,
                     no: r[0],
                     date: r[1],
                     truckNo: licensePlate,
                     truckType: r[3],
-                    routeNumber: routeNumber,
+                    routeNumber,
                     cargoType: r[5],
                     pickup: r[6],
                     dropoff: r[7],
-                    destination: destination,
-                    cargoWeight: cargoWeight,
-                    truckWeight: truckWeight,
-                    totalWeight: totalWeight,
-                    scaleFee: scaleFee,
+                    destination,
+                    cargoWeight,
+                    truckWeight,
+                    totalWeight,
+                    scaleFee,
                     benValue: cleanNumber(r[13]),
                     portValue: cleanNumber(r[14]),
-                    policeValue: policeValue,
+                    policeValue: cleanNumber(r[15]),
                     otherValue: 0,
                     expenseValue: 0,
-                    nationalRoadValue: nationalRoadValue,
-                    markValue: markValue,
-                    noteValue: noteValue,
-                    scaleIds: scaleIds,
-                    scaleAmounts: scaleAmounts,
-                    portIds: portIds,
-                    portAmounts: portAmounts
-                };
-
-                processedData.push(rowData);
+                    nationalRoadValue: r[18]?.toString() || '',
+                    markValue: r[19]?.toString() || '',
+                    noteValue: r[20]?.toString() || '',
+                    scaleIds,
+                    scaleAmounts,
+                    portIds,
+                    portAmounts
+                });
             }
 
-            // Update progress
+            // 🔹 Progress update
             const progress = Math.min(100, Math.round((i + batch.length) / rows.length * 100));
             $('#progressBar').css('width', progress + '%').attr('aria-valuenow', progress);
             $('#progressText').text(`Processing... ${ progress }%`);
         }
 
-        // Update global data structure
+        // 🔹 Final updates
         window.scalesReportData.displayData = processedData;
-
-        // Render using the SINGLE render function
         renderTable();
-
-        // Save to localStorage
         saveToLocalStorage();
 
         return processedData;
@@ -486,7 +482,8 @@ $(function () {
                 const data = await response.json();
                 const routeNumber = data.routeNumber ? parseInt(data.routeNumber) : null;
                 truckRouteCache.set(licensePlate, routeNumber);
-                return routeNumber;
+                console.log({ data });
+                return data.found ? data : null;
             }
         } catch (error) {
             console.error('Error fetching truck route:', error);
@@ -561,20 +558,6 @@ $(function () {
         $('#grandTotalAll').text(formatNumber(totalSelectedScales + totalSelectedPorts, 0) + ' Riel');
     }
 
-    function updateStatistics(data) {
-        let totalRecords = data.length;
-        let totalWeight = 0;
-        let totalScaleFees = 0;
-
-        data.forEach(row => {
-            totalWeight += row.totalWeight || 0;
-            totalScaleFees += row.scaleFee || 0;
-        });
-
-        $('#totalRecords').text(totalRecords);
-        $('#totalWeight').text(formatNumber(totalWeight, 2) + ' kg');
-        $('#totalScaleFees').text(formatNumber(totalScaleFees, 0) + ' Riel');
-    }
 
     // ==================== FILE UPLOAD HANDLER ====================
     $("#excelFile").on("change", async function (e) {
@@ -611,9 +594,6 @@ $(function () {
                         </tr>
                     `);
                 }
-
-                updateStatistics(processedData);
-                calculateGrandTotals();
 
             } catch (error) {
                 console.error('Error processing file:', error);
@@ -1033,9 +1013,6 @@ $(function () {
 
             // Save to localStorage
             saveToLocalStorage();
-
-            // Update grand totals
-            calculateGrandTotals();
         }
 
         closeScalesModal();
@@ -1075,48 +1052,12 @@ $(function () {
             const scaleTotal = Array.from(rowData.scaleAmounts?.values() || []).reduce((a, b) => a + b, 0);
             const totalExpense = scaleTotal + total + (rowData.otherValue || 0);
             $(`#totalExpense-${ rowId }`).text(formatNumber(totalExpense, 0));
-
-            // Save to localStorage
             saveToLocalStorage();
-
-            // Update grand totals
-            calculateGrandTotals();
         }
 
         closePortsModal();
         loadFromLocalStorage();
     };
-
-    // Calculate grand totals
-    function calculateGrandTotals() {
-        let totalSelectedScales = 0;
-        let totalSelectedPorts = 0;
-        let totalExpenses = 0;
-
-        $('[id^="scaleFeeDisplay-"]').each(function () {
-            const text = $(this).text();
-            const value = parseFloat(text.replace(/[^0-9.-]/g, '')) || 0;
-            totalSelectedScales += value;
-        });
-
-        $('[id^="portFeeDisplay-"]').each(function () {
-            const text = $(this).text();
-            const value = parseFloat(text.replace(/[^0-9.-]/g, '')) || 0;
-            totalSelectedPorts += value;
-        });
-
-        $('[id^="totalExpense-"]').each(function () {
-            const text = $(this).text();
-            const value = parseFloat(text.replace(/[^0-9.-]/g, '')) || 0;
-            totalExpenses += value;
-        });
-
-        $('#grandTotalScales').text(formatNumber(totalSelectedScales, 0) + ' Riel');
-        $('#grandTotalPorts').text(formatNumber(totalSelectedPorts, 0) + ' Riel');
-        $('#grandTotalExpenses').text(formatNumber(totalExpenses, 0) + ' Riel');
-        $('#grandTotalAll').text(formatNumber(totalSelectedScales + totalSelectedPorts, 0) + ' Riel');
-    }
-
     // Initialize header checkbox handlers
     $(document).on('change', '#scaleHeaderCheckbox', function () {
         document.querySelectorAll('.scale-checkbox').forEach(cb => {
@@ -1216,6 +1157,7 @@ $(function () {
             window.scalesReportData = { displayData: [], timestamp: null };
             renderTable();
             $('#excelFile').val('');
+            window.location.reload();
         } catch (err) {
             alert(err.message);
         }
@@ -1228,6 +1170,7 @@ $(function () {
         window.scalesReportData = { displayData: [], timestamp: null };
         renderTable();
         $('#excelFile').val('');
+        window.location.reload();
     });
 
     // Load data from localStorage on page load

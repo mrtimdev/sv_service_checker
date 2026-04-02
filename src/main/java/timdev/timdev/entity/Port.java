@@ -8,10 +8,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import timdev.timdev.dto.PortType;
 
 @Entity
 @Audited
@@ -31,6 +34,9 @@ public class Port {
 
     @OneToMany(mappedBy = "port")
     private List<DestinationPort> destinationPorts;
+
+    @Enumerated(EnumType.STRING)
+    private PortType type = PortType.PAE;
 
     public Long getId() {
         return id;
@@ -70,5 +76,13 @@ public class Port {
 
     public void setDestinationPorts(List<DestinationPort> destinationPorts) {
         this.destinationPorts = destinationPorts;
+    }
+
+    public PortType getType() {
+        return type;
+    }
+
+    public void setType(PortType type) {
+        this.type = type;
     }
 }

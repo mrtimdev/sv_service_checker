@@ -166,6 +166,134 @@ public class ScaleReportWebController {
         return "scale-reports/list";
     }
 
+    // reports
+    @GetMapping("/report")
+    public String listReportsPage(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "MMM dd, yyyy") LocalDate endDate,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Long truckId,
+            @RequestParam(required = false) Long destinationId,
+            @RequestParam(required = false) Long scaleStationId,
+            @RequestParam(required = false) Long portId,
+            @RequestParam(required = false) BigDecimal minScaleFee,
+            @RequestParam(required = false) BigDecimal maxScaleFee,
+            @RequestParam(required = false) BigDecimal minTotalWeight,
+            @RequestParam(required = false) BigDecimal maxTotalWeight,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") String pageSize, // String to accept "all"
+            @RequestParam(defaultValue = "reportDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Model model) {
+
+        // Build specification with filters
+        Specification<TruckReport> spec = buildSpecification(
+                startDate, endDate, query, truckId, destinationId,
+                scaleStationId, portId, minScaleFee, maxScaleFee,
+                minTotalWeight, maxTotalWeight);
+
+        // Get all filtered reports (for statistics)
+        List<TruckReport> allFilteredReports = truckReportRepository.findAll(spec);
+
+        // Handle pagination or "all"
+        Page<TruckReport> reportPage;
+        boolean isAllMode = "all".equalsIgnoreCase(pageSize);
+        int actualPageSize = 50; // Default value
+        int currentPageToUse = page;
+
+        if (isAllMode) {
+            // If "all" is selected, use the total count as page size
+            actualPageSize = allFilteredReports.size();
+            currentPageToUse = 0; // Always start from page 0 when in "all" mode
+
+            // Create pageable to get all records
+            Sort sort = sortDir.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+
+            Pageable pageable = PageRequest.of(0, Math.max(actualPageSize, 1), sort);
+            reportPage = truckReportRepository.findAll(spec, pageable);
+        } else {
+            // Parse the page size as integer
+            try {
+                actualPageSize = Integer.parseInt(pageSize);
+                if (actualPageSize <= 0)
+                    actualPageSize = 50;
+            } catch (NumberFormatException e) {
+                actualPageSize = 50; // Default if invalid
+            }
+
+            // Create pageable with sorting
+            Sort sort = sortDir.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+
+            Pageable pageable = PageRequest.of(page, actualPageSize, sort);
+            reportPage = truckReportRepository.findAll(spec, pageable);
+            currentPageToUse = page;
+        }
+
+        // Calculate summary statistics
+        BigDecimal totalScaleFees = allFilteredReports.stream()
+                .map(r -> r.getScaleFee() != null ? r.getScaleFee() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPortFees = allFilteredReports.stream()
+                .map(r -> r.getPortFee() != null ? r.getPortFee() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalOtherExpenses = allFilteredReports.stream()
+                .map(r -> r.getOtherExpense() != null ? r.getOtherExpense() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalWeight = allFilteredReports.stream()
+                .map(r -> r.getTotalWeight() != null ? r.getTotalWeight() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Add attributes to model
+        model.addAttribute("reports", reportPage.getContent());
+        model.addAttribute("currentPage", currentPageToUse);
+        model.addAttribute("totalPages", isAllMode ? 1 : reportPage.getTotalPages());
+        model.addAttribute("totalItems", allFilteredReports.size());
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("actualPageSize", actualPageSize);
+        model.addAttribute("isAllMode", isAllMode);
+        model.addAttribute("currentPageSize", actualPageSize); // Add this for display calculations
+
+        // Filter values for form
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("query", query);
+        model.addAttribute("truckId", truckId);
+        model.addAttribute("destinationId", destinationId);
+        model.addAttribute("scaleStationId", scaleStationId);
+        model.addAttribute("portId", portId);
+        model.addAttribute("minScaleFee", minScaleFee);
+        model.addAttribute("maxScaleFee", maxScaleFee);
+        model.addAttribute("minTotalWeight", minTotalWeight);
+        model.addAttribute("maxTotalWeight", maxTotalWeight);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+
+        // Statistics
+        model.addAttribute("totalScaleFees", totalScaleFees);
+        model.addAttribute("totalPortFees", totalPortFees);
+        model.addAttribute("totalOtherExpenses", totalOtherExpenses);
+        model.addAttribute("totalExpenses", totalScaleFees.add(totalPortFees).add(totalOtherExpenses));
+        model.addAttribute("totalWeight", totalWeight);
+
+        // Dropdown data
+        model.addAttribute("trucks", truckRepository.findAll());
+        model.addAttribute("destinations", destinationRepository.findAll());
+        model.addAttribute("scaleStations", scaleStationRepository.findAll());
+        model.addAttribute("ports", portRepository.findAll());
+
+        // Page size options - now includes "all"
+        model.addAttribute("pageSizes", new Object[] { 25, 50, 100, 200, 500, "all" });
+
+        return "scale-reports/report";
+    }
+
     @GetMapping("/{id}")
     public String viewReport(@PathVariable Long id, Model model) {
         TruckReport report = truckReportRepository.findById(id)

@@ -49,8 +49,8 @@ public class DestinationSetting {
     @Column(name = "destination_name", nullable = false, unique = true, columnDefinition = "TEXT")
     private String name;
 
-    @Column(name = "distance", nullable = false)
-    private double distance;
+    @Column(name = "distance", nullable = true)
+    private double distance = 0;
 
     @OneToMany(mappedBy = "setting", cascade = CascadeType.ALL, orphanRemoval = false)
     @JsonIgnore

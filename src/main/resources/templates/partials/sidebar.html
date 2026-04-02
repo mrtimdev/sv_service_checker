@@ -33,7 +33,7 @@
 
                     <li>
                         <a href="/web/scale-reports"
-                            th:classappend="${requestURI.startsWith('/scales/trucks/report') or requestURI.startsWith('/web/scale-reports') and requestURI != '/scales/trucks/report/deduction/status' and requestURI != '/scales/trucks/report/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                            th:classappend="${requestURI.startsWith('/web/scale-reports') and requestURI != '/web/scale-reports/report'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-balance-scale"></i>
                             <span th:text="#{scales-reports}"></span>
@@ -52,8 +52,8 @@
 
 
                     <li>
-                        <a href="/web/scale-reports"
-                            th:classappend="${requestURI.startsWith('/scales/trucks/report') or requestURI.startsWith('/web/scale-reports') and requestURI != '/scales/trucks/report/deduction/status' and requestURI != '/scales/trucks/report/main/reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
+                        <a href="/web/scale-reports/report"
+                            th:classappend="${requestURI.startsWith('/web/scale-reports/report') and requestURI != '/web/scale-reports'} ? 'bg-gray-700 text-white active-menu' : 'text-white hover:bg-gray-700'"
                             class="flex items-center space-x-3 p-2 rounded-lg font-medium transition duration-200">
                             <i class="menu-icon fas fa-balance-scale"></i>
                             <span th:text="#{scales-reports}"></span>

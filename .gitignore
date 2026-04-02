@@ -24,7 +24,7 @@ node_modules/
 *.ipr
 *.xlsx
 *.csv
-
+*.sql
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

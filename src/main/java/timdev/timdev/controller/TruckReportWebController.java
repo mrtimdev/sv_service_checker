@@ -12,7 +12,7 @@ public class TruckReportWebController {
     @GetMapping("/form")
     public String getReportForm(Model model) {
 
-        return "/scale-reports/index";
+        return "scale-reports/index";
     }
 
 }

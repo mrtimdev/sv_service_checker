@@ -115,7 +115,10 @@ public class ScaleReportController {
                 report.setOtherRemark((String) rowData.get("noteValue"));
 
                 // Parse and set selected scales
-                List<Object> scaleIdsObj = (List<Object>) rowData.get("scaleIds");
+                List<Object> scaleIdsObj = objectMapper.convertValue(
+                        rowData.get("scaleIds"),
+                        new TypeReference<List<Object>>() {
+                        });
                 Map<String, BigDecimal> scaleAmounts = objectMapper.convertValue(
                         rowData.get("scaleAmounts"),
                         new TypeReference<Map<String, BigDecimal>>() {
@@ -141,13 +144,19 @@ public class ScaleReportController {
                             reportScale.setTruckReport(report);
                             reportScale.setScaleStation(scaleStation);
                             reportScale.setAmount(scaleAmounts.getOrDefault(scaleId, BigDecimal.ZERO));
+                            reportScale.setDefaultAmount(
+                                    reportScale.getDefaultAmount() != null ? reportScale.getDefaultAmount()
+                                            : BigDecimal.ZERO);
                             report.addScale(reportScale);
                         });
                     }
                 }
 
                 // Parse and set selected ports
-                List<Object> portIdsObj = (List<Object>) rowData.get("portIds");
+                List<Object> portIdsObj = objectMapper.convertValue(
+                        rowData.get("portIds"),
+                        new TypeReference<List<Object>>() {
+                        });
                 Map<String, BigDecimal> portAmounts = objectMapper.convertValue(
                         rowData.get("portAmounts"),
                         new TypeReference<Map<String, BigDecimal>>() {
@@ -173,6 +182,10 @@ public class ScaleReportController {
                             reportPort.setTruckReport(report);
                             reportPort.setPort(port);
                             reportPort.setAmount(portAmounts.getOrDefault(portId, BigDecimal.ZERO));
+                            reportPort.setDefaultAmount(
+                                    reportPort.getDefaultAmount() != null ? reportPort.getDefaultAmount()
+                                            : BigDecimal.ZERO);
+
                             report.addPort(reportPort);
                         });
                     }

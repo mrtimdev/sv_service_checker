@@ -9,16 +9,19 @@ public class DestinationPortDTO {
     private Long portId;
     private String portName;
     private BigDecimal amount;
+    private PortType portType;
 
     public DestinationPortDTO() {
     }
 
-    public DestinationPortDTO(Long id, Long destinationId, Long portId, String portName, BigDecimal amount) {
+    public DestinationPortDTO(Long id, Long destinationId, Long portId, String portName, BigDecimal amount,
+            PortType portType) {
         this.id = id;
         this.destinationId = destinationId;
         this.portId = portId;
         this.portName = portName;
         this.amount = amount;
+        this.portType = portType;
     }
 
     public Long getId() {
@@ -59,6 +62,14 @@ public class DestinationPortDTO {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public PortType getPortType() {
+        return portType;
+    }
+
+    public void setPortType(PortType portType) {
+        this.portType = portType;
     }
 
     // Getters & Setters
